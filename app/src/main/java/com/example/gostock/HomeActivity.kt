@@ -294,7 +294,8 @@ class HomeActivity : AppCompatActivity() {
             // Trigger SAF to open a CSV file
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
-                type = "text/csv" // Only allow CSV files
+                type = "*/*" // CHANGE THIS TO A BROADER TYPE
+                putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("text/csv")) // ADD THIS TO HINT FOR CSV FILES
                 // Optional: putExtra(DocumentsContract.EXTRA_INITIAL_URI, ...) for default directory
             }
             importDocumentLauncher.launch(intent)
