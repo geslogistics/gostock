@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">GoStock</string>
+    <string name="new_stock_take_button_label">New Stocktake</string>
+</resources>

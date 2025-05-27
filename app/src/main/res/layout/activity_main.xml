@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true" tools:context=".MainActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="?attr/actionBarTheme">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar_main"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:popupTheme="?attr/popupTheme">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stock Record"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_gravity="start"
+                android:layout_marginEnd="16dp"/>
+
+            <TextView
+                android:id="@+id/tv_logged_in_user_main"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Welcome, User!"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:drawablePadding="8dp"
+                android:paddingEnd="16dp"
+                android:gravity="center_vertical"
+                android:layout_gravity="end"
+                android:clickable="true"
+                android:focusable="true"
+                app:drawableEndCompat="@drawable/ic_user_icon"
+                app:drawableTint="@android:color/white" />
+
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tv_breadcrumb_home"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Home"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingEnd="4dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" > "
+                android:textSize="16sp"
+                android:paddingEnd="4dp"/>
+
+            <TextView
+                android:id="@+id/tv_breadcrumb_new_entry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="New Entry"
+                android:textSize="16sp"
+                android:textColor="@android:color/darker_gray" />
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location Barcode:"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/btn_scan_location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Scan Location"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_location_barcode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="N/A"
+            android:textSize="16sp"
+            android:padding="8dp"
+            android:textColor="?android:attr/textColorPrimary"
+            android:background="@android:color/transparent"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SKU Barcode:"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/btn_scan_sku"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Scan SKU"
+            android:enabled="false"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_sku_barcode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="N/A"
+            android:textSize="16sp"
+            android:padding="8dp"
+            android:textColor="?android:attr/textColorPrimary"
+            android:background="@android:color/transparent"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Quantity:"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/et_quantity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:hint="Enter quantity"
+            android:minHeight="48dp"
+            android:layout_marginBottom="16dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal">
+
+            <Button
+                android:id="@+id/btn_save_new"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Save &amp; New"
+                android:layout_marginEnd="8dp"/>
+
+            <Button
+                android:id="@+id/btn_cancel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cancel"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

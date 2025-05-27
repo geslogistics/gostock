@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:padding="16dp"
+    tools:context=".EditRecordActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Edit Stock Record"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Timestamp:"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp"/>
+    <TextView
+        android:id="@+id/tv_edit_timestamp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Timestamp: N/A"
+        android:textSize="16sp"
+        android:padding="8dp"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="User:"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp"/>
+    <TextView
+        android:id="@+id/tv_edit_user"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="User: N/A"
+        android:textSize="16sp"
+        android:padding="8dp"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Location Barcode:"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp"/>
+    <TextView
+        android:id="@+id/tv_edit_location_barcode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Scanned Location: N/A"
+        android:textSize="16sp"
+        android:padding="8dp"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SKU Barcode:"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp"/>
+    <TextView
+        android:id="@+id/tv_edit_sku_barcode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Scanned SKU: N/A"
+        android:textSize="16sp"
+        android:padding="8dp"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Quantity:"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp"/>
+    <EditText
+        android:id="@+id/et_edit_quantity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="Enter quantity"
+        android:minHeight="48dp"
+        android:layout_marginBottom="16dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        android:layout_marginBottom="16dp">
+
+        <Button
+            android:id="@+id/btn_save_changes"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Save Changes"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/btn_cancel_edit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Cancel"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_delete_record"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Delete Record"
+        style="?attr/materialButtonOutlinedStyle"
+        android:textColor="?attr/colorError"/>
+
+</LinearLayout>

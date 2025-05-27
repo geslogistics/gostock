@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:id="@+id/record_item_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tv_item_timestamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:text="Timestamp: 2024-01-01 10:30:00"/>
+
+        <TextView
+            android:id="@+id/tv_item_username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="User: John Doe"
+            android:textSize="16sp"
+            android:layout_marginTop="4dp"/>
+
+        <TextView
+            android:id="@+id/tv_item_location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location: L-A-001"
+            android:textSize="16sp"/>
+
+        <TextView
+            android:id="@+id/tv_item_sku"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SKU: PROD-123"
+            android:textSize="16sp"/>
+
+        <TextView
+            android:id="@+id/tv_item_quantity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Quantity: 100"
+            android:textStyle="bold"
+            android:textSize="16sp"/>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
