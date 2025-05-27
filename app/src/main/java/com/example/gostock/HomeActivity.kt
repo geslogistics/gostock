@@ -344,7 +344,7 @@ class HomeActivity : AppCompatActivity() {
 
                 if (success) {
                     Toast.makeText(this, "Records exported successfully!", Toast.LENGTH_LONG).show()
-                    openCsvFile(fileUri) // Offer to open the file
+
                 } else {
                     Toast.makeText(this, "Failed to export records.", Toast.LENGTH_LONG).show()
                 }
@@ -374,7 +374,7 @@ class HomeActivity : AppCompatActivity() {
                     } else {
                         Toast.makeText(this, "Records exported but failed to clear database.", Toast.LENGTH_LONG).show()
                     }
-                    openCsvFile(fileUri) // Offer to open the file
+
                 } else {
                     Toast.makeText(this, "Failed to export records before clearing.", Toast.LENGTH_LONG).show()
                 }
