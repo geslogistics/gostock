@@ -1,67 +1,196 @@
-package com.example.gostock // IMPORTANT: Replace with your actual package name
+package com.example.gostock
 
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.view.Gravity
+import android.view.View
 import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.PopupMenu
+import androidx.appcompat.widget.Toolbar
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// Imports for SAF
-import android.net.Uri
-import androidx.activity.result.contract.ActivityResultContracts
-import java.io.OutputStream
-
-import android.view.Gravity // Add this for PopupMenu positioning
-import androidx.appcompat.widget.Toolbar // Add this
-import androidx.appcompat.widget.PopupMenu // Add this
-import android.widget.TextView // Add this
-import android.view.View // Add this line
-
-import androidx.appcompat.app.AppCompatDelegate
-
-import android.content.Context
+import java.io.BufferedReader // ADD THIS
+import java.io.InputStream // ADD THIS
+import java.io.InputStreamReader // ADD THIS
+import java.util.UUID // ADD THIS (for generating new IDs for imported records)
 
 
 class HomeActivity : AppCompatActivity() {
 
-    private lateinit var btnNewStockTake: Button
+    private lateinit var btnStartNewRecord: Button
     private lateinit var btnEditRecords: Button
     private lateinit var btnExportRecords: Button
+    private lateinit var btnExportClose: Button
+    private lateinit var btnImportRecords: Button
+    private lateinit var btnManageUsers: Button
+
+
+    private lateinit var tvLoggedInUser: TextView
+    private lateinit var toolbar: Toolbar
 
     private lateinit var fileHandler: FileHandler
 
-    private lateinit var btnManageUsers: Button // New button declaration
-    private lateinit var tvLoggedInUser: TextView // Declare TextView for user display
-    private lateinit var toolbar: Toolbar // Declare Toolbar
+    // Enum to distinguish between export types
+    private enum class ExportType {
+        EXPORT_ONLY, EXPORT_AND_CLEAR
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        btnNewStockTake = findViewById(R.id.btn_new_stock_take)
+        btnStartNewRecord = findViewById(R.id.btn_start_new_record)
         btnEditRecords = findViewById(R.id.btn_edit_records)
         btnExportRecords = findViewById(R.id.btn_export_records)
+        btnExportClose = findViewById(R.id.btn_export_close) // Initialize new button
+        btnImportRecords = findViewById(R.id.btn_import_records)
+        btnManageUsers = findViewById(R.id.btn_manage_users)
+
+        tvLoggedInUser = findViewById(R.id.tv_logged_in_user)
+        toolbar = findViewById(R.id.toolbar_home)
+
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
 
         fileHandler = FileHandler(this)
 
-        btnManageUsers = findViewById(R.id.btn_manage_users) // Link the new button
-
-        tvLoggedInUser = findViewById(R.id.tv_logged_in_user) // Link the user TextView
-        toolbar = findViewById(R.id.toolbar_home) // Link the Toolbar
-
-        setSupportActionBar(toolbar) // Set the toolbar as the activity's action bar
-        supportActionBar?.setDisplayShowTitleEnabled(false) // Hide default title
-
-
-        setupUserDetails() // New function to set user details
+        setupUserDetails()
         setupClickListeners()
-        setupRoleBasedVisibility() // New function for button visibility
+        setupRoleBasedVisibility()
+    }
+
+    // SAF Activity Result Launcher for importing a CSV file
+    private val importDocumentLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val uri: Uri? = result.data?.data
+            uri?.let { fileUri ->
+                importRecordsFromCsv(fileUri)
+            } ?: run {
+                Toast.makeText(this, "File selection cancelled or failed.", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(this, "Import cancelled.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun importRecordsFromCsv(uri: Uri) {
+        val importedEntries = mutableListOf<StockEntry>()
+        var importedCount = 0
+
+        try {
+            contentResolver.openInputStream(uri)?.use { inputStream: InputStream ->
+                val reader = BufferedReader(InputStreamReader(inputStream))
+                var line: String?
+
+                // Read and skip header line
+                line = reader.readLine()
+                if (line == null) {
+                    Toast.makeText(this, "Selected CSV file is empty.", Toast.LENGTH_SHORT).show()
+                    return
+                }
+
+                while (reader.readLine().also { line = it } != null) {
+                    val columns = parseCsvLine(line!!) // Use helper to parse line
+                    if (columns.size == 6) { // Expecting ID, Timestamp, Username, Location, SKU, Quantity
+                        try {
+                            val timestamp = columns[1]
+                            val username = columns[2]
+                            val locationBarcode = columns[3]
+                            val skuBarcode = columns[4]
+                            val quantity = columns[5].toInt()
+
+                            // IMPORTANT: Generate a new UUID for the imported record
+                            // This avoids ID conflicts if you import data from another device
+                            val newEntry = StockEntry(
+                                timestamp = timestamp,
+                                username = username,
+                                locationBarcode = locationBarcode,
+                                skuBarcode = skuBarcode,
+                                quantity = quantity
+                            )
+                            importedEntries.add(newEntry)
+                            importedCount++
+                        } catch (e: NumberFormatException) {
+                            Toast.makeText(this, "Skipping row due to invalid quantity: ${columns[5]}", Toast.LENGTH_SHORT).show()
+                            e.printStackTrace()
+                        } catch (e: Exception) {
+                            Toast.makeText(this, "Skipping row due to parsing error: ${e.message}", Toast.LENGTH_SHORT).show()
+                            e.printStackTrace()
+                        }
+                    } else {
+                        Toast.makeText(this, "Skipping row due to incorrect column count: ${columns.size}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
+            if (importedEntries.isNotEmpty()) {
+                fileHandler.addMultipleStockEntries(importedEntries) // Add all imported entries
+                Toast.makeText(this, "Successfully imported $importedCount records!", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "No valid records found to import.", Toast.LENGTH_LONG).show()
+            }
+
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Toast.makeText(this, "Error reading CSV file: ${e.message}", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "An unexpected error occurred during import: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // Helper function to parse a CSV line, handling quotes and commas within fields
+    private fun parseCsvLine(line: String): List<String> {
+        val result = mutableListOf<String>()
+        var inQuote = false
+        val sb = StringBuilder()
+
+        for (i in line.indices) {
+            val char = line[i]
+
+            when (char) {
+                '"' -> {
+                    if (i + 1 < line.length && line[i + 1] == '"') {
+                        // Escaped double quote ""
+                        sb.append('"')
+                        i.inc() // Skip next quote
+                    } else {
+                        // Start or end of a field quote
+                        inQuote = !inQuote
+                    }
+                }
+                ',' -> {
+                    if (inQuote) {
+                        sb.append(',')
+                    } else {
+                        result.add(sb.toString())
+                        sb.clear()
+                    }
+                }
+                else -> {
+                    sb.append(char)
+                }
+            }
+        }
+        result.add(sb.toString()) // Add the last field
+
+        // Unescape any quotes within fields
+        return result.map { it.replace("\"\"", "\"") }
     }
 
     private fun setupUserDetails() {
@@ -72,8 +201,9 @@ class HomeActivity : AppCompatActivity() {
                 showUserMenu(view)
             }
         } else {
-            // Should not happen if login flow is correct, but as a fallback
             tvLoggedInUser.text = "Not Logged In"
+            Toast.makeText(this, "User not logged in. Redirecting to login.", Toast.LENGTH_LONG).show()
+            performLogout()
         }
     }
 
@@ -90,7 +220,6 @@ class HomeActivity : AppCompatActivity() {
         val popup = PopupMenu(this, view, Gravity.END)
         popup.menuInflater.inflate(R.menu.user_menu, popup.menu)
 
-        // Dynamically set the text for the theme toggle menu item
         val themeToggleMenuItem = popup.menu.findItem(R.id.action_toggle_theme)
         if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
             themeToggleMenuItem.title = "Switch to Light Mode"
@@ -100,18 +229,18 @@ class HomeActivity : AppCompatActivity() {
 
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.action_toggle_theme -> { // Handle the new theme toggle
+                R.id.action_change_password -> {
+                    val intent = Intent(this, ChangePasswordActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+                R.id.action_toggle_theme -> {
                     toggleTheme()
                     true
                 }
-                R.id.action_change_password -> { // Handle new menu item
-                    val intent = Intent(this, ChangePasswordActivity::class.java)
-                    startActivity(intent)
-                    true // Consume the click
-                }
                 R.id.action_logout -> {
                     performLogout()
-                    true // Consume the click
+                    true
                 }
                 else -> false
             }
@@ -119,36 +248,31 @@ class HomeActivity : AppCompatActivity() {
         popup.show()
     }
 
-    private fun toggleTheme() {
-        val currentNightMode = AppCompatDelegate.getDefaultNightMode()
-        val newNightMode = if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES) {
-            AppCompatDelegate.MODE_NIGHT_NO // Switch to Light
-        } else {
-            AppCompatDelegate.MODE_NIGHT_YES // Switch to Dark
-        }
-
-        // Apply the new theme
-        AppCompatDelegate.setDefaultNightMode(newNightMode)
-
-        // Save the preference
-        val sharedPrefs = getSharedPreferences(GoStockApp.PREFS_FILE_NAME, Context.MODE_PRIVATE)
-        sharedPrefs.edit().putInt(GoStockApp.KEY_THEME_MODE, newNightMode).apply()
-
-        Toast.makeText(this, "Theme switched!", Toast.LENGTH_SHORT).show()
-        // No need to restart activity, setDefaultNightMode automatically recreates activities with new theme
-    }
-
     private fun performLogout() {
-        (application as GoStockApp).clearLoginSession() // Clear session data
+        (application as GoStockApp).clearLoginSession()
         val intent = Intent(this, LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK // Clear back stack
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
-        finish() // Finish HomeActivity
+        finish()
         Toast.makeText(this, "Logged out successfully!", Toast.LENGTH_SHORT).show()
     }
 
+    private fun toggleTheme() {
+        val currentNightMode = AppCompatDelegate.getDefaultNightMode()
+        val newNightMode = if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES) {
+            AppCompatDelegate.MODE_NIGHT_NO
+        } else {
+            AppCompatDelegate.MODE_NIGHT_YES
+        }
+
+        AppCompatDelegate.setDefaultNightMode(newNightMode)
+        val sharedPrefs = getSharedPreferences(GoStockApp.PREFS_FILE_NAME, Context.MODE_PRIVATE)
+        sharedPrefs.edit().putInt(GoStockApp.KEY_THEME_MODE, newNightMode).apply()
+        Toast.makeText(this, "Theme switched!", Toast.LENGTH_SHORT).show()
+    }
+
     private fun setupClickListeners() {
-        btnNewStockTake.setOnClickListener {
+        btnStartNewRecord.setOnClickListener {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
         }
@@ -159,8 +283,21 @@ class HomeActivity : AppCompatActivity() {
         }
 
         btnExportRecords.setOnClickListener {
-            // Trigger SAF to create a file
-            createCsvFileWithSaf()
+            initiateSafExport(ExportType.EXPORT_ONLY) // Export only
+        }
+
+        btnExportClose.setOnClickListener {
+            initiateSafExport(ExportType.EXPORT_AND_CLEAR) // Export and clear
+        }
+
+        btnImportRecords.setOnClickListener {
+            // Trigger SAF to open a CSV file
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "text/csv" // Only allow CSV files
+                // Optional: putExtra(DocumentsContract.EXTRA_INITIAL_URI, ...) for default directory
+            }
+            importDocumentLauncher.launch(intent)
         }
 
         btnManageUsers.setOnClickListener {
@@ -169,24 +306,8 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // SAF Activity Result Launcher for creating a file
-    private val createDocumentLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val uri: Uri? = result.data?.data
-            uri?.let { fileUri ->
-                exportRecordsToCsv(fileUri)
-            } ?: run {
-                Toast.makeText(this, "File creation cancelled or failed.", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            Toast.makeText(this, "File creation cancelled.", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // Step 1 for SAF: Open file picker to choose save location/name
-    private fun createCsvFileWithSaf() {
+    // New: Generic function to initiate SAF export
+    private fun initiateSafExport(exportType: ExportType) {
         val records = fileHandler.loadStockEntries()
 
         if (records.isEmpty()) {
@@ -198,30 +319,76 @@ class HomeActivity : AppCompatActivity() {
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "text/csv" // MIME type for CSV
+            type = "text/csv"
             putExtra(Intent.EXTRA_TITLE, csvFileName)
-            // Optionally, you can set a default directory, but it's not strictly necessary.
-            // putExtra(DocumentsContract.EXTRA_INITIAL_URI, DocumentsContract.buildDocumentUri(
-            //     DocumentsContract.PUBLIC_DOWNLOADS_PROVIDER_AUTHORITY, "downloads"))
         }
-        createDocumentLauncher.launch(intent)
+
+        // Use the appropriate launcher based on export type
+        when (exportType) {
+            ExportType.EXPORT_ONLY -> createDocumentLauncher.launch(intent)
+            ExportType.EXPORT_AND_CLEAR -> exportAndClearLauncher.launch(intent)
+        }
     }
 
 
-    // Step 2 for SAF: Write data to the selected URI
-    private fun exportRecordsToCsv(uri: Uri) {
-        val records = fileHandler.loadStockEntries()
+    // Existing: SAF Launcher for "Export All Records"
+    private val createDocumentLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val uri: Uri? = result.data?.data
+            uri?.let { fileUri ->
+                val recordsToExport = fileHandler.loadStockEntries()
+                val success = writeCsvToUri(fileUri, recordsToExport) // Use helper function
 
-        if (records.isEmpty()) {
-            Toast.makeText(this, "No records to export!", Toast.LENGTH_SHORT).show()
-            return
+                if (success) {
+                    Toast.makeText(this, "Records exported successfully!", Toast.LENGTH_LONG).show()
+                    openCsvFile(fileUri) // Offer to open the file
+                } else {
+                    Toast.makeText(this, "Failed to export records.", Toast.LENGTH_LONG).show()
+                }
+            } ?: run {
+                Toast.makeText(this, "File creation cancelled or failed.", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(this, "Export cancelled.", Toast.LENGTH_SHORT).show()
         }
+    }
 
+    // New: SAF Launcher for "Export & Clear Database"
+    private val exportAndClearLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val uri: Uri? = result.data?.data
+            uri?.let { fileUri ->
+                val recordsToExport = fileHandler.loadStockEntries()
+                val success = writeCsvToUri(fileUri, recordsToExport) // Use helper function
+
+                if (success) {
+                    // Only clear if export was successful
+                    val cleared = fileHandler.clearStockEntries()
+                    if (cleared) {
+                        Toast.makeText(this, "Records exported and database cleared!", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(this, "Records exported but failed to clear database.", Toast.LENGTH_LONG).show()
+                    }
+                    openCsvFile(fileUri) // Offer to open the file
+                } else {
+                    Toast.makeText(this, "Failed to export records before clearing.", Toast.LENGTH_LONG).show()
+                }
+            } ?: run {
+                Toast.makeText(this, "File creation cancelled or failed for Export & Clear.", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(this, "Export & Clear cancelled.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // New: Helper function to write CSV data to a given URI
+    private fun writeCsvToUri(uri: Uri, records: List<StockEntry>): Boolean {
         val csvBuilder = StringBuilder()
-        // Add header row
         csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity\n")
-
-        // Add data rows
         for (record in records) {
             csvBuilder.append("${escapeCsv(record.id)},")
             csvBuilder.append("${escapeCsv(record.timestamp)},")
@@ -231,23 +398,18 @@ class HomeActivity : AppCompatActivity() {
             csvBuilder.append("${record.quantity}\n")
         }
 
-        try {
+        return try {
             contentResolver.openOutputStream(uri)?.use { outputStream: OutputStream ->
                 outputStream.write(csvBuilder.toString().toByteArray())
-                Toast.makeText(this, "Records exported successfully!", Toast.LENGTH_LONG).show()
-
-                // Optional: Offer to open the CSV file immediately after saving
-                openCsvFile(uri)
-            } ?: run {
-                Toast.makeText(this, "Failed to open output stream.", Toast.LENGTH_SHORT).show()
-            }
+                true
+            } ?: false
         } catch (e: IOException) {
             e.printStackTrace()
-            Toast.makeText(this, "Error exporting data: ${e.message}", Toast.LENGTH_LONG).show()
+            false
         }
     }
 
-    // Helper function to escape commas and quotes in CSV fields
+    // Helper function to escape commas and quotes in CSV fields (remains the same)
     private fun escapeCsv(field: String): String {
         return if (field.contains(",") || field.contains("\"") || field.contains("\n")) {
             "\"" + field.replace("\"", "\"\"") + "\""
@@ -256,13 +418,13 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // Optional: Function to open the CSV file after it's been created
-    private fun openCsvFile(uri: Uri) {
+    // Helper function to open the CSV file (remains the same)
+    private fun openCsvFile(fileUri: Uri) {
         try {
             val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "text/csv")
+                setDataAndType(fileUri, "text/csv")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // Important for opening external files
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             startActivity(intent)
         } catch (e: Exception) {

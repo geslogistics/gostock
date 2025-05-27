@@ -64,7 +64,7 @@
             android:layout_marginBottom="48dp"/>
 
         <Button
-            android:id="@+id/btn_new_stock_take"
+            android:id="@+id/btn_start_new_record"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/new_stock_take_button_label"
@@ -93,6 +93,33 @@
             android:text="Export All Records (CSV)"
             android:textSize="20sp"
             android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            app:cornerRadius="12dp"
+            android:backgroundTint="@color/button_background_light"
+            android:textColor="@color/primary_text_dark"
+            android:elevation="4dp" />
+
+        <Button
+            android:id="@+id/btn_export_close"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Export &amp; Close"
+            android:textSize="20sp"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            app:cornerRadius="12dp"
+            android:backgroundTint="@color/button_background_light"
+            android:textColor="@color/primary_text_dark"
+            android:elevation="4dp" />
+
+        <Button
+            android:id="@+id/btn_import_records"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Import Records"
+            android:textSize="20sp"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
             app:cornerRadius="12dp"
             android:backgroundTint="@color/button_background_light"
             android:textColor="@color/primary_text_dark"
@@ -105,9 +132,9 @@
             android:text="Manage Users"
             android:textSize="20sp"
             android:padding="16dp"
-            android:layout_marginTop="16dp"
             android:visibility="gone"
             app:cornerRadius="12dp"
+            android:layout_marginBottom="16dp"
             android:backgroundTint="@color/button_background_light"
             android:textColor="@color/primary_text_dark"
             android:elevation="4dp" />

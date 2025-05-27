@@ -94,4 +94,30 @@ class FileHandler(private val context: Context) {
             Log.w(TAG, "Entry with ID $entryId not found for deletion.")
         }
     }
+
+    /**
+     * Clears all stock entries by deleting the data file.
+     */
+    fun clearStockEntries(): Boolean {
+        val file = getFile()
+        if (file.exists()) {
+            val deleted = file.delete()
+            // Log.d(TAG, "Stock data file deleted: $deleted") // Debug log removed
+            return deleted
+        }
+        // Log.d(TAG, "Stock data file not found, no need to delete.") // Debug log removed
+        return true // Consider it cleared if file doesn't exist
+    }
+
+    /**
+     * Adds a list of new stock entries to the existing list and saves it.
+     * More efficient for bulk additions.
+     */
+    fun addMultipleStockEntries(newEntries: List<StockEntry>) {
+        if (newEntries.isEmpty()) return
+        val currentEntries = loadStockEntries()
+        currentEntries.addAll(newEntries)
+        saveStockEntries(currentEntries)
+        // Log.d(TAG, "Added ${newEntries.size} new entries. Total entries: ${currentEntries.size}") // Remove if you want
+    }
 }
