@@ -59,41 +59,7 @@
         android:orientation="vertical"
         android:padding="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
 
-            <TextView
-                android:id="@+id/tv_breadcrumb_home"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Home"
-                android:textColor="?attr/colorPrimary"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingEnd="4dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" > "
-                android:textSize="16sp"
-                android:paddingEnd="4dp"/>
-
-            <TextView
-                android:id="@+id/tv_breadcrumb_new_entry"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="New Entry"
-                android:textSize="16sp"
-                android:textColor="@android:color/darker_gray" />
-
-        </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"

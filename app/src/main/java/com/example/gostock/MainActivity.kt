@@ -39,8 +39,8 @@ class MainActivity : AppCompatActivity() {
 
     // Toolbar and Breadcrumb elements
     private lateinit var toolbar: Toolbar
-    private lateinit var tvLoggedInUserMain: TextView // For displaying user in toolbar
-    private lateinit var tvBreadcrumbHome: TextView
+    // private lateinit var tvLoggedInUserMain: TextView // For displaying user in toolbar
+    // private lateinit var tvBreadcrumbHome: TextView
 
     // To hold the currently logged-in username (automatically captured)
     private var selectedUser: String = ""
@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.setDisplayShowTitleEnabled(false) // Hide default title
 
         // tvLoggedInUserMain = findViewById(R.id.tv_logged_in_user_main)
-        tvBreadcrumbHome = findViewById(R.id.tv_breadcrumb_home)
+        // tvBreadcrumbHome = findViewById(R.id.tv_breadcrumb_home)
 
         // Initialize UI elements
         btnScanLocation = findViewById(R.id.btn_scan_location)
@@ -153,10 +153,7 @@ class MainActivity : AppCompatActivity() {
      * Sets up click listeners for all interactive UI elements.
      */
     private fun setupClickListeners() {
-        // Breadcrumb click listener
-        tvBreadcrumbHome.setOnClickListener {
-            finish() // Simply finish this activity to go back to HomeActivity
-        }
+
 
         btnScanLocation.setOnClickListener {
             currentScanType = ScanType.LOCATION
