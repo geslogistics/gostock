@@ -197,6 +197,14 @@ class MainActivity : AppCompatActivity() {
         val sku = tvSkuBarcode.text.toString()
         val quantity = etQuantity.text.toString().toIntOrNull()
 
+        val loggedInUser = GoStockApp.loggedInUser
+        if (loggedInUser != null) {
+            selectedUser = "${loggedInUser.username}"
+        } else {
+            Toast.makeText(this, "User not logged in. Redirecting to login.", Toast.LENGTH_LONG).show()
+            performLogout()
+        }
+
         // Validation: Username is implicitly always selected now, but check other fields
         if (selectedUser.isEmpty() || location == "N/A" || sku == "N/A" || quantity == null || quantity <= 0) {
             Toast.makeText(this, "Please complete all fields correctly (Location, SKU, Quantity > 0)", Toast.LENGTH_LONG).show()

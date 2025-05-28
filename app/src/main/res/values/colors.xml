@@ -13,4 +13,9 @@
     <color name="button_stroke_light">#E0E0E0</color>
     <color name="gradient_start">#F3E4C9</color>
     <color name="gradient_end">#9BB7FE</color>
+
+
+    <color name="disabled_background_light">#E0E0E0</color>
+    <color name="disabled_text_light">#9E9E9E</color>
+
 </resources>
