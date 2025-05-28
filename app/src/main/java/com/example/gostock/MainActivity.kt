@@ -117,7 +117,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupUserDetailsInToolbar() {
         val loggedInUser = GoStockApp.loggedInUser
         if (loggedInUser != null) {
-            tvLoggedInUserMain.text = "Welcome, ${loggedInUser.username}"
+            tvLoggedInUserMain.text = "${loggedInUser.username}"
             tvLoggedInUserMain.setOnClickListener { view ->
                 showUserMenu(view)
             }

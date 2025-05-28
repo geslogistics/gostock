@@ -4,25 +4,29 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true" tools:context=".MainActivity">
+    android:background="@drawable/gradient_background"
+    android:fitsSystemWindows="true"
+    tools:context=".MainActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:elevation="0dp"
         android:theme="?attr/actionBarTheme">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar_main"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
+            android:background="@android:color/transparent"
             app:popupTheme="?attr/popupTheme">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Stock Record"
-                android:textColor="@android:color/white"
+                android:textColor="@color/primary_text_dark"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:layout_gravity="start"
@@ -33,7 +37,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Welcome, User!"
-                android:textColor="@android:color/white"
+                android:textColor="@color/primary_text_dark"
                 android:textSize="16sp"
                 android:drawablePadding="8dp"
                 android:paddingEnd="16dp"
@@ -42,7 +46,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 app:drawableEndCompat="@drawable/ic_user_icon"
-                app:drawableTint="@android:color/white" />
+                app:drawableTint="@color/primary_text_dark" />
 
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>

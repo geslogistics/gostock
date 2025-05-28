@@ -81,78 +81,78 @@
                 android:id="@+id/btn_start_new_record"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="10dp"
                 android:backgroundTint="@color/button_background_light"
                 android:elevation="4dp"
                 android:padding="16dp"
                 android:text="@string/new_stock_take_button_label"
                 android:textColor="@color/primary_text_dark"
-                android:textSize="20sp"
+                android:textSize="15sp"
                 app:cornerRadius="12dp" />
 
             <Button
                 android:id="@+id/btn_edit_records"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="10dp"
                 android:backgroundTint="@color/button_background_light"
                 android:elevation="4dp"
                 android:padding="16dp"
                 android:text="Edit Existing Records"
                 android:textColor="@color/primary_text_dark"
-                android:textSize="20sp"
+                android:textSize="15sp"
                 app:cornerRadius="12dp" />
 
             <Button
                 android:id="@+id/btn_export_records"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="10dp"
                 android:backgroundTint="@color/button_background_light"
                 android:elevation="4dp"
                 android:padding="16dp"
                 android:text="Export All Records (CSV)"
                 android:textColor="@color/primary_text_dark"
-                android:textSize="20sp"
+                android:textSize="15sp"
                 app:cornerRadius="12dp" />
 
             <Button
                 android:id="@+id/btn_export_close"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="10dp"
                 android:backgroundTint="@color/button_background_light"
                 android:elevation="4dp"
                 android:padding="16dp"
                 android:text="Export &amp; Close"
                 android:textColor="@color/primary_text_dark"
-                android:textSize="20sp"
+                android:textSize="15sp"
                 app:cornerRadius="12dp" />
 
             <Button
                 android:id="@+id/btn_import_records"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="10dp"
                 android:backgroundTint="@color/button_background_light"
                 android:elevation="4dp"
                 android:padding="16dp"
                 android:text="Import Records"
                 android:textColor="@color/primary_text_dark"
-                android:textSize="20sp"
+                android:textSize="15sp"
                 app:cornerRadius="12dp" />
 
             <Button
                 android:id="@+id/btn_manage_users"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="10dp"
                 android:backgroundTint="@color/button_background_light"
                 android:elevation="4dp"
                 android:padding="16dp"
                 android:text="Manage Users"
                 android:textColor="@color/primary_text_dark"
-                android:textSize="20sp"
+                android:textSize="15sp"
                 android:visibility="gone"
                 app:cornerRadius="12dp" />
 
