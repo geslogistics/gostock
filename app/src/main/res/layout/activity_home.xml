@@ -4,141 +4,160 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
     android:background="@drawable/gradient_background"
+    android:fitsSystemWindows="true"
     tools:context=".HomeActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent" android:elevation="0dp" android:theme="?attr/actionBarTheme">
+        android:background="@android:color/transparent"
+        android:elevation="0dp"
+        android:theme="?attr/actionBarTheme">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar_home"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@android:color/transparent" app:popupTheme="?attr/popupTheme">
+            android:background="@android:color/transparent"
+            app:popupTheme="?attr/popupTheme">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="GoStock"
-                android:textColor="@color/primary_text_dark" android:textSize="20sp"
-                android:textStyle="bold"
                 android:layout_gravity="start"
                 android:layout_marginEnd="16dp"
                 android:drawablePadding="8dp"
+                android:text="GoStock"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="20sp"
+                android:textStyle="bold"
                 app:drawableStartCompat="@drawable/ic_gesblack"
-                app:drawableTint="@color/primary_text_dark"/>
+                app:drawableTint="@color/primary_text_dark" />
 
             <TextView
                 android:id="@+id/tv_logged_in_user"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Welcome, User!"
-                android:textColor="@color/primary_text_dark" android:textSize="16sp"
-                android:drawablePadding="8dp"
-                android:paddingEnd="16dp"
-                android:gravity="center_vertical"
                 android:layout_gravity="end"
                 android:clickable="true"
+                android:drawablePadding="8dp"
                 android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingEnd="16dp"
+                android:text="Welcome, User!"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="16sp"
                 app:drawableEndCompat="@drawable/ic_user_icon"
                 app:drawableTint="@color/primary_text_dark" />
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="24dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Good Morning!\nBe Productive Today!" android:textSize="36sp" android:textStyle="bold"
-            android:textColor="@color/primary_text_dark" android:gravity="center"
-            android:layout_marginBottom="48dp"/>
 
-        <Button
-            android:id="@+id/btn_start_new_record"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/new_stock_take_button_label"
-            android:textSize="20sp"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            app:cornerRadius="12dp" android:backgroundTint="@color/button_background_light" android:textColor="@color/primary_text_dark" android:elevation="4dp" />
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="24dp"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <Button
-            android:id="@+id/btn_edit_records"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Edit Existing Records"
-            android:textSize="20sp"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            app:cornerRadius="12dp"
-            android:backgroundTint="@color/button_background_light"
-            android:textColor="@color/primary_text_dark"
-            android:elevation="4dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="48dp"
+                android:gravity="center"
+                android:text="Good Morning!\nBe Productive Today!"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="36sp"
+                android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/btn_export_records"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Export All Records (CSV)"
-            android:textSize="20sp"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            app:cornerRadius="12dp"
-            android:backgroundTint="@color/button_background_light"
-            android:textColor="@color/primary_text_dark"
-            android:elevation="4dp" />
+            <Button
+                android:id="@+id/btn_start_new_record"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@color/button_background_light"
+                android:elevation="4dp"
+                android:padding="16dp"
+                android:text="@string/new_stock_take_button_label"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="20sp"
+                app:cornerRadius="12dp" />
 
-        <Button
-            android:id="@+id/btn_export_close"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Export &amp; Close"
-            android:textSize="20sp"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            app:cornerRadius="12dp"
-            android:backgroundTint="@color/button_background_light"
-            android:textColor="@color/primary_text_dark"
-            android:elevation="4dp" />
+            <Button
+                android:id="@+id/btn_edit_records"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@color/button_background_light"
+                android:elevation="4dp"
+                android:padding="16dp"
+                android:text="Edit Existing Records"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="20sp"
+                app:cornerRadius="12dp" />
 
-        <Button
-            android:id="@+id/btn_import_records"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Import Records"
-            android:textSize="20sp"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            app:cornerRadius="12dp"
-            android:backgroundTint="@color/button_background_light"
-            android:textColor="@color/primary_text_dark"
-            android:elevation="4dp" />
+            <Button
+                android:id="@+id/btn_export_records"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@color/button_background_light"
+                android:elevation="4dp"
+                android:padding="16dp"
+                android:text="Export All Records (CSV)"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="20sp"
+                app:cornerRadius="12dp" />
 
-        <Button
-            android:id="@+id/btn_manage_users"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Manage Users"
-            android:textSize="20sp"
-            android:padding="16dp"
-            android:visibility="gone"
-            app:cornerRadius="12dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="@color/button_background_light"
-            android:textColor="@color/primary_text_dark"
-            android:elevation="4dp" />
+            <Button
+                android:id="@+id/btn_export_close"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@color/button_background_light"
+                android:elevation="4dp"
+                android:padding="16dp"
+                android:text="Export &amp; Close"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="20sp"
+                app:cornerRadius="12dp" />
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/btn_import_records"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@color/button_background_light"
+                android:elevation="4dp"
+                android:padding="16dp"
+                android:text="Import Records"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="20sp"
+                app:cornerRadius="12dp" />
+
+            <Button
+                android:id="@+id/btn_manage_users"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@color/button_background_light"
+                android:elevation="4dp"
+                android:padding="16dp"
+                android:text="Manage Users"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="20sp"
+                android:visibility="gone"
+                app:cornerRadius="12dp" />
+
+        </LinearLayout>
+
+    </ScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

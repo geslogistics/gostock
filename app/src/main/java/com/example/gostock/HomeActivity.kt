@@ -89,6 +89,20 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun importRecordsFromCsv(uri: Uri) {
+
+        val fileName = contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            if (cursor.moveToFirst() && nameIndex != -1) {
+                cursor.getString(nameIndex)
+            } else {
+                null
+            }
+        }
+        if (fileName == null || !fileName.toLowerCase(Locale.ROOT).endsWith(".csv")) {
+            Toast.makeText(this, "Please select a valid .csv file.", Toast.LENGTH_LONG).show()
+            return // Stop import if not a CSV
+        }
+
         val importedEntries = mutableListOf<StockEntry>()
         var importedCount = 0
 
@@ -292,11 +306,9 @@ class HomeActivity : AppCompatActivity() {
 
         btnImportRecords.setOnClickListener {
             // Trigger SAF to open a CSV file
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*" // CHANGE THIS TO A BROADER TYPE
-                putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("text/csv")) // ADD THIS TO HINT FOR CSV FILES
-                // Optional: putExtra(DocumentsContract.EXTRA_INITIAL_URI, ...) for default directory
+                type = "*/*" // Change to accept ALL file types
             }
             importDocumentLauncher.launch(intent)
         }
