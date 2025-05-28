@@ -21,7 +21,7 @@ import android.view.inputmethod.InputMethodManager // ADD THIS IMPORT
 import android.content.Context // Ensure this is also imported, usually it is
 import android.os.Handler // ADD THIS IMPORT
 import android.os.Looper // ADD THIS IMPORT (for Handler(Looper.getMainLooper()))
-
+import android.widget.ImageButton
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,8 +31,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnScanSku: Button
     private lateinit var tvSkuBarcode: TextView
     private lateinit var etQuantity: EditText
-    private lateinit var btnSaveNew: Button // Now functions as "Save" (and clears)
-    private lateinit var btnCancel: Button   // New name for "Cancel"
+
+    // private lateinit var btnSaveNew: Button // Now functions as "Save" (and clears)
+    // private lateinit var btnCancel: Button   // New name for "Cancel"
+    private lateinit var btnToolbarSave: ImageButton // ADDED
+    private lateinit var btnToolbarBack: ImageButton // ADDED
 
     // Toolbar and Breadcrumb elements
     private lateinit var toolbar: Toolbar
@@ -94,7 +97,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false) // Hide default title
 
-        tvLoggedInUserMain = findViewById(R.id.tv_logged_in_user_main)
+        // tvLoggedInUserMain = findViewById(R.id.tv_logged_in_user_main)
         tvBreadcrumbHome = findViewById(R.id.tv_breadcrumb_home)
 
         // Initialize UI elements
@@ -103,32 +106,19 @@ class MainActivity : AppCompatActivity() {
         btnScanSku = findViewById(R.id.btn_scan_sku)
         tvSkuBarcode = findViewById(R.id.tv_sku_barcode)
         etQuantity = findViewById(R.id.et_quantity)
-        btnSaveNew = findViewById(R.id.btn_save_new) // "Save" button
-        btnCancel = findViewById(R.id.btn_cancel)   // "Cancel" button
+        // btnSaveNew = findViewById(R.id.btn_save_new) // "Save" button
+        // btnCancel = findViewById(R.id.btn_cancel)   // "Cancel" button
+        btnToolbarSave = findViewById(R.id.btn_toolbar_save)
+        btnToolbarBack = findViewById(R.id.btn_toolbar_back)
 
         // Initialize FileHandler
         fileHandler = FileHandler(this)
 
-        setupUserDetailsInToolbar() // Set user details in toolbar
         setupClickListeners()
         updateSaveButtonState() // Initial check for button enablement
     }
 
-    private fun setupUserDetailsInToolbar() {
-        val loggedInUser = GoStockApp.loggedInUser
-        if (loggedInUser != null) {
-            tvLoggedInUserMain.text = "${loggedInUser.username}"
-            tvLoggedInUserMain.setOnClickListener { view ->
-                showUserMenu(view)
-            }
-            selectedUser = loggedInUser.username // Automatically set the user for stock entry
-        } else {
-            tvLoggedInUserMain.text = "Not Logged In"
-            // If for some reason no user is logged in (shouldn't happen with proper login flow), force logout
-            Toast.makeText(this, "User not logged in. Redirecting to login.", Toast.LENGTH_LONG).show()
-            performLogout()
-        }
-    }
+
 
     private fun showUserMenu(view: View) {
         val popup = PopupMenu(this, view, Gravity.END)
@@ -189,14 +179,14 @@ class MainActivity : AppCompatActivity() {
             override fun afterTextChanged(s: android.text.Editable?) {}
         })
 
-        // "Save" button behavior: saves and clears fields for a new entry, stays on page
-        btnSaveNew.setOnClickListener {
-            saveStockEntry(resetFields = true)
+        // New Toolbar Save button listener
+        btnToolbarSave.setOnClickListener {
+            saveStockEntry(resetFields = true) // Save and clear fields for a new entry
         }
 
-        // "Cancel" button behavior: simply goes back without saving
-        btnCancel.setOnClickListener {
-            finish()
+        // New Toolbar Cancel button listener
+        btnToolbarBack.setOnClickListener {
+            finish() // Cancel and go back to HomeActivity
         }
     }
 
@@ -258,7 +248,7 @@ class MainActivity : AppCompatActivity() {
         val isQuantityEntered = etQuantity.text.isNotBlank() && etQuantity.text.toString().toIntOrNull() != null && etQuantity.text.toString().toIntOrNull()!! > 0
 
         val canSave = isLocationScanned && isSkuScanned && isQuantityEntered
-        btnSaveNew.isEnabled = canSave
-        btnCancel.isEnabled = true // Cancel button should always be enabled
+        btnToolbarSave.isEnabled = canSave
+        //btnToolbarBack.isEnabled = true // Cancel button should always be enabled
     }
 }

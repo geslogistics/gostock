@@ -22,31 +22,33 @@
             android:background="@android:color/transparent"
             app:popupTheme="?attr/popupTheme">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Stock Record"
-                android:textColor="@color/primary_text_dark"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:layout_gravity="start"
-                android:layout_marginEnd="16dp"/>
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
-            <TextView
-                android:id="@+id/tv_logged_in_user_main"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Welcome, User!"
-                android:textColor="@color/primary_text_dark"
-                android:textSize="16sp"
-                android:drawablePadding="8dp"
-                android:paddingEnd="16dp"
-                android:gravity="center_vertical"
-                android:layout_gravity="end"
-                android:clickable="true"
-                android:focusable="true"
-                app:drawableEndCompat="@drawable/ic_user_icon"
-                app:drawableTint="@color/primary_text_dark" />
+            <ImageButton
+                android:id="@+id/btn_toolbar_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/circle_button_background"
+                android:src="@drawable/ic_back_icon"
+                android:contentDescription="Back"
+                app:tint="@color/primary_text_dark" />
+
+            <ImageButton
+                android:id="@+id/btn_toolbar_save"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="16dp"
+                android:background="@drawable/circle_button_background"
+                android:src="@drawable/ic_save_icon"
+                android:contentDescription="Save"
+                app:tint="@color/primary_text_dark" />
+            </RelativeLayout>
 
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
@@ -169,21 +171,21 @@
             android:orientation="horizontal"
             android:gravity="center_horizontal">
 
-            <Button
-                android:id="@+id/btn_save_new"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Save &amp; New"
-                android:layout_marginEnd="8dp"/>
+<!--            <Button-->
+<!--                android:id="@+id/btn_save_new"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="1"-->
+<!--                android:text="Save &amp; New"-->
+<!--                android:layout_marginEnd="8dp"/>-->
 
-            <Button
-                android:id="@+id/btn_cancel"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Cancel"
-                android:layout_marginStart="8dp"/>
+<!--            <Button-->
+<!--                android:id="@+id/btn_cancel"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="1"-->
+<!--                android:text="Cancel"-->
+<!--                android:layout_marginStart="8dp"/>-->
         </LinearLayout>
 
     </LinearLayout>
