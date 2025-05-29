@@ -18,4 +18,6 @@
     <color name="disabled_background_light">#E0E0E0</color>
     <color name="disabled_text_light">#9E9E9E</color>
 
+    <color name="card_border_color">#909090</color>
+
 </resources>

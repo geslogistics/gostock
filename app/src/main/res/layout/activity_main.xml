@@ -26,154 +26,217 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-            <ImageButton
-                android:id="@+id/btn_toolbar_back"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:background="@drawable/circle_button_bg_stateful"
-                android:src="@drawable/ic_back_icon"
-                android:contentDescription="Back"
-                app:tint="@color/toolbar_icon_tint" />
+                <ImageButton
+                    android:id="@+id/btn_toolbar_back"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/circle_button_bg_stateful"
+                    android:contentDescription="Back"
+                    android:src="@drawable/ic_back_icon"
+                    app:tint="@color/toolbar_icon_tint" />
 
-            <ImageButton
-                android:id="@+id/btn_toolbar_save"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="16dp"
-                android:background="@drawable/circle_button_bg_stateful"
-                android:src="@drawable/ic_save_icon"
-                android:contentDescription="Save"
-                app:tint="@color/toolbar_icon_tint" />
+                <ImageButton
+                    android:id="@+id/btn_toolbar_save"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/circle_button_bg_stateful"
+                    android:contentDescription="Save"
+                    android:src="@drawable/ic_save_icon"
+                    app:tint="@color/toolbar_icon_tint" />
             </RelativeLayout>
 
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Location Barcode:"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
-
-        <Button
-            android:id="@+id/btn_scan_location"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Scan Location"
-            android:layout_marginBottom="8dp"/>
-
-        <EditText
-            android:id="@+id/tv_location_barcode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="text"
-            android:hint=""
-            android:minHeight="48dp"
-            android:layout_marginBottom="16dp"
-            android:enabled="false"/>
-
-<!--        <TextView-->
-<!--            android:id="@+id/tv_location_barcode"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text="N/A"-->
-<!--            android:textSize="16sp"-->
-<!--            android:padding="8dp"-->
-<!--            android:textColor="?android:attr/textColorPrimary"-->
-<!--            android:background="@android:color/transparent"-->
-<!--            android:layout_marginBottom="16dp"/>-->
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="SKU Barcode:"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
-
-        <Button
-            android:id="@+id/btn_scan_sku"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Scan SKU"
-            android:enabled="false"
-            android:layout_marginBottom="8dp"/>
-
-        <EditText
-            android:id="@+id/tv_sku_barcode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="text"
-            android:hint=""
-            android:minHeight="48dp"
-            android:layout_marginBottom="16dp"
-            android:enabled="false"/>
-
-<!--        <TextView-->
-<!--            android:id="@+id/tv_sku_barcode"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text="N/A"-->
-<!--            android:textSize="16sp"-->
-<!--            android:padding="8dp"-->
-<!--            android:textColor="?android:attr/textColorPrimary"-->
-<!--            android:background="@android:color/transparent"-->
-<!--            android:layout_marginBottom="16dp"/>-->
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Quantity:"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
-
-        <EditText
-            android:id="@+id/et_quantity"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="number"
-            android:hint="Enter quantity"
-            android:minHeight="48dp"
-            android:layout_marginBottom="16dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_horizontal">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-<!--            <Button-->
-<!--                android:id="@+id/btn_save_new"-->
-<!--                android:layout_width="0dp"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_weight="1"-->
-<!--                android:text="Save &amp; New"-->
-<!--                android:layout_marginEnd="8dp"/>-->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_location"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="16dp"
+                app:strokeColor="@color/card_border_color"
+                app:strokeWidth="1dp">
 
-<!--            <Button-->
-<!--                android:id="@+id/btn_cancel"-->
-<!--                android:layout_width="0dp"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_weight="1"-->
-<!--                android:text="Cancel"-->
-<!--                android:layout_marginStart="8dp"/>-->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_location_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:layout_toStartOf="@id/iv_location_barcode_icon"
+                        android:text="Location"
+                        android:textColor="@color/primary_text_dark"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/iv_location_barcode_icon"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_centerVertical="true"
+                        android:layout_toStartOf="@id/btn_location_scan_action"
+                        android:contentDescription="Barcode Icon"
+                        android:src="@drawable/ic_barcode_icon"
+                        app:tint="@color/primary_text_dark" />
+
+                    <ImageButton
+                        android:id="@+id/btn_location_scan_action"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Scan Location"
+                        android:src="@drawable/ic_scan_qrcode_icon"
+                        app:tint="@color/primary_text_dark" />
+
+                    <TextView
+                        android:id="@+id/tv_location_value"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/tv_location_label"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="16dp"
+                        android:text=""
+                        android:textColor="@color/primary_text_dark"
+                        android:textSize="18sp"
+                        android:textStyle="italic" />
+
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_sku"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="16dp"
+                app:strokeColor="@color/card_border_color"
+                app:strokeWidth="1dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_sku_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:layout_toStartOf="@id/iv_sku_barcode_icon"
+                        android:text="NSN"
+                        android:textColor="@color/primary_text_dark"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/iv_sku_barcode_icon"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_centerVertical="true"
+                        android:layout_toStartOf="@id/btn_sku_scan_action"
+                        android:contentDescription="Barcode Icon"
+                        android:src="@drawable/ic_barcode_icon"
+                        app:tint="@color/primary_text_dark" />
+
+                    <ImageButton
+                        android:id="@+id/btn_sku_scan_action"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Scan SKU"
+                        android:src="@drawable/ic_scan_barcode_icon"
+                        app:tint="@color/primary_text_dark" />
+
+                    <TextView
+                        android:id="@+id/tv_sku_value"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/tv_sku_label"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="16dp"
+                        android:text=""
+                        android:textColor="@color/primary_text_dark"
+                        android:textSize="18sp"
+                        android:textStyle="italic" />
+
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_quantity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="16dp"
+                app:strokeColor="@color/card_border_color"
+                app:strokeWidth="1dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_quantity_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:layout_toStartOf="@id/et_quantity"
+                        android:text="Quantity"
+                        android:textColor="@color/primary_text_dark"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <EditText
+                        android:id="@+id/et_quantity"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="@android:color/transparent"
+                        android:gravity="end"
+                        android:hint="0"
+                        android:inputType="number"
+                        android:minWidth="80dp"
+                        android:textColor="@color/primary_text_dark"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
 
-    </LinearLayout>
+    </ScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

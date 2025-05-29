@@ -66,5 +66,7 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.9.0") // Or latest stable
     implementation("androidx.fragment:fragment-ktx:1.6.0") // Or latest stable
 
+    implementation("com.google.android.material:material:1.12.0")
+
     // ... other dependencies ...
 }
