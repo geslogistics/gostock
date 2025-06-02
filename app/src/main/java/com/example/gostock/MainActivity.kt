@@ -109,13 +109,11 @@ class MainActivity : AppCompatActivity() {
         // Initialize Location Card elements
         cardLocation = findViewById(R.id.card_location)
         tvLocationValue = findViewById(R.id.tv_location_value)
-        ivLocationBarcodeIcon = findViewById(R.id.iv_location_barcode_icon)
         btnLocationScanAction = findViewById(R.id.btn_location_scan_action)
 
         // Initialize SKU Card elements
         cardSku = findViewById(R.id.card_sku)
         tvSkuValue = findViewById(R.id.tv_sku_value)
-        ivSkuBarcodeIcon = findViewById(R.id.iv_sku_barcode_icon)
         btnSkuScanAction = findViewById(R.id.btn_sku_scan_action)
 
         // Initialize Quantity Card element
