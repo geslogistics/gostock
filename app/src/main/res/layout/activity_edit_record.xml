@@ -1,135 +1,326 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:background="@color/gray_background"
     android:fitsSystemWindows="true"
-    android:padding="16dp"
     tools:context=".EditRecordActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Edit Stock Record"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Timestamp:"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="4dp"/>
-    <TextView
-        android:id="@+id/tv_edit_timestamp"
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Timestamp: N/A"
-        android:textSize="16sp"
-        android:padding="8dp"
-        android:background="#E0E0E0"
-        android:layout_marginBottom="16dp"/>
+        android:background="@android:color/transparent"
+        android:elevation="0dp"
+        android:theme="?attr/actionBarTheme">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="User:"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="4dp"/>
-    <TextView
-        android:id="@+id/tv_edit_user"
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar_main"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/transparent"
+            app:popupTheme="?attr/popupTheme">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageButton
+                    android:id="@+id/btn_toolbar_back"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/circle_button_bg_stateful"
+                    android:contentDescription="Back"
+                    android:src="@drawable/ic_back_icon"
+                    app:tint="@color/toolbar_icon_tint" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_centerVertical="true"
+                    android:text="Edit"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/btn_toolbar_save"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/circle_button_bg_stateful"
+                    android:contentDescription="Save"
+                    android:src="@drawable/ic_save_icon"
+                    app:tint="@color/toolbar_icon_tint" />
+            </RelativeLayout>
+
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="User: N/A"
-        android:textSize="16sp"
-        android:padding="8dp"
-        android:background="#E0E0E0"
-        android:layout_marginBottom="16dp"/>
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Location Barcode:"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="4dp"/>
-    <TextView
-        android:id="@+id/tv_edit_location_barcode"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Scanned Location: N/A"
-        android:textSize="16sp"
-        android:padding="8dp"
-        android:background="#E0E0E0"
-        android:layout_marginBottom="16dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="SKU Barcode:"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="4dp"/>
-    <TextView
-        android:id="@+id/tv_edit_sku_barcode"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Scanned SKU: N/A"
-        android:textSize="16sp"
-        android:padding="8dp"
-        android:background="#E0E0E0"
-        android:layout_marginBottom="16dp"/>
+            <RelativeLayout
+                android:id="@+id/rl_location"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_bg_outline_gray"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Quantity:"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="4dp"/>
-    <EditText
-        android:id="@+id/et_edit_quantity"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="number"
-        android:hint="Enter quantity"
-        android:minHeight="48dp"
-        android:layout_marginBottom="16dp"/>
+                <ImageView
+                    android:id="@+id/iv_location_label"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginVertical="5dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_alignParentStart="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_scan_qrcode_icon"
+                    app:tint="@android:color/darker_gray"
+                    />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_horizontal"
-        android:layout_marginBottom="16dp">
+                <TextView
+                    android:id="@+id/tv_location_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@+id/iv_location_label"
+                    android:text="Location"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/btn_save_changes"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Save Changes"
-            android:layout_marginEnd="8dp"/>
+                <TextView
+                    android:id="@+id/tv_edit_location_barcode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_location_label"
+                    android:layout_marginTop="8dp"
+                    android:text="01012345678901281721022110ABCD1234\F217654"
+                    android:textColor="@color/primary_text_dark"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/btn_cancel_edit"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Cancel"
-            android:layout_marginStart="8dp"/>
-    </LinearLayout>
+            </RelativeLayout>
 
-    <Button
-        android:id="@+id/btn_delete_record"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Delete Record"
-        style="?attr/materialButtonOutlinedStyle"
-        android:textColor="?attr/colorError"/>
+            <RelativeLayout
+                android:id="@+id/rl_sku"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_bg_outline_gray"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
 
-</LinearLayout>
+                <ImageView
+                    android:id="@+id/iv_sku_label"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginVertical="5dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_alignParentStart="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_scan_barcode_icon"
+                    app:tint="@android:color/darker_gray"
+                    />
+
+                <TextView
+                    android:id="@+id/tv_sku_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@+id/iv_sku_label"
+                    android:text="NSN"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_edit_sku_barcode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_sku_label"
+                    android:layout_marginTop="8dp"
+                    android:text="01012345678901281721022110ABCD1234\F217654"
+                    android:textColor="@color/primary_text_dark"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_timestamp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_bg_outline_gray"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <ImageView
+                    android:id="@+id/iv_timestamp_label"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginVertical="5dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_alignParentStart="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_date_icon"
+                    app:tint="@android:color/darker_gray"
+                    />
+
+                <TextView
+                    android:id="@+id/tv_timestamp_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@+id/iv_timestamp_label"
+                    android:text="Date &amp; Time"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_edit_timestamp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_timestamp_label"
+                    android:layout_marginTop="8dp"
+                    android:text="2025-01-01 01:01:01"
+                    android:textColor="@color/primary_text_dark"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_user"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_bg_outline_gray"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <ImageView
+                    android:id="@+id/iv_user_label"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginVertical="5dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_alignParentStart="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_user_icon"
+                    app:tint="@android:color/darker_gray"
+                    />
+
+                <TextView
+                    android:id="@+id/tv_user_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@+id/iv_user_label"
+                    android:text="User"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_edit_user"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_user_label"
+                    android:layout_marginTop="8dp"
+                    android:text="username"
+                    android:textColor="@color/primary_text_dark"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_quantity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:layout_marginBottom="50dp"
+                android:background="@drawable/rounded_bg_white"
+                >
+
+                <ImageView
+                    android:id="@+id/iv_quantity_label"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginVertical="5dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_alignParentStart="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_quantity_icon"
+                    app:tint="@android:color/darker_gray"
+                    />
+
+                <TextView
+                    android:id="@+id/tv_quantity_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@+id/iv_quantity_label"
+                    android:text="Quantity"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="22sp"
+                    android:textStyle="bold" /> />
+
+                <EditText
+                    android:id="@+id/et_edit_quantity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:background="@android:color/transparent"
+                    android:gravity="end"
+                    android:hint="0"
+                    android:inputType="number"
+                    android:minWidth="80dp"
+                    android:textColor="@color/black"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+            </RelativeLayout>
+
+            <LinearLayout
+                android:id="@+id/btn_delete_record"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_bg_danger"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:orientation="horizontal"
+                android:padding="20dp">
+
+                <TextView
+                    android:id="@+id/tv_btn_login_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:text="Delete"
+                    android:textColor="@color/white"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/iv_forward_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|end"
+                    app:srcCompat="@drawable/ic_delete_icon"
+                    app:tint="@color/white" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

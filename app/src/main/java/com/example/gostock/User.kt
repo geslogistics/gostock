@@ -7,6 +7,7 @@ import java.util.UUID
 // Enum to define user roles
 enum class UserRole {
     ADMIN, // Can manage users, export data, stocktake
+    TEAMLEADER, // Can view/edit records, export data, stocktake
     SUPERVISOR, // Can view/edit records, export data, stocktake
     STOCKTAKER // Can only perform stocktaking
     // Add more roles as needed

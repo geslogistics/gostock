@@ -4,14 +4,20 @@ import android.content.Intent
 import android.os.Bundle
 // import android.util.Log // Log import removed for cleaner output
 import android.view.View
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast // Still needed for toasts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.widget.Toolbar
 
 class RecordListActivity : AppCompatActivity() {
+
+
+    // Toolbar buttons (Back and Add)
+    private lateinit var btnToolbarBack: ImageButton
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var tvNoRecords: TextView
@@ -38,14 +44,25 @@ class RecordListActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_record_list)
+
+        // Initialize Toolbar and its buttons
+        val toolbar = findViewById<Toolbar>(R.id.toolbar_main)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+
+        btnToolbarBack = findViewById(R.id.btn_toolbar_back)
 
         recyclerView = findViewById(R.id.recyclerView_records)
         tvNoRecords = findViewById(R.id.tv_no_records)
         fileHandler = FileHandler(this) // Initialize FileHandler
 
         setupRecyclerView()
+
         // Data will be loaded in onResume to ensure fresh data after returning from EditRecordActivity
     }
 
@@ -54,6 +71,7 @@ class RecordListActivity : AppCompatActivity() {
         // Load records every time the activity comes to the foreground
         // This ensures the list is always fresh.
         loadAndDisplayRecords()
+        setupClickListeners()
     }
 
     private fun setupRecyclerView() {
@@ -93,6 +111,13 @@ class RecordListActivity : AppCompatActivity() {
             tvNoRecords.visibility = View.GONE
             // IMPORTANT: Notify the adapter that its underlying data has changed
             entryAdapter.updateData(records) // This calls notifyDataSetChanged internally
+        }
+    }
+
+    private fun setupClickListeners() {
+        // Toolbar Back button
+        btnToolbarBack.setOnClickListener {
+            finish() // Go back to HomeActivity
         }
     }
 }

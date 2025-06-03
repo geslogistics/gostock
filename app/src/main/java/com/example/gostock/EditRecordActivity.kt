@@ -3,12 +3,20 @@ package com.example.gostock // IMPORTANT: Replace with your actual package name
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AlertDialog
 
+import androidx.appcompat.widget.Toolbar
+
 class EditRecordActivity : AppCompatActivity() {
+
+    // Toolbar buttons (Back and New)
+    private lateinit var btnToolbarBack: ImageButton
+    private lateinit var btnToolbarSave: ImageButton
 
     private lateinit var fileHandler: FileHandler
     private var currentEntry: StockEntry? = null // Holds the StockEntry object being edited
@@ -18,9 +26,7 @@ class EditRecordActivity : AppCompatActivity() {
     private lateinit var tvLocationBarcode: TextView
     private lateinit var tvSkuBarcode: TextView
     private lateinit var etQuantity: EditText
-    private lateinit var btnSaveChanges: Button
-    private lateinit var btnCancelEdit: Button
-    private lateinit var btnDeleteRecord: Button
+    private lateinit var btnDeleteRecord: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,13 +35,13 @@ class EditRecordActivity : AppCompatActivity() {
         fileHandler = FileHandler(this)
 
         // Initialize UI elements
+        btnToolbarBack = findViewById(R.id.btn_toolbar_back)
+        btnToolbarSave = findViewById(R.id.btn_toolbar_save)
         tvTimestamp = findViewById(R.id.tv_edit_timestamp)
         tvUser = findViewById(R.id.tv_edit_user)
         tvLocationBarcode = findViewById(R.id.tv_edit_location_barcode)
         tvSkuBarcode = findViewById(R.id.tv_edit_sku_barcode)
         etQuantity = findViewById(R.id.et_edit_quantity)
-        btnSaveChanges = findViewById(R.id.btn_save_changes)
-        btnCancelEdit = findViewById(R.id.btn_cancel_edit)
         btnDeleteRecord = findViewById(R.id.btn_delete_record)
 
         // Retrieve the StockEntry object passed from RecordListActivity
@@ -53,14 +59,20 @@ class EditRecordActivity : AppCompatActivity() {
     }
 
     private fun populateFields(entry: StockEntry) {
-        tvTimestamp.text = "Timestamp: ${entry.timestamp}"
-        tvUser.text = "User: ${entry.username}"
-        tvLocationBarcode.text = "Scanned Location: ${entry.locationBarcode}"
-        tvSkuBarcode.text = "Scanned SKU: ${entry.skuBarcode}"
+        tvTimestamp.text = "${entry.timestamp}"
+        tvUser.text = "${entry.username}"
+        tvLocationBarcode.text = "${entry.locationBarcode}"
+        tvSkuBarcode.text = "${entry.skuBarcode}"
         etQuantity.setText(entry.quantity.toString()) // Set existing quantity
     }
 
     private fun setupClickListeners() {
+
+        // Toolbar Back button
+        btnToolbarBack.setOnClickListener {
+            finish() // Go back to HomeActivity
+        }
+
         // Listener for quantity text changes to enable/disable save buttons
         etQuantity.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -70,13 +82,8 @@ class EditRecordActivity : AppCompatActivity() {
             override fun afterTextChanged(s: android.text.Editable?) {}
         })
 
-        btnSaveChanges.setOnClickListener {
+        btnToolbarSave.setOnClickListener {
             saveChanges()
-        }
-
-        btnCancelEdit.setOnClickListener {
-            setResult(RESULT_CANCELED) // Indicate that editing was cancelled
-            finish() // Close activity
         }
 
         btnDeleteRecord.setOnClickListener {
@@ -128,6 +135,6 @@ class EditRecordActivity : AppCompatActivity() {
         val isQuantityValid = enteredQuantity != null && enteredQuantity > 0
         val hasQuantityChanged = enteredQuantity != currentEntry?.quantity // Check if quantity has changed
 
-        btnSaveChanges.isEnabled = isQuantityValid && hasQuantityChanged
+        btnToolbarSave.isEnabled = isQuantityValid && hasQuantityChanged
     }
 }

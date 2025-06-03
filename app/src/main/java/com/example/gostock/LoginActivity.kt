@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
@@ -11,7 +12,7 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var etUsername: EditText
     private lateinit var etPassword: EditText
-    private lateinit var btnLogin: Button
+    private lateinit var btnLogin: LinearLayout
     private lateinit var userFileHandler: UserFileHandler
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,7 +21,7 @@ class LoginActivity : AppCompatActivity() {
 
         etUsername = findViewById(R.id.et_username)
         etPassword = findViewById(R.id.et_password)
-        btnLogin = findViewById(R.id.btn_login)
+        btnLogin = findViewById(R.id.btn_login2)
         userFileHandler = UserFileHandler(this)
 
         // Check if user is already logged in (from previous session)

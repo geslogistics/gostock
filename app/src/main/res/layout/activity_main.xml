@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/gradient_background"
+    android:background="@color/gray_background"
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
@@ -36,6 +36,15 @@
                     android:contentDescription="Back"
                     android:src="@drawable/ic_back_icon"
                     app:tint="@color/toolbar_icon_tint" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_centerVertical="true"
+                    android:text="New"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
                 <ImageButton
                     android:id="@+id/btn_toolbar_save"
@@ -69,24 +78,40 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@android:color/transparent"
+                app:cardBackgroundColor="@color/light_yellow"
                 app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
                 app:strokeColor="@color/card_border_color"
-                app:strokeWidth="1dp">
+                app:strokeWidth="0dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
 
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="16dp">
 
+                    <ImageView
+                        android:id="@+id/iv_location_label"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginVertical="5dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_alignParentStart="true"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Scan Location"
+                        android:src="@drawable/ic_scan_qrcode_icon"
+                        app:tint="@android:color/darker_gray"
+                        />
+
                     <TextView
                         android:id="@+id/tv_location_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentStart="true"
-                        android:layout_centerVertical="true"
+                        android:layout_toEndOf="@+id/iv_location_label"
                         android:text="Location"
-                        android:textColor="@color/primary_text_dark"
+                        android:textColor="@android:color/darker_gray"
                         android:textSize="22sp"
                         android:textStyle="bold" />
 
@@ -99,7 +124,8 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="Scan Location"
                         android:src="@drawable/ic_scan_qrcode_icon"
-                        app:tint="@color/primary_text_dark" />
+                        android:visibility="gone"
+                        app:tint="@color/black" />
 
                     <TextView
                         android:id="@+id/tv_location_value"
@@ -107,11 +133,22 @@
                         android:layout_height="wrap_content"
                         android:layout_below="@id/tv_location_label"
                         android:layout_marginTop="8dp"
-                        android:layout_marginEnd="16dp"
-                        android:text=""
-                        android:textColor="@color/primary_text_dark"
-                        android:textSize="18sp"
-                        android:textStyle="italic" />
+
+                        android:text="01012345678901281721022110ABCD1234\F217654"
+                        android:textColor="@color/black"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/iv_location_check_icon"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_alignParentEnd="true"
+                        android:background="@drawable/circle_button_black_bg"
+                        android:contentDescription="Done"
+                        android:padding="5dp"
+                        android:src="@drawable/ic_check_icon_white"
+                        android:visibility="gone" />
 
                 </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -122,24 +159,49 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@android:color/transparent"
+                android:enabled="false"
+                app:cardBackgroundColor="@color/light_lavender"
                 app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
                 app:strokeColor="@color/card_border_color"
-                app:strokeWidth="1dp">
+                app:strokeWidth="0dp">
 
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="16dp">
 
+                    <ImageView
+                        android:id="@+id/iv_sku_check_icon"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_alignParentEnd="true"
+                        android:background="@drawable/circle_button_black_bg"
+                        android:contentDescription="Done"
+                        android:padding="5dp"
+                        android:src="@drawable/ic_check_icon_white"
+                        android:visibility="gone" />
+
+                    <ImageView
+                        android:id="@+id/iv_sku_label"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginVertical="5dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_alignParentStart="true"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Scan SKU"
+                        android:src="@drawable/ic_scan_barcode_icon"
+                        app:tint="@android:color/darker_gray"
+                        />
+
                     <TextView
                         android:id="@+id/tv_sku_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentStart="true"
-                        android:layout_centerVertical="true"
+                        android:layout_toEndOf="@+id/iv_sku_label"
                         android:text="NSN"
-                        android:textColor="@color/primary_text_dark"
+                        android:textColor="@android:color/darker_gray"
                         android:textSize="22sp"
                         android:textStyle="bold" />
 
@@ -152,19 +214,20 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="Scan SKU"
                         android:src="@drawable/ic_scan_barcode_icon"
-                        app:tint="@color/primary_text_dark" />
+                        android:visibility="gone"
+                        app:tint="@color/black" />
 
                     <TextView
                         android:id="@+id/tv_sku_value"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_below="@id/tv_sku_label"
+                        android:layout_below="@+id/tv_sku_label"
                         android:layout_marginTop="8dp"
                         android:layout_marginEnd="16dp"
-                        android:text=""
-                        android:textColor="@color/primary_text_dark"
-                        android:textSize="18sp"
-                        android:textStyle="italic" />
+                        android:text="01012345678901281721022110ABCD1234\F217654"
+                        android:textColor="@color/black"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
 
                 </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -173,27 +236,38 @@
                 android:id="@+id/card_quantity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@android:color/transparent"
+                app:cardBackgroundColor="@color/white"
                 app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
                 app:strokeColor="@color/card_border_color"
-                app:strokeWidth="1dp">
+                app:strokeWidth="0dp">
 
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="16dp">
 
+                    <ImageView
+                        android:id="@+id/iv_quantity_label"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginVertical="5dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_alignParentStart="true"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_quantity_icon"
+                        app:tint="@android:color/darker_gray"
+                        />
+
                     <TextView
                         android:id="@+id/tv_quantity_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentStart="true"
-                        android:layout_centerVertical="true"
-                        android:layout_toStartOf="@id/et_quantity"
+                        android:layout_toEndOf="@+id/iv_quantity_label"
                         android:text="Quantity"
-                        android:textColor="@color/primary_text_dark"
+                        android:textColor="@android:color/darker_gray"
                         android:textSize="22sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold" /> />
 
                     <EditText
                         android:id="@+id/et_quantity"
@@ -206,7 +280,7 @@
                         android:hint="0"
                         android:inputType="number"
                         android:minWidth="80dp"
-                        android:textColor="@color/primary_text_dark"
+                        android:textColor="@color/black"
                         android:textSize="22sp"
                         android:textStyle="bold" />
 

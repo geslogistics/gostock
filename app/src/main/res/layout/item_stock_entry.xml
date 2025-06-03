@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:backgroundTint="@color/button_background_light"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
     app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    app:cardElevation="0dp">
 
     <LinearLayout
         android:id="@+id/record_item_layout"
@@ -14,43 +15,204 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <TextView
-            android:id="@+id/tv_item_timestamp"
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:id="@+id/rl_location"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:text="Timestamp: 2024-01-01 10:30:00"/>
+            android:paddingBottom="10dp">
 
-        <TextView
-            android:id="@+id/tv_item_username"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="User: John Doe"
-            android:textSize="16sp"
-            android:layout_marginTop="4dp"/>
+            <ImageView
+                android:id="@+id/iv_location_label"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginVertical="3dp"
+                android:layout_marginEnd="10dp"
+                android:layout_alignParentStart="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_scan_qrcode_icon"
+                app:tint="@android:color/darker_gray"
+                />
 
-        <TextView
-            android:id="@+id/tv_item_location"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Location: L-A-001"
-            android:textSize="16sp"/>
+            <TextView
+                android:id="@+id/tv_location_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@+id/iv_location_label"
+                android:text="Location"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tv_item_sku"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="SKU: PROD-123"
-            android:textSize="16sp"/>
+            <TextView
+                android:id="@+id/tv_item_location"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_location_label"
+                android:layout_marginTop="3dp"
+                android:layout_marginStart="20dp"
+                android:text="010123456789012817022110ABCD1234\F217654"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tv_item_quantity"
-            android:layout_width="wrap_content"
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/rl_sku"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Quantity: 100"
-            android:textStyle="bold"
-            android:textSize="16sp"/>
+            android:paddingBottom="10dp">
+
+            <ImageView
+                android:id="@+id/iv_sku_label"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginVertical="3dp"
+                android:layout_marginEnd="10dp"
+                android:layout_alignParentStart="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_scan_barcode_icon"
+                app:tint="@android:color/darker_gray"
+                />
+
+            <TextView
+                android:id="@+id/tv_sku_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@+id/iv_sku_label"
+                android:text="NSN"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_item_sku"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_sku_label"
+                android:layout_marginTop="3dp"
+                android:layout_marginStart="20dp"
+                android:text="010123456789012817022110ABCD1234\F217654"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/rl_quantity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10dp">
+
+            <ImageView
+                android:id="@+id/iv_quantity_label"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginVertical="3dp"
+                android:layout_marginEnd="10dp"
+                android:layout_alignParentStart="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_quantity_icon"
+                app:tint="@android:color/darker_gray"
+                />
+
+            <TextView
+                android:id="@+id/tv_quantity_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@+id/iv_quantity_label"
+                android:text="Quantity"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_item_quantity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_quantity_label"
+                android:layout_marginTop="3dp"
+                android:layout_marginStart="20dp"
+                android:text="124"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/rl_system_data"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RelativeLayout
+                android:id="@+id/rl_timestamp"
+                android:layout_alignParentStart="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_bg_badge"
+                android:paddingVertical="2dp"
+                android:paddingHorizontal="7dp">
+
+                <ImageView
+                    android:id="@+id/iv_timestamp_label"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_marginVertical="3dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_alignParentStart="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_date_icon"
+                    app:tint="#000000"
+                    />
+
+                <TextView
+                    android:id="@+id/tv_item_timestamp"
+                    android:layout_toEndOf="@+id/iv_timestamp_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2024-01-01 10:30:00"
+                    android:textColor="@color/black"
+                    android:textSize="12sp"/>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_user"
+                android:layout_alignParentEnd="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_bg_badge"
+                android:paddingVertical="2dp"
+                android:paddingHorizontal="7dp">
+
+                <ImageView
+                    android:id="@+id/iv_user_label"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_marginVertical="3dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_alignParentStart="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_user_icon"
+                    app:tint="#000000"
+                    />
+
+                <TextView
+                    android:id="@+id/tv_item_username"
+                    android:layout_toEndOf="@+id/iv_user_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="username"
+                    android:textColor="@color/black"
+                    android:textSize="12sp"/>
+
+            </RelativeLayout>
+
+
+        </RelativeLayout>
+
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

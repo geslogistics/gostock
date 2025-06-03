@@ -28,7 +28,6 @@ class UserAdapter(
         val tvFullname: TextView = itemView.findViewById(R.id.tv_user_fullname)
         val tvRole: TextView = itemView.findViewById(R.id.tv_user_role)
         val userLayout: LinearLayout = itemView.findViewById(R.id.user_item_layout)
-        val btnDelete: ImageButton = itemView.findViewById(R.id.btn_delete_user)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
@@ -45,19 +44,16 @@ class UserAdapter(
         val currentUser = users[position]
         Log.d(TAG, "onBindViewHolder: Binding user at position $position, Username: ${currentUser.username}")
 
-        holder.tvUsername.text = "Username: ${currentUser.username}"
-        holder.tvFullname.text = "Name: ${currentUser.firstName} ${currentUser.lastName}"
-        holder.tvRole.text = "Role: ${currentUser.role.name}"
+        holder.tvUsername.text = "${currentUser.username}"
+        holder.tvFullname.text = "${currentUser.firstName} ${currentUser.lastName}"
+        holder.tvRole.text = "${currentUser.role.name}"
 
         // Set click listener for the entire item (for editing)
         holder.userLayout.setOnClickListener {
             listener.onEditClick(currentUser)
         }
 
-        // Set click listener for the delete button
-        holder.btnDelete.setOnClickListener {
-            listener.onDeleteClick(currentUser.id)
-        }
+
     }
 
     override fun getItemCount(): Int {

@@ -8,14 +8,15 @@ import android.os.Looper
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
-import android.widget.ImageButton // Make sure this is imported
-import android.widget.ImageView // ADD THIS IMPORT
+import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.cardview.widget.CardView // ADD THIS IMPORT
+import com.google.android.material.card.MaterialCardView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.isVisible
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -27,20 +28,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnToolbarBack: ImageButton
 
     // Location Card elements
-    private lateinit var cardLocation: CardView
-    private lateinit var tvLocationValue: TextView // The value displayed
-    private lateinit var ivLocationBarcodeIcon: ImageView // Static barcode icon inside card
-    private lateinit var btnLocationScanAction: ImageButton // Scan/Refresh button inside card
+    private lateinit var cardLocation: MaterialCardView
+    private lateinit var tvLocationValue: TextView
+    // private lateinit var ivLocationBarcodeIcon: ImageView // Not directly used in latest XML
+    private lateinit var btnLocationScanAction: ImageButton
+    private lateinit var ivLocationCheckIcon: ImageView
 
     // SKU Card elements
-    private lateinit var cardSku: CardView
-    private lateinit var tvSkuValue: TextView // The value displayed
-    private lateinit var ivSkuBarcodeIcon: ImageView // Static barcode icon inside card
-    private lateinit var btnSkuScanAction: ImageButton // Scan/Refresh button inside card
+    private lateinit var cardSku: MaterialCardView
+    private lateinit var tvSkuValue: TextView
+    // private lateinit var ivSkuBarcodeIcon: ImageView // Not directly used in latest XML
+    private lateinit var btnSkuScanAction: ImageButton
+    private lateinit var ivSkuCheckIcon: ImageView
 
     // Quantity Card elements
-    private lateinit var cardQuantity: CardView
-    private lateinit var etQuantity: EditText // Input for quantity
+    private lateinit var cardQuantity: MaterialCardView
+    private lateinit var etQuantity: EditText
 
     // Internal state
     private var selectedUser: String = "" // Captured from logged-in user
@@ -60,13 +63,15 @@ class MainActivity : AppCompatActivity() {
             val scannedBarcode = result.data?.getStringExtra(BarcodeScannerActivity.EXTRA_BARCODE_RESULT)
             scannedBarcode?.let {
                 if (currentScanType == ScanType.LOCATION) {
-                    tvLocationValue.text = it // Update Location card's TextView
-                    btnLocationScanAction.setImageResource(R.drawable.ic_refresh_icon) // Change icon to refresh
-                    // Enable SKU scan action after successful location scan
+                    tvLocationValue.text = it
+                    btnLocationScanAction.setImageResource(R.drawable.ic_refresh_icon)
+                    ivLocationCheckIcon.visibility = View.VISIBLE
+                    cardSku.isEnabled = true // ENABLE SKU card after successful location scan
                     btnSkuScanAction.isEnabled = true
                 } else if (currentScanType == ScanType.SKU) {
-                    tvSkuValue.text = it // Update SKU card's TextView
-                    btnSkuScanAction.setImageResource(R.drawable.ic_refresh_icon) // Change icon to refresh
+                    tvSkuValue.text = it
+                    btnSkuScanAction.setImageResource(R.drawable.ic_refresh_icon)
+                    ivSkuCheckIcon.visibility = View.VISIBLE
                     etQuantity.requestFocus()
                     val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                     Handler(Looper.getMainLooper()).postDelayed({
@@ -77,19 +82,20 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Barcode scanned: $it", Toast.LENGTH_SHORT).show()
             }
         } else {
-            // If scan was cancelled/failed, and it was a location scan, keep SKU disabled
+            // If scan was cancelled/failed
             if (currentScanType == ScanType.LOCATION) {
-                // If location scan was cancelled, revert icon and disable SKU scan button
-                btnLocationScanAction.setImageResource(R.drawable.ic_scan_qrcode_icon) // Revert to scan icon
-                tvLocationValue.text = "" // Revert text
-                btnSkuScanAction.isEnabled = false // Disable SKU scan action
+                tvLocationValue.text = ""
+                btnLocationScanAction.setImageResource(R.drawable.ic_scan_qrcode_icon)
+                ivLocationCheckIcon.visibility = View.GONE
+                cardSku.isEnabled = false
+                btnSkuScanAction.isEnabled = false
             } else if (currentScanType == ScanType.SKU) {
-                // If SKU scan was cancelled, revert icon and value if it was a new scan
-                btnSkuScanAction.setImageResource(R.drawable.ic_scan_barcode_icon)
                 tvSkuValue.text = ""
+                btnSkuScanAction.setImageResource(R.drawable.ic_scan_barcode_icon)
+                ivSkuCheckIcon.visibility = View.GONE
             }
             Toast.makeText(this, "Barcode scan cancelled or failed.", Toast.LENGTH_SHORT).show()
-            updateSaveButtonState() // Re-evaluate save button state after cancel
+            updateSaveButtonState()
         }
         currentScanType = ScanType.NONE
     }
@@ -101,7 +107,7 @@ class MainActivity : AppCompatActivity() {
         // Initialize Toolbar and its buttons
         val toolbar = findViewById<Toolbar>(R.id.toolbar_main)
         setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayShowTitleEnabled(false) // Hide default title for custom layout
+        supportActionBar?.setDisplayShowTitleEnabled(false)
 
         btnToolbarSave = findViewById(R.id.btn_toolbar_save)
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
@@ -109,12 +115,15 @@ class MainActivity : AppCompatActivity() {
         // Initialize Location Card elements
         cardLocation = findViewById(R.id.card_location)
         tvLocationValue = findViewById(R.id.tv_location_value)
+        // ivLocationBarcodeIcon is removed from XML
         btnLocationScanAction = findViewById(R.id.btn_location_scan_action)
-
+        ivLocationCheckIcon = findViewById(R.id.iv_location_check_icon)
         // Initialize SKU Card elements
         cardSku = findViewById(R.id.card_sku)
         tvSkuValue = findViewById(R.id.tv_sku_value)
+        // ivSkuBarcodeIcon is removed from XML
         btnSkuScanAction = findViewById(R.id.btn_sku_scan_action)
+        ivSkuCheckIcon = findViewById(R.id.iv_sku_check_icon)
 
         // Initialize Quantity Card element
         cardQuantity = findViewById(R.id.card_quantity)
@@ -129,7 +138,7 @@ class MainActivity : AppCompatActivity() {
             selectedUser = it.username
         } ?: run {
             Toast.makeText(this, "User not logged in. Redirecting to login.", Toast.LENGTH_LONG).show()
-            performLogout() // Force logout if no user is found
+            performLogout()
         }
 
         setupClickListeners()
@@ -160,19 +169,33 @@ class MainActivity : AppCompatActivity() {
             saveStockEntry(resetFields = true) // Save and clear fields, stay on page
         }
 
-        // Location Scan action button
+        // --- CardView and ImageButton click listeners for scan actions ---
+        // Location Card click (triggers scan)
+        cardLocation.setOnClickListener {
+            currentScanType = ScanType.LOCATION
+            val intent = Intent(this, BarcodeScannerActivity::class.java)
+            barcodeScannerLauncher.launch(intent)
+        }
+        // Location ImageButton click (also triggers scan)
         btnLocationScanAction.setOnClickListener {
             currentScanType = ScanType.LOCATION
             val intent = Intent(this, BarcodeScannerActivity::class.java)
             barcodeScannerLauncher.launch(intent)
         }
 
-        // SKU Scan action button
+        // SKU Card click (triggers scan - Initially disabled, enabled after Location Scan)
+        cardSku.setOnClickListener {
+            currentScanType = ScanType.SKU
+            val intent = Intent(this, BarcodeScannerActivity::class.java)
+            barcodeScannerLauncher.launch(intent)
+        }
+        // SKU ImageButton click (also triggers scan)
         btnSkuScanAction.setOnClickListener {
             currentScanType = ScanType.SKU
             val intent = Intent(this, BarcodeScannerActivity::class.java)
             barcodeScannerLauncher.launch(intent)
         }
+        // --- END CardView and ImageButton click listeners ---
 
         // TextWatcher for quantity to enable/disable save button
         etQuantity.addTextChangedListener(object : android.text.TextWatcher {
@@ -189,15 +212,14 @@ class MainActivity : AppCompatActivity() {
      * @param resetFields If true, clears the input fields after saving.
      */
     private fun saveStockEntry(resetFields: Boolean) {
-        // Username is automatically the logged-in user
-        val location = tvLocationValue.text.toString() // Get value from new TextView
-        val sku = tvSkuValue.text.toString() // Get value from new TextView
+        val location = tvLocationValue.text.toString()
+        val sku = tvSkuValue.text.toString()
         val quantity = etQuantity.text.toString().toIntOrNull()
 
-        // Validation based on new placeholder text
-        if (selectedUser.isEmpty() || location == "" || sku == "" || quantity == null || quantity <= 0) {
+        // Validation based on empty text
+        if (selectedUser.isEmpty() || location.isEmpty() || sku.isEmpty() || quantity == null || quantity <= 0) {
             Toast.makeText(this, "Please complete all fields correctly (Location, SKU, Quantity > 0)", Toast.LENGTH_LONG).show()
-            return // Stop the function if validation fails
+            return
         }
 
         val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
@@ -214,6 +236,9 @@ class MainActivity : AppCompatActivity() {
 
         if (resetFields) {
             resetInputFields()
+            etQuantity.clearFocus()
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(etQuantity.windowToken, 0)
         }
     }
 
@@ -221,21 +246,24 @@ class MainActivity : AppCompatActivity() {
      * Resets the UI fields and state for a new entry.
      */
     private fun resetInputFields() {
-        tvLocationValue.text = "" // Reset text
+        tvLocationValue.text = "" // Reset text to empty
         btnLocationScanAction.setImageResource(R.drawable.ic_scan_qrcode_icon) // Reset icon to scan
-        tvSkuValue.text = "" // Reset text
+        ivLocationCheckIcon.visibility = View.GONE // Hide check icon
+        tvSkuValue.text = "" // Reset text to empty
         btnSkuScanAction.setImageResource(R.drawable.ic_scan_barcode_icon) // Reset icon to scan
+        ivSkuCheckIcon.visibility = View.GONE // Hide check icon
         etQuantity.text.clear() // Clear quantity
-        btnSkuScanAction.isEnabled = false // Disable SKU scan initially
-        updateSaveButtonState() // Update save button state (which will disable Save button if fields are N/A)
+        cardSku.isEnabled = false // DISABLE SKU card initially
+        btnSkuScanAction.isEnabled = false
+        updateSaveButtonState() // Update save button state (which will disable Save button if fields are empty)
     }
 
     /**
      * Updates the enabled state of the Save button based on input validity.
      */
     private fun updateSaveButtonState() {
-        val isLocationScanned = tvLocationValue.text.toString() != ""
-        val isSkuScanned = tvSkuValue.text.toString() != ""
+        val isLocationScanned = tvLocationValue.text.toString().isNotEmpty()
+        val isSkuScanned = tvSkuValue.text.toString().isNotEmpty()
         val isQuantityEntered = etQuantity.text.isNotBlank() && etQuantity.text.toString().toIntOrNull() != null && etQuantity.text.toString().toIntOrNull()!! > 0
 
         val canSave = isLocationScanned && isSkuScanned && isQuantityEntered

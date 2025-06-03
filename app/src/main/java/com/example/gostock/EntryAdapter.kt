@@ -44,11 +44,11 @@ class EntryAdapter(
         val entry = entries[position]
         // Log.d(TAG, "onBindViewHolder: Binding item at position $position, ID: ${entry.id}, SKU: ${entry.skuBarcode}") // Debug log removed
 
-        holder.timestamp.text = "Timestamp: ${entry.timestamp}"
-        holder.username.text = "User: ${entry.username}"
-        holder.location.text = "Location: ${entry.locationBarcode}"
-        holder.sku.text = "SKU: ${entry.skuBarcode}"
-        holder.quantity.text = "Quantity: ${entry.quantity}"
+        holder.timestamp.text = "${entry.timestamp}"
+        holder.username.text = "${entry.username}"
+        holder.location.text = "${entry.locationBarcode}"
+        holder.sku.text = "${entry.skuBarcode}"
+        holder.quantity.text = "${entry.quantity}"
 
         // Set up click listener for the entire item
         holder.itemLayout.setOnClickListener {
