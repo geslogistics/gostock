@@ -60,13 +60,13 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         >
 
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
             android:padding="24dp"
@@ -148,19 +148,20 @@
                 android:textSize="15sp"
                 app:cornerRadius="12dp" />
 
-            <!-- NEW: Bluetooth Connect Button -->
+
             <Button
                 android:id="@+id/btn_bluetooth_connect"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Bluetooth Connect"
-                android:textSize="20sp"
+                android:layout_marginBottom="10dp"
+                android:elevation="4dp"
                 android:padding="16dp"
-                android:layout_marginBottom="16dp"
-                app:cornerRadius="12dp"
+                android:text="Bluetooth"
                 android:backgroundTint="@color/blue_500"
                 android:textColor="@android:color/white"
-                android:elevation="4dp" />
+                android:textSize="15sp"
+                android:visibility="visible"
+                app:cornerRadius="12dp" />
 
             <Button
                 android:id="@+id/btn_manage_users"
@@ -173,7 +174,21 @@
                 android:text="@string/manage_users_button_label"
                 android:textColor="@color/primary_text_dark"
                 android:textSize="15sp"
-                android:visibility="gone"
+                android:visibility="visible"
+                app:cornerRadius="12dp" />
+
+            <Button
+                android:id="@+id/btn_settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:backgroundTint="@color/button_background_light"
+                android:elevation="4dp"
+                android:padding="16dp"
+                android:text="Settings"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="15sp"
+                android:visibility="visible"
                 app:cornerRadius="12dp" />
 
         </LinearLayout>

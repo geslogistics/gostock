@@ -23,10 +23,14 @@
     <string name="user_list_page_title_label">User List</string>
     <string name="new_user_page_title_label">New User</string>
     <string name="edit_user_page_title_label">Edit User</string>
+    <string name="settings_page_title_label">Settings</string>"
+    <string name="max_batch_size_label">Maximum Batch Size (items)</string>
+    <string name="max_batch_time_label">Maximum Batch Time (minutes)</string>
     <string name="new_page_title_label">New</string>
     <string name="list_page_title_label">List</string>
     <string name="edit_page_title_label">Edit</string>
     <string name="not_logged_in">Not Logged In</string>
+
 
 
 </resources>

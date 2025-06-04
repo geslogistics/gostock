@@ -26,6 +26,8 @@ class GoStockApp : Application() {
         super.onCreate()
         Log.d("GoStockApp", "Application onCreate called.")
 
+        AppSettings.initialize(this)
+
         userFileHandler = UserFileHandler(this)
         sharedPreferences = getSharedPreferences(PREFS_FILE_NAME, Context.MODE_PRIVATE)
 

@@ -37,6 +37,7 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var btnBluetoothConnect: Button
 
+    private lateinit var btnSettings: Button
 
     private lateinit var tvLoggedInUser: TextView
 
@@ -57,6 +58,7 @@ class HomeActivity : AppCompatActivity() {
         btnExportClose = findViewById(R.id.btn_export_close) // Initialize new button
         btnImportRecords = findViewById(R.id.btn_import_records)
         btnManageUsers = findViewById(R.id.btn_manage_users)
+        btnSettings = findViewById(R.id.btn_settings)
 
         btnBluetoothConnect = findViewById(R.id.btn_bluetooth_connect)
 
@@ -315,6 +317,11 @@ class HomeActivity : AppCompatActivity() {
 
         btnManageUsers.setOnClickListener {
             val intent = Intent(this, UserManagementActivity::class.java)
+            startActivity(intent)
+        }
+
+        btnSettings.setOnClickListener {
+            val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
         }
     }
