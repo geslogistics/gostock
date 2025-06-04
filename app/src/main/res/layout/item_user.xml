@@ -182,9 +182,10 @@
                     android:id="@+id/btn_reset_password"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/rounded_bg"
+                    android:background="@drawable/rounded_bg_badge"
                     android:padding="5dp"
-                    app:srcCompat="@drawable/ic_reset_password_icon" />
+                    app:srcCompat="@drawable/ic_reset_password_icon"
+                    />
             </LinearLayout>
 
         </LinearLayout>

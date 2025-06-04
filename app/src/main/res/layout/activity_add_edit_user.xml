@@ -260,6 +260,35 @@
                     />
 
             </RelativeLayout>
+            <LinearLayout
+                android:id="@+id/btn_delete_record"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_bg_danger"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:orientation="horizontal"
+                android:padding="20dp">
+
+                <TextView
+                    android:id="@+id/tv_btn_login_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:text="Delete"
+                    android:textColor="@color/white"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/iv_forward_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|end"
+                    app:srcCompat="@drawable/ic_delete_icon"
+                    app:tint="@color/white" />
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>>
 

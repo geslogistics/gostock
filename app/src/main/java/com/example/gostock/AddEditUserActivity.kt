@@ -7,9 +7,11 @@ import android.widget.ArrayAdapter
 import android.widget.ImageButton
 import android.widget.RelativeLayout
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 class AddEditUserActivity : AppCompatActivity() {
@@ -25,6 +27,7 @@ class AddEditUserActivity : AppCompatActivity() {
     private lateinit var btnToolbarSave: ImageButton
     private lateinit var btnToolbarBack: ImageButton
     private lateinit var rlPassword: RelativeLayout
+    private lateinit var btnDeleteRecord: LinearLayout
 
     private lateinit var userFileHandler: UserFileHandler
     private var isEditing: Boolean = false
@@ -60,6 +63,8 @@ class AddEditUserActivity : AppCompatActivity() {
 
         rlPassword = findViewById(R.id.rl_password)
 
+        btnDeleteRecord = findViewById(R.id.btn_delete_record)
+
         setupRoleSpinner()
 
         val userId = intent.getStringExtra(UserManagementActivity.EXTRA_USER_ID)
@@ -67,12 +72,14 @@ class AddEditUserActivity : AppCompatActivity() {
             isEditing = true
             tvTitle.text = "Edit User"
             rlPassword.visibility = View.GONE
+            btnDeleteRecord.visibility = View.VISIBLE
             // Log.d(TAG, "onCreate: Editing existing user with ID: $userId") // Debug log removed
             loadUserDataForEditing(userId)
         } else {
             isEditing = false
             tvTitle.text = "New User"
             rlPassword.visibility = View.VISIBLE
+            btnDeleteRecord.visibility = View.GONE
             // Log.d(TAG, "onCreate: Adding new user.") // Debug log removed
         }
 
@@ -153,6 +160,10 @@ class AddEditUserActivity : AppCompatActivity() {
             // Log.d(TAG, "Cancel User button clicked.") // Debug log removed
             setResult(RESULT_CANCELED)
             finish()
+        }
+
+        btnDeleteRecord.setOnClickListener {
+            confirmDelete()
         }
     }
 
@@ -251,5 +262,26 @@ class AddEditUserActivity : AppCompatActivity() {
         setResult(RESULT_OK) // Indicate success to UserManagementActivity
         finish()
         // Log.d(TAG, "saveUser: Activity finished with RESULT_OK.") // Debug log removed
+    }
+
+    private fun confirmDelete() {
+        if (GoStockApp.loggedInUser?.id == currentUser?.id) {
+            Toast.makeText(this, "Cannot delete current user.", Toast.LENGTH_LONG).show()
+            return
+        }
+        
+        AlertDialog.Builder(this)
+            .setTitle("Delete User")
+            .setMessage("Are you sure you want to permanently delete this user? This action cannot be undone.")
+            .setPositiveButton("Yes") { dialog, which ->
+                currentUser?.id?.let { id ->
+                    userFileHandler.deleteUser(id) // Use FileHandler to delete
+                    setResult(RESULT_OK) // Indicate success (record was deleted)
+                    Toast.makeText(this, "User deleted successfully!", Toast.LENGTH_SHORT).show()
+                    finish() // Close activity
+                }
+            }
+            .setNegativeButton("No", null)
+            .show()
     }
 }
