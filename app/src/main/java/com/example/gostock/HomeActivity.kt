@@ -13,18 +13,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.PopupMenu
-import java.io.File
-import java.io.FileWriter
+
 import java.io.IOException
 import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-import java.io.BufferedReader // ADD THIS
-import java.io.InputStream // ADD THIS
-import java.io.InputStreamReader // ADD THIS
-import java.util.UUID // ADD THIS (for generating new IDs for imported records)
+import java.io.BufferedReader
+import java.io.InputStream
+import java.io.InputStreamReader
 
 
 class HomeActivity : AppCompatActivity() {
@@ -173,9 +171,7 @@ class HomeActivity : AppCompatActivity() {
         val sb = StringBuilder()
 
         for (i in line.indices) {
-            val char = line[i]
-
-            when (char) {
+            when (val char = line[i]) {
                 '"' -> {
                     if (i + 1 < line.length && line[i + 1] == '"') {
                         // Escaped double quote ""

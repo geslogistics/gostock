@@ -40,7 +40,7 @@
             android:id="@+id/page_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/list_page_title_label"
+            android:text="@string/user_list_page_title_label"
             android:textSize="20sp"
             android:textStyle="bold" />
 

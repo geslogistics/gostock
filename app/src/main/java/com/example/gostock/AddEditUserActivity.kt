@@ -224,11 +224,11 @@ class AddEditUserActivity : AppCompatActivity() {
             val newPasswordHash = if (password.isNotEmpty()) {
                 // Log.d(TAG, "saveUser: New password provided for edit.") // Debug log removed
                 if (password.length < 6) {
-                    Toast.makeText(this, "New password must be at least 6 characters.", Toast.LENGTH_SHORT).show(); // Log.w(TAG, "Validation failed: New password too short."); // Debug log removed
+                    Toast.makeText(this, "New password must be at least 6 characters.", Toast.LENGTH_SHORT).show() // Log.w(TAG, "Validation failed: New password too short."); // Debug log removed
                     return
                 }
                 if (password != confirmPassword) {
-                    Toast.makeText(this, "New passwords do not match.", Toast.LENGTH_SHORT).show(); // Log.w(TAG, "Validation failed: New passwords do not match."); // Debug log removed
+                    Toast.makeText(this, "New passwords do not match.", Toast.LENGTH_SHORT).show() // Log.w(TAG, "Validation failed: New passwords do not match."); // Debug log removed
                     return
                 }
                 PasswordHasher.hashPassword(password)

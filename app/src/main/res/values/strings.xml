@@ -19,6 +19,7 @@
     <string name="done_label">Done</string>
     <string name="reset_password_page_title_label">Reset Password</string>
     <string name="change_password_page_title_label">Change Password</string>
+    <string name="user_list_page_title_label">User List</string>
     <string name="new_user_page_title_label">New User</string>
     <string name="edit_user_page_title_label">Edit User</string>
     <string name="new_page_title_label">New</string>
