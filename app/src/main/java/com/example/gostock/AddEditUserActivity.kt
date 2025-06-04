@@ -4,7 +4,8 @@ import android.os.Bundle
 // import android.util.Log // Log import removed for cleaner output
 import android.view.View
 import android.widget.ArrayAdapter
-import android.widget.Button
+import android.widget.ImageButton
+import android.widget.RelativeLayout
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -19,11 +20,11 @@ class AddEditUserActivity : AppCompatActivity() {
     private lateinit var etUsername: EditText
     private lateinit var tvPasswordLabel: TextView
     private lateinit var etPassword: EditText
-    private lateinit var tvConfirmPasswordLabel: TextView
     private lateinit var etConfirmPassword: EditText
     private lateinit var spinnerRole: Spinner
-    private lateinit var btnSaveUser: Button
-    private lateinit var btnCancelUser: Button
+    private lateinit var btnToolbarSave: ImageButton
+    private lateinit var btnToolbarBack: ImageButton
+    private lateinit var rlPassword: RelativeLayout
 
     private lateinit var userFileHandler: UserFileHandler
     private var isEditing: Boolean = false
@@ -50,13 +51,14 @@ class AddEditUserActivity : AppCompatActivity() {
         etUsername = findViewById(R.id.et_username)
         tvPasswordLabel = findViewById(R.id.tv_password_label)
         etPassword = findViewById(R.id.et_password)
-        tvConfirmPasswordLabel = findViewById(R.id.tv_confirm_password_label)
         etConfirmPassword = findViewById(R.id.et_confirm_password)
         spinnerRole = findViewById(R.id.spinner_role)
-        btnSaveUser = findViewById(R.id.btn_save_user)
-        btnCancelUser = findViewById(R.id.btn_cancel_user)
+        btnToolbarSave = findViewById(R.id.btn_toolbar_save)
+        btnToolbarBack = findViewById(R.id.btn_toolbar_back)
 
         userFileHandler = UserFileHandler(this)
+
+        rlPassword = findViewById(R.id.rl_password)
 
         setupRoleSpinner()
 
@@ -64,11 +66,13 @@ class AddEditUserActivity : AppCompatActivity() {
         if (userId != null) {
             isEditing = true
             tvTitle.text = "Edit User"
+            rlPassword.visibility = View.GONE
             // Log.d(TAG, "onCreate: Editing existing user with ID: $userId") // Debug log removed
             loadUserDataForEditing(userId)
         } else {
             isEditing = false
-            tvTitle.text = "Add New User"
+            tvTitle.text = "New User"
+            rlPassword.visibility = View.VISIBLE
             // Log.d(TAG, "onCreate: Adding new user.") // Debug log removed
         }
 
@@ -119,13 +123,11 @@ class AddEditUserActivity : AppCompatActivity() {
             if (isEditingSelf) {
                 tvPasswordLabel.visibility = View.GONE
                 etPassword.visibility = View.GONE
-                tvConfirmPasswordLabel.visibility = View.GONE
                 etConfirmPassword.visibility = View.GONE
             } else {
                 tvPasswordLabel.visibility = View.VISIBLE
                 etPassword.visibility = View.VISIBLE
                 etPassword.hint = "Enter new password (optional)" // Change hint
-                tvConfirmPasswordLabel.visibility = View.VISIBLE
                 etConfirmPassword.visibility = View.VISIBLE
             }
             // Set selected role in spinner
@@ -142,12 +144,12 @@ class AddEditUserActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        btnSaveUser.setOnClickListener {
+        btnToolbarSave.setOnClickListener {
             // Log.d(TAG, "Save User button clicked.") // Debug log removed
             saveUser()
         }
 
-        btnCancelUser.setOnClickListener {
+        btnToolbarBack.setOnClickListener {
             // Log.d(TAG, "Cancel User button clicked.") // Debug log removed
             setResult(RESULT_CANCELED)
             finish()

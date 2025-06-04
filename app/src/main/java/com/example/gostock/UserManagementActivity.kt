@@ -18,6 +18,7 @@ class UserManagementActivity : AppCompatActivity(), OnUserActionListener {
     private lateinit var rvUsers: RecyclerView
     private lateinit var tvNoUsers: TextView
     private lateinit var btnToolbarAdd: ImageButton
+    private lateinit var btnToolbarBack: ImageButton
     private lateinit var userFileHandler: UserFileHandler
     private lateinit var userAdapter: UserAdapter
     private var users: MutableList<User> = mutableListOf() // Data source for the adapter
@@ -56,6 +57,7 @@ class UserManagementActivity : AppCompatActivity(), OnUserActionListener {
         rvUsers = findViewById(R.id.rv_users)
         tvNoUsers = findViewById(R.id.tv_no_users)
         btnToolbarAdd = findViewById(R.id.btn_toolbar_add)
+        btnToolbarBack = findViewById(R.id.btn_toolbar_back)
         userFileHandler = UserFileHandler(this)
 
         setupRecyclerView()
@@ -76,11 +78,12 @@ class UserManagementActivity : AppCompatActivity(), OnUserActionListener {
 
     private fun setupClickListeners() {
         btnToolbarAdd.setOnClickListener {
-
             // Launch AddEditUserActivity to add a new user (no user ID passed)
             val intent = Intent(this, AddEditUserActivity::class.java)
             addEditUserLauncher.launch(intent)
-
+        }
+        btnToolbarBack.setOnClickListener {
+            finish()
         }
     }
 

@@ -7,9 +7,8 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
-class ChangePasswordActivity : AppCompatActivity() {
+class ResetPasswordActivity : AppCompatActivity() {
 
-    private lateinit var etOldPassword: EditText
     private lateinit var etNewPassword: EditText
     private lateinit var etConfirmNewPassword: EditText
     private lateinit var btnToolbarSave: ImageButton
@@ -21,7 +20,6 @@ class ChangePasswordActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_change_password)
 
-        etOldPassword = findViewById(R.id.et_old_password)
         etNewPassword = findViewById(R.id.et_new_password)
         etConfirmNewPassword = findViewById(R.id.et_confirm_new_password)
         btnToolbarSave = findViewById(R.id.btn_toolbar_save)
@@ -42,7 +40,6 @@ class ChangePasswordActivity : AppCompatActivity() {
     }
 
     private fun saveNewPassword() {
-        val oldPassword = etOldPassword.text.toString()
         val newPassword = etNewPassword.text.toString()
         val confirmNewPassword = etConfirmNewPassword.text.toString()
 
@@ -58,14 +55,7 @@ class ChangePasswordActivity : AppCompatActivity() {
             return
         }
 
-        // 1. Verify old password
-        if (!PasswordHasher.verifyPassword(oldPassword, loggedInUser.passwordHash)) {
-            Toast.makeText(this, "Old password is incorrect.", Toast.LENGTH_SHORT).show()
-            etOldPassword.text.clear()
-            return
-        }
-
-        // 2. Validate new password
+        // 1. Validate new password
         if (newPassword.isEmpty() || newPassword.length < 6) {
             Toast.makeText(this, "New password must be at least 6 characters.", Toast.LENGTH_SHORT).show()
             return
@@ -75,14 +65,14 @@ class ChangePasswordActivity : AppCompatActivity() {
             return
         }
 
-        // 3. Update user password
+        // 2. Update user password
         val newPasswordHash = PasswordHasher.hashPassword(newPassword)
         val updatedUser = loggedInUser.copy(passwordHash = newPasswordHash)
 
         userFileHandler.updateUser(updatedUser) // Save to file
         (application as GoStockApp).saveLoginSession(updatedUser) // Update session object
 
-        Toast.makeText(this, "Password changed successfully!", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Password reset successfully!", Toast.LENGTH_SHORT).show()
         finish() // Close activity
     }
 }
