@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 interface OnUserActionListener {
     fun onEditClick(user: User)
     fun onDeleteClick(userId: String)
+    fun onResetPasswordClick(userId: String)
 }
 
 class UserAdapter(
@@ -28,6 +29,7 @@ class UserAdapter(
         val tvFullname: TextView = itemView.findViewById(R.id.tv_user_fullname)
         val tvRole: TextView = itemView.findViewById(R.id.tv_user_role)
         val userLayout: LinearLayout = itemView.findViewById(R.id.user_item_layout)
+        val btnResetPassword: ImageButton = itemView.findViewById(R.id.btn_reset_password) // ADD THIS
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
@@ -51,6 +53,10 @@ class UserAdapter(
         // Set click listener for the entire item (for editing)
         holder.userLayout.setOnClickListener {
             listener.onEditClick(currentUser)
+        }
+
+        holder.btnResetPassword.setOnClickListener {
+            listener.onResetPasswordClick(currentUser.id) // Pass user ID
         }
 
 

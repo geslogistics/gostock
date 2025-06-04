@@ -184,7 +184,6 @@
                     android:layout_height="wrap_content"
                     android:background="@drawable/rounded_bg"
                     android:padding="5dp"
-                    android:tint="@color/button_background_light"
                     app:srcCompat="@drawable/ic_reset_password_icon" />
             </LinearLayout>
 

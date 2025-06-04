@@ -42,6 +42,17 @@ class UserManagementActivity : AppCompatActivity(), OnUserActionListener {
         }
     }
 
+    private val resetPasswordLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            loadAndDisplayUsers() // Reload list in case user data was updated
+            Toast.makeText(this, "Password reset successful!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Password reset cancelled.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -134,5 +145,18 @@ class UserManagementActivity : AppCompatActivity(), OnUserActionListener {
             }
             .setNegativeButton("No", null)
             .show()
+    }
+
+    override fun onResetPasswordClick(userId: String) {
+        // Prevent admin from resetting their own password here
+        if (GoStockApp.loggedInUser?.id == userId) {
+            Toast.makeText(this, "Cannot reset your own password from here. Use 'Change Password' from the Home screen menu.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val intent = Intent(this, ResetPasswordActivity::class.java).apply {
+            putExtra(EXTRA_USER_ID, userId) // Pass the ID of the user to reset
+        }
+        resetPasswordLauncher.launch(intent) // Launch the reset password activity
     }
 }
