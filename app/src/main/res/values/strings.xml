@@ -25,6 +25,7 @@
     <string name="new_page_title_label">New</string>
     <string name="list_page_title_label">List</string>
     <string name="edit_page_title_label">Edit</string>
+    <string name="not_logged_in">Not Logged In</string>
 
 
 </resources>

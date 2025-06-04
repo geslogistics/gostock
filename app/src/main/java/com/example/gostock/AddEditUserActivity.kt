@@ -69,14 +69,14 @@ class AddEditUserActivity : AppCompatActivity() {
         val userId = intent.getStringExtra(UserManagementActivity.EXTRA_USER_ID)
         if (userId != null) {
             isEditing = true
-            tvTitle.text = "Edit User"
+            tvTitle.text = getString(R.string.edit_user_page_title_label)
             llPassword.visibility = View.GONE
             btnDeleteRecord.visibility = View.VISIBLE
             // Log.d(TAG, "onCreate: Editing existing user with ID: $userId") // Debug log removed
             loadUserDataForEditing(userId)
         } else {
             isEditing = false
-            tvTitle.text = "New User"
+            tvTitle.text = getString(R.string.new_user_page_title_label)
             llPassword.visibility = View.VISIBLE
             btnDeleteRecord.visibility = View.GONE
             // Log.d(TAG, "onCreate: Adding new user.") // Debug log removed
@@ -86,7 +86,7 @@ class AddEditUserActivity : AppCompatActivity() {
     }
 
     private fun setupRoleSpinner() {
-        val roles = UserRole.values().map { it.name }
+        val roles = UserRole.entries.map { it.name }
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, roles)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerRole.adapter = adapter
@@ -137,7 +137,7 @@ class AddEditUserActivity : AppCompatActivity() {
                 etConfirmPassword.visibility = View.VISIBLE
             }
             // Set selected role in spinner
-            val roleIndex = UserRole.values().indexOf(user.role)
+            val roleIndex = UserRole.entries.indexOf(user.role)
             if (roleIndex != -1) {
                 spinnerRole.setSelection(roleIndex)
             }

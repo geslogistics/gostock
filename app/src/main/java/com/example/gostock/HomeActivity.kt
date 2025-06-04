@@ -23,6 +23,7 @@ import java.util.Locale
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
+import androidx.core.content.edit
 
 
 class HomeActivity : AppCompatActivity() {
@@ -204,12 +205,12 @@ class HomeActivity : AppCompatActivity() {
     private fun setupUserDetails() {
         val loggedInUser = GoStockApp.loggedInUser
         if (loggedInUser != null) {
-            tvLoggedInUser.text = "${loggedInUser.username}"
+            tvLoggedInUser.text = loggedInUser.username
             tvLoggedInUser.setOnClickListener { view ->
                 showUserMenu(view)
             }
         } else {
-            tvLoggedInUser.text = "Not Logged In"
+            tvLoggedInUser.text = getString(R.string.not_logged_in)
             Toast.makeText(this, "User not logged in. Redirecting to login.", Toast.LENGTH_LONG).show()
             performLogout()
         }
@@ -275,7 +276,7 @@ class HomeActivity : AppCompatActivity() {
 
         AppCompatDelegate.setDefaultNightMode(newNightMode)
         val sharedPrefs = getSharedPreferences(GoStockApp.PREFS_FILE_NAME, Context.MODE_PRIVATE)
-        sharedPrefs.edit().putInt(GoStockApp.KEY_THEME_MODE, newNightMode).apply()
+        sharedPrefs.edit { putInt(GoStockApp.KEY_THEME_MODE, newNightMode) }
         Toast.makeText(this, "Theme switched!", Toast.LENGTH_SHORT).show()
     }
 
