@@ -8,288 +8,304 @@
     android:fitsSystemWindows="true"
     tools:context=".AddEditUserActivity">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <LinearLayout
+        android:id="@+id/main_page_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:elevation="0dp"
-        android:theme="?attr/actionBarTheme">
-
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar_main"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@android:color/transparent"
-            app:popupTheme="?attr/popupTheme">
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <ImageButton
-                    android:id="@+id/btn_toolbar_back"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:background="@drawable/circle_button_bg_stateful"
-                    android:contentDescription="Back"
-                    android:src="@drawable/ic_back_icon"
-                    app:tint="@color/toolbar_icon_tint" />
-
-                <TextView
-                    android:id="@+id/tv_add_edit_title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
-                    android:layout_centerVertical="true"
-                    android:text="User Details"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-
-                <ImageButton
-                    android:id="@+id/btn_toolbar_save"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginEnd="16dp"
-                    android:background="@drawable/circle_button_bg_stateful"
-                    android:contentDescription="Save"
-                    android:src="@drawable/ic_save_icon"
-                    app:tint="@color/toolbar_icon_tint" />
-            </RelativeLayout>
-
-        </androidx.appcompat.widget.Toolbar>
-    </com.google.android.material.appbar.AppBarLayout>
-
-
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="64dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <RelativeLayout
-                android:id="@+id/rl_username"
-                android:layout_width="match_parent"
+            <ImageButton
+                android:id="@+id/btn_toolbar_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="start|center"
+                android:layout_marginStart="16dp"
+                android:background="@drawable/circle_button_bg_stateful"
+                android:contentDescription="@string/back_button_label"
+                android:src="@drawable/ic_back_icon"
+                app:tint="@color/toolbar_icon_tint" />
+
+            <View
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:background="@drawable/rounded_bg_outline_gray"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
+                android:layout_weight="1" />
 
-                <ImageView
-                    android:id="@+id/iv_username_label"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginVertical="5dp"
-                    android:layout_marginEnd="10dp"
-                    android:layout_alignParentStart="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_username_icon"
-                    app:tint="@android:color/darker_gray"
-                    />
-
-                <TextView
-                    android:id="@+id/tv_username_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_toEndOf="@+id/iv_username_label"
-                    android:text="Username"
-                    android:textColor="@android:color/darker_gray"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
-
-                <EditText
-                    android:id="@+id/et_username"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/tv_username_label"
-                    android:hint="Required"
-                    android:inputType="text"
-                    android:minHeight="20dp"
-                    />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/rl_role"
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/page_title"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/rounded_bg_outline_gray"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
+                android:text="@string/new_page_title_label"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-                <ImageView
-                    android:id="@+id/iv_role_label"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginVertical="5dp"
-                    android:layout_marginEnd="10dp"
-                    android:layout_alignParentStart="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_group_icon"
-                    app:tint="@android:color/darker_gray"
-                    />
-
-                <TextView
-                    android:id="@+id/tv_role_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_toEndOf="@+id/iv_role_label"
-                    android:text="User Role"
-                    android:textColor="@android:color/darker_gray"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
-
-                <Spinner
-                    android:id="@+id/spinner_role"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/tv_role_label"
-                    android:minHeight="35dp"/>
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/rl_name"
-                android:layout_width="match_parent"
+            <View
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:background="@drawable/rounded_bg_outline_gray"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
+                android:layout_weight="1" />
 
-                <ImageView
-                    android:id="@+id/iv_name_label"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginVertical="5dp"
-                    android:layout_marginEnd="10dp"
-                    android:layout_alignParentStart="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_user_icon"
-                    app:tint="@android:color/darker_gray"
-                    />
+            <ImageButton
+                android:id="@+id/btn_toolbar_save"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="16dp"
+                android:background="@drawable/circle_button_bg_stateful"
+                android:contentDescription="@string/save_button_label"
+                android:src="@drawable/ic_save_icon"
+                app:tint="@color/toolbar_icon_tint" />
 
-                <TextView
-                    android:id="@+id/tv_name_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_toEndOf="@+id/iv_name_label"
-                    android:text="First &amp; Last Name"
-                    android:textColor="@android:color/darker_gray"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
-
-                <EditText
-                    android:id="@+id/et_first_name"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/tv_name_label"
-                    android:hint="First Name"
-                    android:inputType="text"
-                    android:minHeight="20dp"
-                    />
-
-                <EditText
-                    android:id="@+id/et_last_name"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/et_first_name"
-                    android:hint="Last Name"
-                    android:inputType="text"
-                    android:minHeight="20dp"
-                    />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/rl_password"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/rounded_bg_outline_gray"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
-
-                <ImageView
-                    android:id="@+id/iv_password_label"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginVertical="5dp"
-                    android:layout_marginEnd="10dp"
-                    android:layout_alignParentStart="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_key_icon"
-                    app:tint="@android:color/darker_gray"
-                    />
-
-                <TextView
-                    android:id="@+id/tv_password_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_toEndOf="@+id/iv_password_label"
-                    android:text="Password"
-                    android:textColor="@android:color/darker_gray"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
-
-                <EditText
-                    android:id="@+id/et_password"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/tv_password_label"
-                    android:hint="Minimum 6 characters"
-                    android:inputType="text"
-                    android:minHeight="20dp"
-                    />
-
-                <EditText
-                    android:id="@+id/et_confirm_password"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/et_password"
-                    android:hint="Confirm Password"
-                    android:inputType="text"
-                    android:minHeight="20dp"
-                    />
-
-            </RelativeLayout>
-            <LinearLayout
-                android:id="@+id/btn_delete_record"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/rounded_bg_danger"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:orientation="horizontal"
-                android:padding="20dp">
-
-                <TextView
-                    android:id="@+id/tv_btn_login_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_weight="1"
-                    android:text="Delete"
-                    android:textColor="@color/white"
-                    android:textStyle="bold" />
-
-                <ImageView
-                    android:id="@+id/iv_forward_icon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical|end"
-                    app:srcCompat="@drawable/ic_delete_icon"
-                    app:tint="@color/white" />
-            </LinearLayout>
         </LinearLayout>
-    </ScrollView>>
 
+
+
+
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:id="@+id/ll_username"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_bg_outline_gray"
+                    android:padding="16dp"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:id="@+id/iv_username_label"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginVertical="5dp"
+                            android:layout_marginEnd="10dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_username_icon"
+                            app:tint="@android:color/darker_gray"
+                            />
+
+                        <TextView
+                            android:id="@+id/tv_username_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Username"
+                            android:textColor="@android:color/darker_gray"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <EditText
+                        android:id="@+id/et_username"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Required"
+                        android:inputType="text"
+                        android:minHeight="20dp"
+                        />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_role"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_bg_outline_gray"
+                    android:padding="16dp"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:id="@+id/iv_role_label"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginVertical="5dp"
+                            android:layout_marginEnd="10dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_group_icon"
+                            app:tint="@android:color/darker_gray"
+                            />
+
+                        <TextView
+                            android:id="@+id/tv_role_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="User Role"
+                            android:textColor="@android:color/darker_gray"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <Spinner
+                        android:id="@+id/spinner_role"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:minHeight="35dp"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_name"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_bg_outline_gray"
+                    android:padding="16dp"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:id="@+id/iv_name_label"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginVertical="5dp"
+                            android:layout_marginEnd="10dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_user_icon"
+                            app:tint="@android:color/darker_gray"
+                            />
+
+                        <TextView
+                            android:id="@+id/tv_name_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="First &amp; Last Name"
+                            android:textColor="@android:color/darker_gray"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <EditText
+                        android:id="@+id/et_first_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="First Name"
+                        android:inputType="text"
+                        android:minHeight="20dp"
+                        />
+
+                    <EditText
+                        android:id="@+id/et_last_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Last Name"
+                        android:inputType="text"
+                        android:minHeight="20dp"
+                        />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_password"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_bg_outline_gray"
+                    android:padding="16dp"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:id="@+id/iv_password_label"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginVertical="5dp"
+                            android:layout_marginEnd="10dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_key_icon"
+                            app:tint="@android:color/darker_gray"
+                            />
+
+                        <TextView
+                            android:id="@+id/tv_password_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Password"
+                            android:textColor="@android:color/darker_gray"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <EditText
+                        android:id="@+id/et_password"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Minimum 6 characters"
+                        android:inputType="text"
+                        android:minHeight="20dp"
+                        />
+
+                    <EditText
+                        android:id="@+id/et_confirm_password"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Confirm Password"
+                        android:inputType="text"
+                        android:minHeight="20dp"
+                        />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/btn_delete_record"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_bg_danger"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:id="@+id/tv_btn_login_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="1"
+                        android:text="Delete"
+                        android:textColor="@color/white"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/iv_forward_icon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical|end"
+                        app:srcCompat="@drawable/ic_delete_icon"
+                        app:tint="@color/white" />
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>>
+    </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

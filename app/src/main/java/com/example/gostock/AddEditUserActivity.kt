@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.ImageButton
-import android.widget.RelativeLayout
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Spinner
@@ -26,7 +25,7 @@ class AddEditUserActivity : AppCompatActivity() {
     private lateinit var spinnerRole: Spinner
     private lateinit var btnToolbarSave: ImageButton
     private lateinit var btnToolbarBack: ImageButton
-    private lateinit var rlPassword: RelativeLayout
+    private lateinit var llPassword: LinearLayout
     private lateinit var btnDeleteRecord: LinearLayout
 
     private lateinit var userFileHandler: UserFileHandler
@@ -48,7 +47,7 @@ class AddEditUserActivity : AppCompatActivity() {
             return
         }
 
-        tvTitle = findViewById(R.id.tv_add_edit_title)
+        tvTitle = findViewById(R.id.page_title)
         etFirstName = findViewById(R.id.et_first_name)
         etLastName = findViewById(R.id.et_last_name)
         etUsername = findViewById(R.id.et_username)
@@ -61,7 +60,7 @@ class AddEditUserActivity : AppCompatActivity() {
 
         userFileHandler = UserFileHandler(this)
 
-        rlPassword = findViewById(R.id.rl_password)
+        llPassword = findViewById(R.id.ll_password)
 
         btnDeleteRecord = findViewById(R.id.btn_delete_record)
 
@@ -71,14 +70,14 @@ class AddEditUserActivity : AppCompatActivity() {
         if (userId != null) {
             isEditing = true
             tvTitle.text = "Edit User"
-            rlPassword.visibility = View.GONE
+            llPassword.visibility = View.GONE
             btnDeleteRecord.visibility = View.VISIBLE
             // Log.d(TAG, "onCreate: Editing existing user with ID: $userId") // Debug log removed
             loadUserDataForEditing(userId)
         } else {
             isEditing = false
             tvTitle.text = "New User"
-            rlPassword.visibility = View.VISIBLE
+            llPassword.visibility = View.VISIBLE
             btnDeleteRecord.visibility = View.GONE
             // Log.d(TAG, "onCreate: Adding new user.") // Debug log removed
         }

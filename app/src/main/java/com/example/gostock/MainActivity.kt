@@ -31,14 +31,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardLocation: MaterialCardView
     private lateinit var tvLocationValue: TextView
     // private lateinit var ivLocationBarcodeIcon: ImageView // Not directly used in latest XML
-    private lateinit var btnLocationScanAction: ImageButton
     private lateinit var ivLocationCheckIcon: ImageView
 
     // SKU Card elements
     private lateinit var cardSku: MaterialCardView
     private lateinit var tvSkuValue: TextView
     // private lateinit var ivSkuBarcodeIcon: ImageView // Not directly used in latest XML
-    private lateinit var btnSkuScanAction: ImageButton
     private lateinit var ivSkuCheckIcon: ImageView
 
     // Quantity Card elements
@@ -64,13 +62,10 @@ class MainActivity : AppCompatActivity() {
             scannedBarcode?.let {
                 if (currentScanType == ScanType.LOCATION) {
                     tvLocationValue.text = it
-                    btnLocationScanAction.setImageResource(R.drawable.ic_refresh_icon)
                     ivLocationCheckIcon.visibility = View.VISIBLE
                     cardSku.isEnabled = true // ENABLE SKU card after successful location scan
-                    btnSkuScanAction.isEnabled = true
                 } else if (currentScanType == ScanType.SKU) {
                     tvSkuValue.text = it
-                    btnSkuScanAction.setImageResource(R.drawable.ic_refresh_icon)
                     ivSkuCheckIcon.visibility = View.VISIBLE
                     etQuantity.requestFocus()
                     val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -85,13 +80,10 @@ class MainActivity : AppCompatActivity() {
             // If scan was cancelled/failed
             if (currentScanType == ScanType.LOCATION) {
                 tvLocationValue.text = ""
-                btnLocationScanAction.setImageResource(R.drawable.ic_scan_qrcode_icon)
                 ivLocationCheckIcon.visibility = View.GONE
                 cardSku.isEnabled = false
-                btnSkuScanAction.isEnabled = false
             } else if (currentScanType == ScanType.SKU) {
                 tvSkuValue.text = ""
-                btnSkuScanAction.setImageResource(R.drawable.ic_scan_barcode_icon)
                 ivSkuCheckIcon.visibility = View.GONE
             }
             Toast.makeText(this, "Barcode scan cancelled or failed.", Toast.LENGTH_SHORT).show()
@@ -104,10 +96,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize Toolbar and its buttons
-        val toolbar = findViewById<Toolbar>(R.id.toolbar_main)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
+
 
         btnToolbarSave = findViewById(R.id.btn_toolbar_save)
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
@@ -115,14 +104,10 @@ class MainActivity : AppCompatActivity() {
         // Initialize Location Card elements
         cardLocation = findViewById(R.id.card_location)
         tvLocationValue = findViewById(R.id.tv_location_value)
-        // ivLocationBarcodeIcon is removed from XML
-        btnLocationScanAction = findViewById(R.id.btn_location_scan_action)
         ivLocationCheckIcon = findViewById(R.id.iv_location_check_icon)
         // Initialize SKU Card elements
         cardSku = findViewById(R.id.card_sku)
         tvSkuValue = findViewById(R.id.tv_sku_value)
-        // ivSkuBarcodeIcon is removed from XML
-        btnSkuScanAction = findViewById(R.id.btn_sku_scan_action)
         ivSkuCheckIcon = findViewById(R.id.iv_sku_check_icon)
 
         // Initialize Quantity Card element
@@ -176,12 +161,7 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, BarcodeScannerActivity::class.java)
             barcodeScannerLauncher.launch(intent)
         }
-        // Location ImageButton click (also triggers scan)
-        btnLocationScanAction.setOnClickListener {
-            currentScanType = ScanType.LOCATION
-            val intent = Intent(this, BarcodeScannerActivity::class.java)
-            barcodeScannerLauncher.launch(intent)
-        }
+
 
         // SKU Card click (triggers scan - Initially disabled, enabled after Location Scan)
         cardSku.setOnClickListener {
@@ -189,12 +169,7 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, BarcodeScannerActivity::class.java)
             barcodeScannerLauncher.launch(intent)
         }
-        // SKU ImageButton click (also triggers scan)
-        btnSkuScanAction.setOnClickListener {
-            currentScanType = ScanType.SKU
-            val intent = Intent(this, BarcodeScannerActivity::class.java)
-            barcodeScannerLauncher.launch(intent)
-        }
+
         // --- END CardView and ImageButton click listeners ---
 
         // TextWatcher for quantity to enable/disable save button
@@ -247,14 +222,11 @@ class MainActivity : AppCompatActivity() {
      */
     private fun resetInputFields() {
         tvLocationValue.text = "" // Reset text to empty
-        btnLocationScanAction.setImageResource(R.drawable.ic_scan_qrcode_icon) // Reset icon to scan
         ivLocationCheckIcon.visibility = View.GONE // Hide check icon
         tvSkuValue.text = "" // Reset text to empty
-        btnSkuScanAction.setImageResource(R.drawable.ic_scan_barcode_icon) // Reset icon to scan
         ivSkuCheckIcon.visibility = View.GONE // Hide check icon
         etQuantity.text.clear() // Clear quantity
         cardSku.isEnabled = false // DISABLE SKU card initially
-        btnSkuScanAction.isEnabled = false
         updateSaveButtonState() // Update save button state (which will disable Save button if fields are empty)
     }
 

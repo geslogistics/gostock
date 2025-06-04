@@ -1,4 +1,29 @@
 <resources>
     <string name="app_name">GoStock</string>
-    <string name="new_stock_take_button_label">New Stocktake</string>
+    <string name="new_button_label">New</string>
+    <string name="edit_button_label">Edit</string>
+    <string name="export_button_label">Export</string>
+    <string name="export_close_button_label">Export &amp; Close</string>
+    <string name="import_button_label">Import</string>
+    <string name="manage_users_button_label">Manage Users</string>
+    <string name="back_button_label">Back</string>
+    <string name="save_button_label">Save</string>
+    <string name="location_label">Location</string>
+    <string name="sku_label">NSN</string>
+    <string name="quantity_label">Quantity</string>
+    <string name="timestamp_label">Date &amp; Time</string>
+    <string name="user_label">User</string>
+    <string name="username_label">Username</string>
+    <string name="scan_location_button_label">Scan Location</string>
+    <string name="scan_sku_button_label">Scan NSN</string>
+    <string name="done_label">Done</string>
+    <string name="reset_password_page_title_label">Reset Password</string>
+    <string name="change_password_page_title_label">Change Password</string>
+    <string name="new_user_page_title_label">New User</string>
+    <string name="edit_user_page_title_label">Edit User</string>
+    <string name="new_page_title_label">New</string>
+    <string name="list_page_title_label">List</string>
+    <string name="edit_page_title_label">Edit</string>
+
+
 </resources>

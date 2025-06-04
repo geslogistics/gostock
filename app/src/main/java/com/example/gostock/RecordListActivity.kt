@@ -50,11 +50,6 @@ class RecordListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_record_list)
 
-        // Initialize Toolbar and its buttons
-        val toolbar = findViewById<Toolbar>(R.id.toolbar_main)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
-
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
 
         recyclerView = findViewById(R.id.recyclerView_records)

@@ -8,287 +8,274 @@
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <LinearLayout
+        android:id="@+id/main_page_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:elevation="0dp"
-        android:theme="?attr/actionBarTheme">
-
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar_main"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@android:color/transparent"
-            app:popupTheme="?attr/popupTheme">
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <ImageButton
-                    android:id="@+id/btn_toolbar_back"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:background="@drawable/circle_button_bg_stateful"
-                    android:contentDescription="Back"
-                    android:src="@drawable/ic_back_icon"
-                    app:tint="@color/toolbar_icon_tint" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
-                    android:layout_centerVertical="true"
-                    android:text="New"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-
-                <ImageButton
-                    android:id="@+id/btn_toolbar_save"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginEnd="16dp"
-                    android:background="@drawable/circle_button_bg_stateful"
-                    android:contentDescription="Save"
-                    android:src="@drawable/ic_save_icon"
-                    app:tint="@color/toolbar_icon_tint" />
-            </RelativeLayout>
-
-        </androidx.appcompat.widget.Toolbar>
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="64dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_location"
-                android:layout_width="match_parent"
+            <ImageButton
+                android:id="@+id/btn_toolbar_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="start|center"
+                android:layout_marginStart="16dp"
+                android:background="@drawable/circle_button_bg_stateful"
+                android:contentDescription="@string/back_button_label"
+                android:src="@drawable/ic_back_icon"
+                app:tint="@color/toolbar_icon_tint" />
+
+            <View
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/light_yellow"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/card_border_color"
-                app:strokeWidth="0dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground">
+                android:layout_weight="1" />
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:id="@+id/iv_location_label"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_marginVertical="5dp"
-                        android:layout_marginEnd="10dp"
-                        android:layout_alignParentStart="true"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Scan Location"
-                        android:src="@drawable/ic_scan_qrcode_icon"
-                        app:tint="@android:color/darker_gray"
-                        />
-
-                    <TextView
-                        android:id="@+id/tv_location_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_toEndOf="@+id/iv_location_label"
-                        android:text="Location"
-                        android:textColor="@android:color/darker_gray"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-
-                    <ImageButton
-                        android:id="@+id/btn_location_scan_action"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Scan Location"
-                        android:src="@drawable/ic_scan_qrcode_icon"
-                        android:visibility="gone"
-                        app:tint="@color/black" />
-
-                    <TextView
-                        android:id="@+id/tv_location_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/tv_location_label"
-                        android:layout_marginTop="8dp"
-
-                        android:text="01012345678901281721022110ABCD1234\F217654"
-                        android:textColor="@color/black"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <ImageView
-                        android:id="@+id/iv_location_check_icon"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_alignParentEnd="true"
-                        android:background="@drawable/circle_button_black_bg"
-                        android:contentDescription="Done"
-                        android:padding="5dp"
-                        android:src="@drawable/ic_check_icon_white"
-                        android:visibility="gone" />
-
-                </RelativeLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_sku"
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/page_title"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:enabled="false"
-                app:cardBackgroundColor="@color/light_lavender"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/card_border_color"
-                app:strokeWidth="0dp">
+                android:text="@string/new_page_title_label"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:id="@+id/iv_sku_check_icon"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_alignParentEnd="true"
-                        android:background="@drawable/circle_button_black_bg"
-                        android:contentDescription="Done"
-                        android:padding="5dp"
-                        android:src="@drawable/ic_check_icon_white"
-                        android:visibility="gone" />
-
-                    <ImageView
-                        android:id="@+id/iv_sku_label"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_marginVertical="5dp"
-                        android:layout_marginEnd="10dp"
-                        android:layout_alignParentStart="true"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Scan SKU"
-                        android:src="@drawable/ic_scan_barcode_icon"
-                        app:tint="@android:color/darker_gray"
-                        />
-
-                    <TextView
-                        android:id="@+id/tv_sku_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_toEndOf="@+id/iv_sku_label"
-                        android:text="NSN"
-                        android:textColor="@android:color/darker_gray"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-
-                    <ImageButton
-                        android:id="@+id/btn_sku_scan_action"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Scan SKU"
-                        android:src="@drawable/ic_scan_barcode_icon"
-                        android:visibility="gone"
-                        app:tint="@color/black" />
-
-                    <TextView
-                        android:id="@+id/tv_sku_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@+id/tv_sku_label"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginEnd="16dp"
-                        android:text="01012345678901281721022110ABCD1234\F217654"
-                        android:textColor="@color/black"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                </RelativeLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_quantity"
-                android:layout_width="match_parent"
+            <View
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/white"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/card_border_color"
-                app:strokeWidth="0dp">
+                android:layout_weight="1" />
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:id="@+id/iv_quantity_label"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_marginVertical="5dp"
-                        android:layout_marginEnd="10dp"
-                        android:layout_alignParentStart="true"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_quantity_icon"
-                        app:tint="@android:color/darker_gray"
-                        />
-
-                    <TextView
-                        android:id="@+id/tv_quantity_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_toEndOf="@+id/iv_quantity_label"
-                        android:text="Quantity"
-                        android:textColor="@android:color/darker_gray"
-                        android:textSize="22sp"
-                        android:textStyle="bold" /> />
-
-                    <EditText
-                        android:id="@+id/et_quantity"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:background="@android:color/transparent"
-                        android:gravity="end"
-                        android:hint="0"
-                        android:inputType="number"
-                        android:minWidth="80dp"
-                        android:textColor="@color/black"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-
-                </RelativeLayout>
-            </com.google.android.material.card.MaterialCardView>
+            <ImageButton
+                android:id="@+id/btn_toolbar_save"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="16dp"
+                android:background="@drawable/circle_button_bg_stateful"
+                android:contentDescription="@string/save_button_label"
+                android:src="@drawable/ic_save_icon"
+                app:tint="@color/toolbar_icon_tint" />
 
         </LinearLayout>
 
-    </ScrollView>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_location"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    app:cardBackgroundColor="@color/light_yellow"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/card_border_color"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            tools:ignore="UseCompoundDrawables">
+
+                            <ImageView
+                                android:id="@+id/iv_location_label"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center_vertical"
+                                android:layout_marginEnd="10dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/scan_location_button_label"
+                                android:src="@drawable/ic_scan_qrcode_icon"
+                                app:tint="@android:color/darker_gray" />
+
+                            <TextView
+                                android:id="@+id/tv_location_label"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/location_label"
+                                android:textColor="@android:color/darker_gray"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:layout_weight="1"/>
+
+                            <ImageView
+                                android:id="@+id/iv_location_check_icon"
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:background="@drawable/circle_button_black_bg"
+                                android:contentDescription="@string/done_label"
+                                android:padding="5dp"
+                                android:src="@drawable/ic_check_icon_white"
+                                android:visibility="gone" />
+
+
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tv_location_value"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="01012345678901281721022110ABCD1234\F217654"
+                            android:textColor="@color/black"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_sku"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:enabled="false"
+                    app:cardBackgroundColor="@color/light_lavender"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/card_border_color"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="16dp">
+
+                        <LinearLayout
+                            android:orientation="horizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <ImageView
+                                android:id="@+id/iv_sku_label"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center_vertical"
+                                android:layout_marginEnd="10dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/scan_sku_button_label"
+                                android:src="@drawable/ic_scan_barcode_icon"
+                                app:tint="@android:color/darker_gray" />
+
+                            <TextView
+                                android:id="@+id/tv_sku_label"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/sku_label"
+                                android:textColor="@android:color/darker_gray"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:layout_weight="1"/>
+
+                            <ImageView
+                                android:id="@+id/iv_sku_check_icon"
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:layout_alignParentEnd="true"
+                                android:background="@drawable/circle_button_black_bg"
+                                android:contentDescription="@string/done_label"
+                                android:padding="5dp"
+                                android:src="@drawable/ic_check_icon_white"
+                                android:visibility="gone" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tv_sku_value"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/tv_sku_label"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginEnd="16dp"
+                            android:text="01012345678901281721022110ABCD1234\F217654"
+                            android:textColor="@color/black"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_quantity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/card_border_color"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:id="@+id/iv_quantity_label"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="10dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/quantity_label"
+                            android:src="@drawable/ic_quantity_icon"
+                            app:tint="@android:color/darker_gray" />
+
+                        <TextView
+                            android:id="@+id/tv_quantity_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/quantity_label"
+                            android:textColor="@android:color/darker_gray"
+                            android:textSize="22sp"
+                            android:textStyle="bold"
+                            android:layout_weight="1"/>
+
+                        <EditText
+                            android:id="@+id/et_quantity"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@android:color/transparent"
+                            android:gravity="end"
+                            android:hint="0"
+                            android:inputType="number"
+                            android:minWidth="80dp"
+                            android:textColor="@color/black"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+        </ScrollView>
+    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

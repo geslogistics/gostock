@@ -13,7 +13,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.PopupMenu
-import androidx.appcompat.widget.Toolbar
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
@@ -37,9 +36,10 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var btnImportRecords: Button
     private lateinit var btnManageUsers: Button
 
+    private lateinit var btnBluetoothConnect: Button
+
 
     private lateinit var tvLoggedInUser: TextView
-    private lateinit var toolbar: Toolbar
 
     private lateinit var fileHandler: FileHandler
 
@@ -59,11 +59,9 @@ class HomeActivity : AppCompatActivity() {
         btnImportRecords = findViewById(R.id.btn_import_records)
         btnManageUsers = findViewById(R.id.btn_manage_users)
 
-        tvLoggedInUser = findViewById(R.id.tv_logged_in_user)
-        toolbar = findViewById(R.id.toolbar_home)
+        btnBluetoothConnect = findViewById(R.id.btn_bluetooth_connect)
 
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
+        tvLoggedInUser = findViewById(R.id.tv_logged_in_user)
 
         fileHandler = FileHandler(this)
 
@@ -98,7 +96,7 @@ class HomeActivity : AppCompatActivity() {
                 null
             }
         }
-        if (fileName == null || !fileName.toLowerCase(Locale.ROOT).endsWith(".csv")) {
+        if (fileName == null || !fileName.lowercase(Locale.ROOT).endsWith(".csv")) {
             Toast.makeText(this, "Please select a valid .csv file.", Toast.LENGTH_LONG).show()
             return // Stop import if not a CSV
         }
@@ -311,6 +309,11 @@ class HomeActivity : AppCompatActivity() {
                 type = "*/*" // Change to accept ALL file types
             }
             importDocumentLauncher.launch(intent)
+        }
+
+        btnBluetoothConnect.setOnClickListener {
+            val intent = Intent(this, BluetoothActivity::class.java)
+            startActivity(intent)
         }
 
         btnManageUsers.setOnClickListener {

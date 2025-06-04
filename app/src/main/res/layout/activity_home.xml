@@ -9,55 +9,59 @@
     android:fitsSystemWindows="true"
     tools:context=".HomeActivity">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <LinearLayout
+        android:id="@+id/main_page_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:elevation="0dp"
-        android:theme="?attr/actionBarTheme">
+        android:orientation="vertical">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar_home"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@android:color/transparent"
-            app:popupTheme="?attr/popupTheme">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="16dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start"
-                android:layout_marginEnd="16dp"
-                android:drawablePadding="8dp"
-                android:text="GoStock"
-                android:textColor="@color/primary_text_dark"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:drawableStartCompat="@drawable/ic_gesblack"
-                app:drawableTint="@color/primary_text_dark" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layout_marginEnd="16dp"
+            android:drawablePadding="8dp"
+            android:text="GoStock"
+            android:textColor="@color/primary_text_dark"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:drawableStartCompat="@drawable/ic_gesblack"
+            app:drawableTint="@color/primary_text_dark" />
 
-            <TextView
-                android:id="@+id/tv_logged_in_user"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:clickable="true"
-                android:drawablePadding="8dp"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:paddingEnd="16dp"
-                android:text="Welcome, User!"
-                android:textColor="@color/primary_text_dark"
-                android:textSize="16sp"
-                app:drawableEndCompat="@drawable/ic_user_icon"
-                app:drawableTint="@color/primary_text_dark" />
-        </androidx.appcompat.widget.Toolbar>
-    </com.google.android.material.appbar.AppBarLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+
+        <TextView
+            android:id="@+id/tv_logged_in_user"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:clickable="true"
+            android:drawablePadding="8dp"
+            android:gravity="center_vertical"
+            android:text="Welcome, User!"
+            android:textColor="@color/primary_text_dark"
+            android:textSize="16sp"
+            app:drawableEndCompat="@drawable/ic_user_icon"
+            app:drawableTint="@color/primary_text_dark" />
+
+    </LinearLayout>
+
+
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        >
 
 
         <LinearLayout
@@ -66,7 +70,7 @@
             android:gravity="center"
             android:orientation="vertical"
             android:padding="24dp"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+            >
 
             <TextView
                 android:layout_width="wrap_content"
@@ -76,7 +80,8 @@
                 android:text="Good Morning!\nBe Productive Today!"
                 android:textColor="@color/primary_text_dark"
                 android:textSize="36sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:visibility="gone"/>
 
             <Button
                 android:id="@+id/btn_start_new_record"
@@ -86,7 +91,7 @@
                 android:backgroundTint="@color/button_background_light"
                 android:elevation="4dp"
                 android:padding="16dp"
-                android:text="@string/new_stock_take_button_label"
+                android:text="@string/new_button_label"
                 android:textColor="@color/primary_text_dark"
                 android:textSize="15sp"
                 app:cornerRadius="12dp" />
@@ -99,7 +104,7 @@
                 android:backgroundTint="@color/button_background_light"
                 android:elevation="4dp"
                 android:padding="16dp"
-                android:text="Edit Existing Records"
+                android:text="@string/edit_button_label"
                 android:textColor="@color/primary_text_dark"
                 android:textSize="15sp"
                 app:cornerRadius="12dp" />
@@ -112,7 +117,7 @@
                 android:backgroundTint="@color/button_background_light"
                 android:elevation="4dp"
                 android:padding="16dp"
-                android:text="Export All Records (CSV)"
+                android:text="@string/export_button_label"
                 android:textColor="@color/primary_text_dark"
                 android:textSize="15sp"
                 app:cornerRadius="12dp" />
@@ -125,7 +130,7 @@
                 android:backgroundTint="@color/button_background_light"
                 android:elevation="4dp"
                 android:padding="16dp"
-                android:text="Export &amp; Close"
+                android:text="@string/export_close_button_label"
                 android:textColor="@color/primary_text_dark"
                 android:textSize="15sp"
                 app:cornerRadius="12dp" />
@@ -138,10 +143,24 @@
                 android:backgroundTint="@color/button_background_light"
                 android:elevation="4dp"
                 android:padding="16dp"
-                android:text="Import Records"
+                android:text="@string/import_button_label"
                 android:textColor="@color/primary_text_dark"
                 android:textSize="15sp"
                 app:cornerRadius="12dp" />
+
+            <!-- NEW: Bluetooth Connect Button -->
+            <Button
+                android:id="@+id/btn_bluetooth_connect"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Bluetooth Connect"
+                android:textSize="20sp"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp"
+                app:cornerRadius="12dp"
+                android:backgroundTint="@color/blue_500"
+                android:textColor="@android:color/white"
+                android:elevation="4dp" />
 
             <Button
                 android:id="@+id/btn_manage_users"
@@ -151,7 +170,7 @@
                 android:backgroundTint="@color/button_background_light"
                 android:elevation="4dp"
                 android:padding="16dp"
-                android:text="Manage Users"
+                android:text="@string/manage_users_button_label"
                 android:textColor="@color/primary_text_dark"
                 android:textSize="15sp"
                 android:visibility="gone"
@@ -160,5 +179,5 @@
         </LinearLayout>
 
     </ScrollView>
-
+    </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
