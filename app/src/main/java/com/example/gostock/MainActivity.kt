@@ -21,7 +21,15 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import androidx.recyclerview.widget.LinearLayoutManager // ADD THIS IMPORT
+import androidx.recyclerview.widget.RecyclerView // ADD THIS IMPORT
+
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var tvRecentEntriesTitle: TextView
+    private lateinit var rvRecentEntries: RecyclerView
+    private lateinit var tvNoRecentEntries: TextView
+    private lateinit var recentEntryAdapter: RecentEntryAdapter // Declare the new adapter
 
     // Toolbar buttons (Back and Save)
     private lateinit var btnToolbarSave: ImageButton
@@ -114,6 +122,11 @@ class MainActivity : AppCompatActivity() {
         cardQuantity = findViewById(R.id.card_quantity)
         etQuantity = findViewById(R.id.et_quantity)
 
+        // NEW: Initialize Recent Entries UI elements
+        tvRecentEntriesTitle = findViewById(R.id.tv_recent_entries_title)
+        rvRecentEntries = findViewById(R.id.rv_recent_entries)
+        tvNoRecentEntries = findViewById(R.id.tv_no_recent_entries)
+
 
         // Initialize FileHandler
         fileHandler = FileHandler(this)
@@ -126,9 +139,38 @@ class MainActivity : AppCompatActivity() {
             performLogout()
         }
 
+        setupRecentEntriesRecyclerView()
         setupClickListeners()
         resetInputFields() // Call this initially to set up states and text like ""
         updateSaveButtonState() // Initial check for save button enablement
+    }
+
+    override fun onResume() {
+        super.onResume()
+        loadRecentEntries() // NEW: Load recent entries whenever activity resumes
+    }
+
+    private fun setupRecentEntriesRecyclerView() {
+        recentEntryAdapter = RecentEntryAdapter(emptyList()) // Initialize with empty list
+        rvRecentEntries.layoutManager = LinearLayoutManager(this)
+        rvRecentEntries.adapter = recentEntryAdapter
+    }
+
+    private fun loadRecentEntries() {
+        val allEntries = fileHandler.loadStockEntries()
+        // Sort by timestamp in descending order and take the top 3
+        val recentEntries = allEntries.sortedByDescending { it.timestamp }.take(3)
+
+        if (recentEntries.isNotEmpty()) {
+            recentEntryAdapter.updateData(recentEntries)
+            tvRecentEntriesTitle.visibility = View.VISIBLE
+            rvRecentEntries.visibility = View.VISIBLE
+            tvNoRecentEntries.visibility = View.GONE
+        } else {
+            tvRecentEntriesTitle.visibility = View.GONE
+            rvRecentEntries.visibility = View.GONE
+            tvNoRecentEntries.visibility = View.VISIBLE
+        }
     }
 
     private fun performLogout() {
@@ -215,6 +257,7 @@ class MainActivity : AppCompatActivity() {
             val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             imm.hideSoftInputFromWindow(etQuantity.windowToken, 0)
         }
+        loadRecentEntries()
     }
 
     /**

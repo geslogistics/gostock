@@ -89,23 +89,26 @@ class RecordListActivity : AppCompatActivity() {
     }
 
     private fun loadAndDisplayRecords() {
-        // Log.d(TAG, "loadAndDisplayRecords() called.") // Debug log removed
+        // Log.d(TAG, "loadAndDisplayRecords() called.")
         val loadedEntries = fileHandler.loadStockEntries()
-        // Log.d(TAG, "FileHandler returned ${loadedEntries.size} entries.") // Debug log removed
+        // Log.d(TAG, "FileHandler returned ${loadedEntries.size} entries.")
+
+        // --- ADD THIS LINE TO SORT ENTRIES BY TIMESTAMP (MOST RECENT FIRST) ---
+        val sortedEntries = loadedEntries.sortedByDescending { it.timestamp }
+        // ---------------------------------------------------------------------
 
         records.clear()
-        records.addAll(loadedEntries)
+        records.addAll(sortedEntries) // Add the sorted entries
 
         if (records.isEmpty()) {
-            // Log.d(TAG, "Records list is empty. Hiding RecyclerView, showing No Records text.") // Debug log removed
+            // Log.d(TAG, "Records list is empty. Hiding RecyclerView, showing No Records text.")
             recyclerView.visibility = View.GONE
             tvNoRecords.visibility = View.VISIBLE
         } else {
-            // Log.d(TAG, "Records list has ${records.size} entries. Showing RecyclerView.") // Debug log removed
+            // Log.d(TAG, "Records list has ${records.size} entries. Showing RecyclerView.")
             recyclerView.visibility = View.VISIBLE
             tvNoRecords.visibility = View.GONE
-            // IMPORTANT: Notify the adapter that its underlying data has changed
-            entryAdapter.updateData(records) // This calls notifyDataSetChanged internally
+            entryAdapter.updateData(records) // Update the adapter with the new data
         }
     }
 

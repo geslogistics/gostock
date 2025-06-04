@@ -16,6 +16,7 @@
     <string name="username_label">Username</string>
     <string name="scan_location_button_label">Scan Location</string>
     <string name="scan_sku_button_label">Scan NSN</string>
+    <string name="recent_entries_label">Recent Entries</string>
     <string name="done_label">Done</string>
     <string name="reset_password_page_title_label">Reset Password</string>
     <string name="change_password_page_title_label">Change Password</string>
