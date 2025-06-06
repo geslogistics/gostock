@@ -32,7 +32,14 @@ import java.util.concurrent.TimeUnit // ADD THIS IMPORT
 
 class HomeActivity : AppCompatActivity() {
 
+
+
+    private lateinit var tvWelcomeSmallMessage: TextView
     private lateinit var tvWelcomeMessage: TextView
+    private lateinit var llBatchSummary: LinearLayout
+    private lateinit var llDashboard: LinearLayout
+    private lateinit var llHdash: LinearLayout
+
 
     private lateinit var pbBatchSize: ProgressBar
     private lateinit var tvBatchSizeProgress: TextView
@@ -47,6 +54,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var tvDashcardQuantity: TextView
 
     private lateinit var btnStartNewRecord: LinearLayout
+    private lateinit var btnMenuContinueBatch: LinearLayout
     private lateinit var btnEditRecords: LinearLayout
     private lateinit var btnExportRecords: LinearLayout
     private lateinit var btnExportClose: LinearLayout
@@ -70,16 +78,11 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
+        tvWelcomeSmallMessage = findViewById(R.id.tv_welcome_small_message)
         tvWelcomeMessage = findViewById(R.id.tv_welcome_message)
-
-        val loggedInUser = GoStockApp.loggedInUser
-        if (loggedInUser != null) {
-            tvWelcomeMessage.text = "\uD83D\uDC4B\uD83C\uDFFE" + " Hello " + loggedInUser.username + "!"
-        } else {
-            tvLoggedInUser.text = getString(R.string.not_logged_in)
-            Toast.makeText(this, "User not logged in. Redirecting to login.", Toast.LENGTH_LONG).show()
-            performLogout()
-        }
+        llDashboard = findViewById(R.id.ll_dashboard)
+        llHdash = findViewById(R.id.ll_hdash)
+        llBatchSummary = findViewById(R.id.ll_batch_summary) // Initialize
 
         // NEW: Initialize Dashboard UI elements
         pbBatchSize = findViewById(R.id.pb_batch_size)
@@ -94,6 +97,7 @@ class HomeActivity : AppCompatActivity() {
         tvDashcardQuantity = findViewById(R.id.tv_dashcard_quantity)
 
         btnStartNewRecord = findViewById(R.id.btn_start_new_record)
+        btnMenuContinueBatch = findViewById(R.id.btn_menu_continue_batch)
         btnEditRecords = findViewById(R.id.btn_edit_records)
         btnExportRecords = findViewById(R.id.btn_export_records)
         btnExportClose = findViewById(R.id.btn_export_close) // Initialize new button
@@ -106,6 +110,15 @@ class HomeActivity : AppCompatActivity() {
         tvLoggedInUser = findViewById(R.id.tv_logged_in_user)
 
         fileHandler = FileHandler(this)
+
+        val loggedInUser = GoStockApp.loggedInUser
+        if (loggedInUser != null) {
+            tvWelcomeMessage.text = "\uD83D\uDC4B\uD83C\uDFFE" + " Hello " + loggedInUser.username + "!"
+        } else {
+            tvLoggedInUser.text = getString(R.string.not_logged_in)
+            Toast.makeText(this, "User not logged in. Redirecting to login.", Toast.LENGTH_LONG).show()
+            performLogout()
+        }
 
         setupUserDetails()
         setupClickListeners()
@@ -329,6 +342,11 @@ class HomeActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        btnMenuContinueBatch.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+        }
+
         btnEditRecords.setOnClickListener {
             val intent = Intent(this, RecordListActivity::class.java)
             startActivity(intent)
@@ -507,75 +525,99 @@ class HomeActivity : AppCompatActivity() {
         val currentRecordCount = allEntries.size
         val maxBatchSize = AppSettings.maxBatchSize
 
-        // --- Calculate Batch Size Progress ---
-        if (maxBatchSize > 0) {
-            tvBatchSizeProgress.text = "$currentRecordCount"
-            tvMaxBatchSize.text = "/$maxBatchSize"
-            val progress = ((currentRecordCount.toFloat() / maxBatchSize) * 100).toInt().coerceIn(0, 100)
-            pbBatchSize.progress = progress
-        } else {
-            tvBatchSizeProgress.text = "$currentRecordCount"
-            tvMaxBatchSize.text = "/∞"
-            pbBatchSize.progress = 0 // Or set to 0, or hide, depending on desired visual for unlimited
-        }
+        // --- Conditional Visibility Logic ---
+        if (allEntries.isEmpty()) {
+            tvWelcomeSmallMessage.visibility = View.GONE
+            llDashboard.visibility = View.GONE
+            llHdash.visibility = View.GONE
+            llBatchSummary.visibility = View.GONE
+            btnMenuContinueBatch.visibility = View.GONE // Hide continue button
+            btnStartNewRecord.visibility = View.VISIBLE // Show start new button
 
-
-        // --- Calculate Batch Time Progress ---
-        val maxBatchTimeHours = AppSettings.maxBatchTime // Get from settings (now in hours)
-        var elapsedTimeHours = 0 // Initialize to 0
-
-        val oldestEntryTimestamp: Long? = allEntries.minByOrNull {
-            // Parse timestamp string to Date, then get time in milliseconds
-            try {
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(it.timestamp)?.time ?: Long.MAX_VALUE
-            } catch (e: Exception) {
-                // Handle parsing error, treat as very old
-                Long.MAX_VALUE
-            }
-        }?.let {
-            try {
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(it.timestamp)?.time
-            } catch (e: Exception) {
-                null
-            }
-        }
-
-        if (oldestEntryTimestamp != null) { // If there's at least one entry
-            val currentTime = System.currentTimeMillis()
-            val elapsedTimeMillis = currentTime - oldestEntryTimestamp
-            elapsedTimeHours = TimeUnit.MILLISECONDS.toHours(elapsedTimeMillis).toInt()
-        }
-
-        if (maxBatchTimeHours > 0) { // If maxBatchTime is defined (not unlimited)
-            tvBatchTimeProgress.text = "${elapsedTimeHours}h"
-            tvMaxBatchTime.text = "/${maxBatchTimeHours}h"
-            val progress = ((elapsedTimeHours.toFloat() / maxBatchTimeHours) * 100).toInt().coerceIn(0, 100)
-            pbBatchTime.progress = progress
-        } else { // Max batch time is unlimited (maxBatchTimeHours == 0)
-            tvBatchTimeProgress.text = "${elapsedTimeHours}h/∞" // Show actual elapsed hours
-            tvMaxBatchTime.text = "/∞"
-            pbBatchTime.progress = 0 // Progress bar remains at 0 for unlimited
-        }
-
-        // --- NEW: Calculate and Display Unique Location Count ---
-        val uniqueLocationsCount = allEntries.map { it.locationBarcode }.distinct().size
-        tvDashcardLocation.text = uniqueLocationsCount.toString()
-
-        // --- NEW: Calculate and Display Unique SKU Count ---
-        val uniqueSkusCount = allEntries.map { it.skuBarcode }.distinct().size
-        tvDashcardSku.text = uniqueSkusCount.toString()
-
-        // --- NEW: Calculate and Display Sum of Quantity ---
-        val totalQuantity = allEntries.sumOf { it.quantity }
-        tvDashcardQuantity.text = totalQuantity.toString()
-
-        // --- Optional: Update Batch Summary Text based on oldest entry ---
-        val tvBatchStatus = findViewById<TextView>(R.id.tv_batch_status) // Assuming you have this ID in your XML
-        if (oldestEntryTimestamp != null) {
-            val formattedTimestamp = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.getDefault()).format(Date(oldestEntryTimestamp))
-            tvBatchStatus.text = "🟢 Batch started on $formattedTimestamp"
-        } else {
+            // Set default texts for dashboard elements when hidden/empty
+            tvBatchSizeProgress.text = "0"
+            tvMaxBatchSize.text = "/0"
+            pbBatchSize.progress = 0
+            tvBatchTimeProgress.text = "0h"
+            tvMaxBatchTime.text = "/0h"
+            pbBatchTime.progress = 0
+            tvDashcardLocation.text = "0"
+            tvDashcardSku.text = "0"
+            tvDashcardQuantity.text = "0"
+            // Update Batch Status TextView
+            val tvBatchStatus = findViewById<TextView>(R.id.tv_batch_status)
             tvBatchStatus.text = "⚪ No batch started yet."
+
+        } else {
+            tvWelcomeSmallMessage.visibility = View.VISIBLE
+            llDashboard.visibility = View.VISIBLE
+            llHdash.visibility = View.VISIBLE
+            llBatchSummary.visibility = View.VISIBLE
+            btnMenuContinueBatch.visibility = View.VISIBLE // Show continue button
+            btnStartNewRecord.visibility = View.GONE // Hide start new button
+
+            // --- Existing Dashboard Calculations (only run if entries exist) ---
+            if (maxBatchSize > 0) {
+                tvBatchSizeProgress.text = "$currentRecordCount"
+                tvMaxBatchSize.text = "/ $maxBatchSize"
+                val progress = ((currentRecordCount.toFloat() / maxBatchSize) * 100).toInt().coerceIn(0, 100)
+                pbBatchSize.progress = progress
+            } else {
+                tvBatchSizeProgress.text = "$currentRecordCount"
+                tvMaxBatchSize.text = "/ ∞"
+                pbBatchSize.progress = 0
+            }
+
+            val maxBatchTimeHours = AppSettings.maxBatchTime
+            var elapsedTimeHours = 0
+
+            val oldestEntryTimestamp: Long? = allEntries.minByOrNull {
+                try {
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(it.timestamp)?.time ?: Long.MAX_VALUE
+                } catch (e: Exception) {
+                    Long.MAX_VALUE
+                }
+            }?.let {
+                try {
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(it.timestamp)?.time
+                } catch (e: Exception) {
+                    null
+                }
+            }
+
+            if (oldestEntryTimestamp != null) {
+                val currentTime = System.currentTimeMillis()
+                val elapsedTimeMillis = currentTime - oldestEntryTimestamp
+                elapsedTimeHours = TimeUnit.MILLISECONDS.toHours(elapsedTimeMillis).toInt()
+            }
+
+            if (maxBatchTimeHours > 0) {
+                tvBatchTimeProgress.text = "${elapsedTimeHours}h"
+                tvMaxBatchTime.text = "/ ${maxBatchTimeHours}h"
+                val progress = ((elapsedTimeHours.toFloat() / maxBatchTimeHours) * 100).toInt().coerceIn(0, 100)
+                pbBatchTime.progress = progress
+            } else {
+                tvBatchTimeProgress.text = "${elapsedTimeHours}h"
+                tvMaxBatchTime.text = "/ ∞"
+                pbBatchTime.progress = 0
+            }
+
+            val uniqueLocationsCount = allEntries.map { it.locationBarcode }.distinct().size
+            tvDashcardLocation.text = uniqueLocationsCount.toString()
+
+            val uniqueSkusCount = allEntries.map { it.skuBarcode }.distinct().size
+            tvDashcardSku.text = uniqueSkusCount.toString()
+
+            val totalQuantity = allEntries.sumOf { it.quantity }
+            tvDashcardQuantity.text = totalQuantity.toString()
+
+            val tvBatchStatus = findViewById<TextView>(R.id.tv_batch_status)
+            if (oldestEntryTimestamp != null) {
+                val formattedTimestamp = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.getDefault()).format(Date(oldestEntryTimestamp))
+                tvBatchStatus.text = "🟢 Batch started on $formattedTimestamp"
+            } else {
+                tvBatchStatus.text = "⚪ No batch started yet." // Fallback, shouldn't happen here
+            }
         }
 
         // --- Update welcome message based on logged in user ---
