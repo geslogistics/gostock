@@ -370,8 +370,7 @@ class HomeActivity : AppCompatActivity() {
         }
 
         btnBluetoothConnect.setOnClickListener {
-            val intent = Intent(this, BluetoothActivity::class.java)
-            startActivity(intent)
+            Toast.makeText(this, "Coming Soon!", Toast.LENGTH_SHORT).show()
         }
 
         btnManageUsers.setOnClickListener {
@@ -530,7 +529,6 @@ class HomeActivity : AppCompatActivity() {
             tvWelcomeSmallMessage.visibility = View.GONE
             llDashboard.visibility = View.GONE
             llHdash.visibility = View.GONE
-            llBatchSummary.visibility = View.GONE
             btnMenuContinueBatch.visibility = View.GONE // Hide continue button
             btnStartNewRecord.visibility = View.VISIBLE // Show start new button
 
@@ -552,7 +550,6 @@ class HomeActivity : AppCompatActivity() {
             tvWelcomeSmallMessage.visibility = View.VISIBLE
             llDashboard.visibility = View.VISIBLE
             llHdash.visibility = View.VISIBLE
-            llBatchSummary.visibility = View.VISIBLE
             btnMenuContinueBatch.visibility = View.VISIBLE // Show continue button
             btnStartNewRecord.visibility = View.GONE // Hide start new button
 
