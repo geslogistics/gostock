@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -38,16 +39,16 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var pbBatchTime: ProgressBar
     private lateinit var tvBatchTimeProgress: TextView
 
-    private lateinit var btnStartNewRecord: Button
-    private lateinit var btnEditRecords: Button
-    private lateinit var btnExportRecords: Button
-    private lateinit var btnExportClose: Button
-    private lateinit var btnImportRecords: Button
-    private lateinit var btnManageUsers: Button
+    private lateinit var btnStartNewRecord: LinearLayout
+    private lateinit var btnEditRecords: LinearLayout
+    private lateinit var btnExportRecords: LinearLayout
+    private lateinit var btnExportClose: LinearLayout
+    private lateinit var btnImportRecords: LinearLayout
+    private lateinit var btnManageUsers: LinearLayout
 
-    private lateinit var btnBluetoothConnect: Button
+    private lateinit var btnBluetoothConnect: LinearLayout
 
-    private lateinit var btnSettings: Button
+    private lateinit var btnSettings: LinearLayout
 
     private lateinit var tvLoggedInUser: TextView
 

@@ -167,15 +167,37 @@
                             android:progress="0"
                             />
 
-                        <TextView
-                            android:id="@+id/tv_batch_size_progress"
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
-                            android:text="0/0"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/primary_text_dark" />
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tv_batch_size_progress"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginTop="15dp"
+                                android:text="123"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:textAlignment="center"
+                                android:textColor="@color/primary_text_dark" />
+
+                            <TextView
+                                android:id="@+id/tv_max_batch_size"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="/ 200"
+                                android:textSize="15sp"
+                                android:textAlignment="center"
+                                android:textColor="@android:color/darker_gray" />
+
+                        </LinearLayout>
+
+
                     </RelativeLayout>
 
                     <TextView
@@ -215,15 +237,36 @@
                             android:progress="0"
                             />
 
-                        <TextView
-                            android:id="@+id/tv_batch_time_progress"
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
-                            android:text="0m/0m"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/primary_text_dark" />
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tv_batch_time_progress"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginTop="15dp"
+                                android:text="3h"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:textAlignment="center"
+                                android:textColor="@color/primary_text_dark" />
+
+                            <TextView
+                                android:id="@+id/tv_max_batch_size"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="/ 4h"
+                                android:textSize="15sp"
+                                android:textAlignment="center"
+                                android:textColor="@android:color/darker_gray" />
+
+                        </LinearLayout>
+
                     </RelativeLayout>
                     <TextView
                         android:layout_width="wrap_content"
@@ -385,10 +428,11 @@
                 android:orientation="vertical">
 
                 <LinearLayout
-                    android:id="@+id/btn_menu_start_batch"
+                    android:id="@+id/btn_start_new_record"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
+                    android:focusable="true"
                     android:clickable="true"
                     android:background="@drawable/rounded_bg_light"
                     android:foreground="?attr/selectableItemBackground"
@@ -481,7 +525,7 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/btn_menu_edit_batch"
+                    android:id="@+id/btn_edit_records"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -529,7 +573,7 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/btn_menu_export_batch"
+                    android:id="@+id/btn_export_records"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -577,7 +621,7 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/btn_menu_export_close_batch"
+                    android:id="@+id/btn_export_close"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -625,7 +669,7 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/btn_menu_import_batch"
+                    android:id="@+id/btn_import_records"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -673,7 +717,7 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/btn_menu_bluetooth"
+                    android:id="@+id/btn_bluetooth_connect"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -704,7 +748,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Continue stocktaking for the current batch"
+                            android:text="Pair with other devices to sync data"
                             android:textColor="@color/white"
                             android:textSize="15sp"
                             android:textStyle="normal" />
@@ -721,126 +765,108 @@
 
                 </LinearLayout>
 
+                <LinearLayout
+                    android:id="@+id/btn_manage_users"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:clickable="true"
+                    android:background="@drawable/rounded_bg_light"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:padding="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_weight="1">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Manage Users"
+                            android:textSize="22dp"
+                            android:textStyle="bold"
+                            android:layout_gravity="center_vertical"
+                            android:textColor="@color/primary_text_dark" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Create and modify users for the app"
+                            android:textColor="@color/primary_text_dark"
+                            android:textSize="15sp"
+                            android:textStyle="normal" />
+
+                    </LinearLayout>
+
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top|end"
+                        app:srcCompat="@drawable/ic_groups_icon"
+                        app:tint="@color/primary_text_dark"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/btn_settings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:clickable="true"
+                    android:background="@drawable/rounded_bg_light"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:padding="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_weight="1">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Settings"
+                            android:textSize="22dp"
+                            android:textStyle="bold"
+                            android:layout_gravity="center_vertical"
+                            android:textColor="@color/primary_text_dark" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Configure and customize the app"
+                            android:textColor="@color/primary_text_dark"
+                            android:textSize="15sp"
+                            android:textStyle="normal" />
+
+                    </LinearLayout>
+
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top|end"
+                        app:srcCompat="@drawable/ic_settings_icon"
+                        app:tint="@color/primary_text_dark"/>
+
+                </LinearLayout>
+
             </LinearLayout>
 
 
             <!-- END Menu Button Secion -->
 
-            <Button
-                android:id="@+id/btn_start_new_record"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="@color/button_background_light"
-                android:elevation="0dp"
-                android:padding="16dp"
-                android:text="@string/new_button_label"
-                android:textColor="@color/primary_text_dark"
-                android:textSize="15sp"
-                app:cornerRadius="12dp" />
 
-            <Button
-                android:id="@+id/btn_edit_records"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="@color/button_background_light"
-                android:elevation="0dp"
-                android:padding="16dp"
-                android:text="@string/edit_button_label"
-                android:textColor="@color/primary_text_dark"
-                android:textSize="15sp"
-                app:cornerRadius="12dp" />
-
-            <Button
-                android:id="@+id/btn_export_records"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="@color/button_background_light"
-                android:elevation="0dp"
-                android:padding="16dp"
-                android:text="@string/export_button_label"
-                android:textColor="@color/primary_text_dark"
-                android:textSize="15sp"
-                app:cornerRadius="12dp" />
-
-            <Button
-                android:id="@+id/btn_export_close"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="@color/button_background_light"
-                android:elevation="0dp"
-                android:padding="16dp"
-                android:text="@string/export_close_button_label"
-                android:textColor="@color/primary_text_dark"
-                android:textSize="15sp"
-                app:cornerRadius="12dp" />
-
-            <Button
-                android:id="@+id/btn_import_records"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="@color/button_background_light"
-                android:elevation="0dp"
-                android:padding="16dp"
-                android:text="@string/import_button_label"
-                android:textColor="@color/primary_text_dark"
-                android:textSize="15sp"
-                app:cornerRadius="12dp" />
-
-
-            <Button
-                android:id="@+id/btn_bluetooth_connect"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:elevation="0dp"
-                android:padding="16dp"
-                android:text="Bluetooth"
-                android:backgroundTint="@color/blue_500"
-                android:textColor="@android:color/white"
-                android:textSize="15sp"
-                android:visibility="visible"
-                app:cornerRadius="12dp" />
-
-            <Button
-                android:id="@+id/btn_manage_users"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="@color/button_background_light"
-                android:elevation="0dp"
-                android:padding="16dp"
-                android:text="@string/manage_users_button_label"
-                android:textColor="@color/primary_text_dark"
-                android:textSize="15sp"
-                android:visibility="visible"
-                app:cornerRadius="12dp" />
-
-            <Button
-                android:id="@+id/btn_settings"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="@color/button_background_light"
-                android:elevation="0dp"
-                android:padding="16dp"
-                android:text="Settings"
-                android:textColor="@color/primary_text_dark"
-                android:textSize="15sp"
-                android:visibility="visible"
-                app:cornerRadius="12dp" />
 
         </LinearLayout>
 
