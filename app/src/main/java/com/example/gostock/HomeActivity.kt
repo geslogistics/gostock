@@ -36,8 +36,11 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var pbBatchSize: ProgressBar
     private lateinit var tvBatchSizeProgress: TextView
+    private lateinit var tvMaxBatchSize: TextView
+
     private lateinit var pbBatchTime: ProgressBar
     private lateinit var tvBatchTimeProgress: TextView
+    private lateinit var tvMaxBatchTime: TextView
 
     private lateinit var btnStartNewRecord: LinearLayout
     private lateinit var btnEditRecords: LinearLayout
@@ -77,8 +80,10 @@ class HomeActivity : AppCompatActivity() {
         // NEW: Initialize Dashboard UI elements
         pbBatchSize = findViewById(R.id.pb_batch_size)
         tvBatchSizeProgress = findViewById(R.id.tv_batch_size_progress)
+        tvMaxBatchSize = findViewById(R.id.tv_max_batch_size)
         pbBatchTime = findViewById(R.id.pb_batch_time)
         tvBatchTimeProgress = findViewById(R.id.tv_batch_time_progress)
+        tvMaxBatchTime = findViewById(R.id.tv_max_batch_time)
 
         btnStartNewRecord = findViewById(R.id.btn_start_new_record)
         btnEditRecords = findViewById(R.id.btn_edit_records)
@@ -496,11 +501,13 @@ class HomeActivity : AppCompatActivity() {
 
         // --- Calculate Batch Size Progress ---
         if (maxBatchSize > 0) {
-            tvBatchSizeProgress.text = "$currentRecordCount/$maxBatchSize"
+            tvBatchSizeProgress.text = "$currentRecordCount"
+            tvMaxBatchSize.text = "/$maxBatchSize"
             val progress = ((currentRecordCount.toFloat() / maxBatchSize) * 100).toInt().coerceIn(0, 100)
             pbBatchSize.progress = progress
         } else {
-            tvBatchSizeProgress.text = "$currentRecordCount/∞"
+            tvBatchSizeProgress.text = "$currentRecordCount"
+            tvMaxBatchSize.text = "/∞"
             pbBatchSize.progress = 0 // Or set to 0, or hide, depending on desired visual for unlimited
         }
 
@@ -532,11 +539,13 @@ class HomeActivity : AppCompatActivity() {
         }
 
         if (maxBatchTimeHours > 0) { // If maxBatchTime is defined (not unlimited)
-            tvBatchTimeProgress.text = "${elapsedTimeHours}h/${maxBatchTimeHours}h"
+            tvBatchTimeProgress.text = "${elapsedTimeHours}h"
+            tvMaxBatchTime.text = "/${maxBatchTimeHours}h"
             val progress = ((elapsedTimeHours.toFloat() / maxBatchTimeHours) * 100).toInt().coerceIn(0, 100)
             pbBatchTime.progress = progress
         } else { // Max batch time is unlimited (maxBatchTimeHours == 0)
             tvBatchTimeProgress.text = "${elapsedTimeHours}h/∞" // Show actual elapsed hours
+            tvMaxBatchTime.text = "/∞"
             pbBatchTime.progress = 0 // Progress bar remains at 0 for unlimited
         }
     }
