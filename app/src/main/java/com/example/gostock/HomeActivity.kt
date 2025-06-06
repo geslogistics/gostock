@@ -42,6 +42,10 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var tvBatchTimeProgress: TextView
     private lateinit var tvMaxBatchTime: TextView
 
+    private lateinit var tvDashcardLocation: TextView
+    private lateinit var tvDashcardSku: TextView
+    private lateinit var tvDashcardQuantity: TextView
+
     private lateinit var btnStartNewRecord: LinearLayout
     private lateinit var btnEditRecords: LinearLayout
     private lateinit var btnExportRecords: LinearLayout
@@ -84,6 +88,10 @@ class HomeActivity : AppCompatActivity() {
         pbBatchTime = findViewById(R.id.pb_batch_time)
         tvBatchTimeProgress = findViewById(R.id.tv_batch_time_progress)
         tvMaxBatchTime = findViewById(R.id.tv_max_batch_time)
+
+        tvDashcardLocation = findViewById(R.id.tv_dashcard_location)
+        tvDashcardSku = findViewById(R.id.tv_dashcard_sku)
+        tvDashcardQuantity = findViewById(R.id.tv_dashcard_quantity)
 
         btnStartNewRecord = findViewById(R.id.btn_start_new_record)
         btnEditRecords = findViewById(R.id.btn_edit_records)
@@ -548,5 +556,33 @@ class HomeActivity : AppCompatActivity() {
             tvMaxBatchTime.text = "/∞"
             pbBatchTime.progress = 0 // Progress bar remains at 0 for unlimited
         }
+
+        // --- NEW: Calculate and Display Unique Location Count ---
+        val uniqueLocationsCount = allEntries.map { it.locationBarcode }.distinct().size
+        tvDashcardLocation.text = uniqueLocationsCount.toString()
+
+        // --- NEW: Calculate and Display Unique SKU Count ---
+        val uniqueSkusCount = allEntries.map { it.skuBarcode }.distinct().size
+        tvDashcardSku.text = uniqueSkusCount.toString()
+
+        // --- NEW: Calculate and Display Sum of Quantity ---
+        val totalQuantity = allEntries.sumOf { it.quantity }
+        tvDashcardQuantity.text = totalQuantity.toString()
+
+        // --- Optional: Update Batch Summary Text based on oldest entry ---
+        val tvBatchStatus = findViewById<TextView>(R.id.tv_batch_status) // Assuming you have this ID in your XML
+        if (oldestEntryTimestamp != null) {
+            val formattedTimestamp = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.getDefault()).format(Date(oldestEntryTimestamp))
+            tvBatchStatus.text = "🟢 Batch started on $formattedTimestamp"
+        } else {
+            tvBatchStatus.text = "⚪ No batch started yet."
+        }
+
+        // --- Update welcome message based on logged in user ---
+        val loggedInUser = GoStockApp.loggedInUser
+        if (loggedInUser != null) {
+            tvWelcomeMessage.text = "👋🏾 Hello ${loggedInUser.username}!"
+        }
+
     }
 }
