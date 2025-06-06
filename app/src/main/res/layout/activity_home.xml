@@ -121,6 +121,7 @@
                 android:backgroundTint="#1A000000">
 
                 <TextView
+                    android:id="@+id/tv_batch_status"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="🟢  Batch started on 18/10/2024 05:38 PM"/>
@@ -321,6 +322,7 @@
                             android:textStyle="normal"/>
 
                         <TextView
+                            android:id="@+id/tv_dashcard_location"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="48"
@@ -362,6 +364,7 @@
                             android:textStyle="normal"/>
 
                         <TextView
+                            android:id="@+id/tv_dashcard_sku"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="48"
@@ -403,6 +406,7 @@
                             android:textStyle="normal"/>
 
                         <TextView
+                            android:id="@+id/tv_dashcard_quantity"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="48"
