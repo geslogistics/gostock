@@ -11,7 +11,7 @@ object AppSettings {
 
     // Default values
     const val DEFAULT_MAX_BATCH_SIZE = 0 // count
-    const val DEFAULT_MAX_BATCH_TIME = 0 // minutes
+    const val DEFAULT_MAX_BATCH_TIME = 0 // hours
 
     private lateinit var sharedPreferences: SharedPreferences
 

@@ -147,7 +147,7 @@
                             android:id="@+id/tv_max_batch_time_label"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/max_batch_size_label"
+                            android:text="@string/max_batch_time_label"
                             android:textColor="@android:color/darker_gray"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -157,7 +157,7 @@
                         android:id="@+id/et_max_batch_time"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="e.g., 60"
+                        android:hint="e.g., 2"
                         android:inputType="text"
                         android:minHeight="20dp"
                         />

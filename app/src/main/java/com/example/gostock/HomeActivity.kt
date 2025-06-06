@@ -25,8 +25,18 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import androidx.core.content.edit
 
+import android.widget.ProgressBar // ADD THIS IMPORT
+import java.util.concurrent.TimeUnit // ADD THIS IMPORT
+
 
 class HomeActivity : AppCompatActivity() {
+
+    private lateinit var tvWelcomeMessage: TextView
+
+    private lateinit var pbBatchSize: ProgressBar
+    private lateinit var tvBatchSizeProgress: TextView
+    private lateinit var pbBatchTime: ProgressBar
+    private lateinit var tvBatchTimeProgress: TextView
 
     private lateinit var btnStartNewRecord: Button
     private lateinit var btnEditRecords: Button
@@ -51,6 +61,23 @@ class HomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
+
+        tvWelcomeMessage = findViewById(R.id.tv_welcome_message)
+
+        val loggedInUser = GoStockApp.loggedInUser
+        if (loggedInUser != null) {
+            tvWelcomeMessage.text = "\uD83D\uDC4B\uD83C\uDFFE" + " Hello " + loggedInUser.username + "!"
+        } else {
+            tvLoggedInUser.text = getString(R.string.not_logged_in)
+            Toast.makeText(this, "User not logged in. Redirecting to login.", Toast.LENGTH_LONG).show()
+            performLogout()
+        }
+
+        // NEW: Initialize Dashboard UI elements
+        pbBatchSize = findViewById(R.id.pb_batch_size)
+        tvBatchSizeProgress = findViewById(R.id.tv_batch_size_progress)
+        pbBatchTime = findViewById(R.id.pb_batch_time)
+        tvBatchTimeProgress = findViewById(R.id.tv_batch_time_progress)
 
         btnStartNewRecord = findViewById(R.id.btn_start_new_record)
         btnEditRecords = findViewById(R.id.btn_edit_records)
@@ -450,6 +477,66 @@ class HomeActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Toast.makeText(this, "No app found to open CSV files.", Toast.LENGTH_SHORT).show()
             e.printStackTrace()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Reload recent entries in MainActivity, but here we update dashboard
+        setupUserDetails() // Update user details in case of change
+        setupRoleBasedVisibility() // Update button visibility based on role
+        updateDashboard() // NEW: Update dashboard whenever activity resumes
+    }
+
+    private fun updateDashboard() {
+        val allEntries = fileHandler.loadStockEntries()
+        val currentRecordCount = allEntries.size
+        val maxBatchSize = AppSettings.maxBatchSize
+
+        // --- Calculate Batch Size Progress ---
+        if (maxBatchSize > 0) {
+            tvBatchSizeProgress.text = "$currentRecordCount/$maxBatchSize"
+            val progress = ((currentRecordCount.toFloat() / maxBatchSize) * 100).toInt().coerceIn(0, 100)
+            pbBatchSize.progress = progress
+        } else {
+            tvBatchSizeProgress.text = "$currentRecordCount/∞"
+            pbBatchSize.progress = 0 // Or set to 0, or hide, depending on desired visual for unlimited
+        }
+
+
+        // --- Calculate Batch Time Progress ---
+        val maxBatchTimeHours = AppSettings.maxBatchTime // Get from settings (now in hours)
+        var elapsedTimeHours = 0 // Initialize to 0
+
+        val oldestEntryTimestamp: Long? = allEntries.minByOrNull {
+            // Parse timestamp string to Date, then get time in milliseconds
+            try {
+                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(it.timestamp)?.time ?: Long.MAX_VALUE
+            } catch (e: Exception) {
+                // Handle parsing error, treat as very old
+                Long.MAX_VALUE
+            }
+        }?.let {
+            try {
+                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(it.timestamp)?.time
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        if (oldestEntryTimestamp != null) { // If there's at least one entry
+            val currentTime = System.currentTimeMillis()
+            val elapsedTimeMillis = currentTime - oldestEntryTimestamp
+            elapsedTimeHours = TimeUnit.MILLISECONDS.toHours(elapsedTimeMillis).toInt()
+        }
+
+        if (maxBatchTimeHours > 0) { // If maxBatchTime is defined (not unlimited)
+            tvBatchTimeProgress.text = "${elapsedTimeHours}h/${maxBatchTimeHours}h"
+            val progress = ((elapsedTimeHours.toFloat() / maxBatchTimeHours) * 100).toInt().coerceIn(0, 100)
+            pbBatchTime.progress = progress
+        } else { // Max batch time is unlimited (maxBatchTimeHours == 0)
+            tvBatchTimeProgress.text = "${elapsedTimeHours}h/∞" // Show actual elapsed hours
+            pbBatchTime.progress = 0 // Progress bar remains at 0 for unlimited
         }
     }
 }
