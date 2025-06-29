@@ -31,9 +31,21 @@
                 android:src="@drawable/ic_back_icon"
                 app:tint="@color/toolbar_icon_tint" />
 
+            <ImageButton
+                android:id="@+id/btn_toolbar_clear"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="start|center"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/circle_button_bg_stateful"
+                android:contentDescription="@string/back_button_label"
+                android:src="@drawable/ic_undo_icon"
+                app:tint="#BF0000" />
+
             <View
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="-58dp"
                 android:layout_weight="1" />
 
             <TextView

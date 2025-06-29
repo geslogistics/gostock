@@ -42,62 +42,48 @@ class ZebraScannerHelper(private val context: Context, private val listener: Zeb
 
     /** Initializes and configures the DataWedge profile. */
     fun setupDataWedgeProfile() {
-        Log.d(TAG, "Configuring DataWedge profile '$PROFILE_NAME'...")
-
-        val bMain = Bundle()
-        val bConfig = Bundle()
-        val bParams = Bundle()
+        val bMain = Bundle() // Main bundle for SET_CONFIG payload
+        val bConfig = Bundle() // Bundle for PLUGIN_CONFIG
+        val bParams = Bundle() // Bundle for Intent plugin parameters
 
         // 1. Configure Intent Output Plugin Parameters
         bParams.putString("intent_output_enabled", "true")
+        // Use YOUR APP'S intent action for data delivery
         bParams.putString("intent_action", context.resources.getString(R.string.activity_intent_filter_action))
+        // Explicitly set the category for the intent. This is crucial for matching your receiver.
         bParams.putString("intent_category", Intent.CATEGORY_DEFAULT)
-        bParams.putInt("intent_delivery", 2)
+        // Set delivery method as Integer (2 for Broadcast) as per reference
+        bParams.putInt("intent_delivery", 2) // 0 for Start Activity, 1 for Start Service, 2 for Broadcast
+
+        // 2. Configure Intent Plugin itself
         bConfig.putString("PLUGIN_NAME", "INTENT")
-        bConfig.putString("RESET_CONFIG", "false")
-        bConfig.putBundle("PARAM_LIST", bParams)
-
-        // 2. Configure Barcode Plugin (Scanner)
-        val barcodeConfig = Bundle()
-        barcodeConfig.putString("PLUGIN_NAME", "BARCODE")
-        barcodeConfig.putString("RESET_CONFIG", "false")
-        val barcodeParams = Bundle()
-        barcodeParams.putString("scanner_selection", "auto")
-        barcodeParams.putString("scanner_input_enabled", "true")
-        barcodeConfig.putBundle("PARAM_LIST", barcodeParams)
-
+        bConfig.putString("RESET_CONFIG", "false") // Set to false as per reference
+        bConfig.putBundle("PARAM_LIST", bParams) // Add parameters to the plugin config
 
         // 3. Configure the main Profile
-        bMain.putString("PROFILE_NAME", PROFILE_NAME)
+        bMain.putString("PROFILE_NAME", DataWedgeConstants.PROFILE_NAME)
         bMain.putString("PROFILE_ENABLED", "true")
-        bMain.putString("CONFIG_MODE", DataWedgeConstants.CREATE_IF_NOT_EXIST) // Use DataWedgeConstants
-        bMain.putBundle("PLUGIN_CONFIG", barcodeConfig)
-        // It's common to explicitly list both intent and barcode plugins if they are separate configs
-        bMain.putParcelableArray("PLUGIN_CONFIG_INTENT", arrayOf(bConfig)) // Add Intent plugin as well
+        // Use CREATE_IF_NOT_EXIST for CONFIG_MODE as per reference
+        bMain.putString("CONFIG_MODE", "CREATE_IF_NOT_EXIST")
+        bMain.putBundle("PLUGIN_CONFIG", bConfig) // Add plugin config to main profile bundle
 
-        bMain.putParcelableArray("APP_LIST", arrayOf(
-            Bundle().apply {
-                putString("PACKAGE_NAME", context.packageName)
-                putStringArray("ACTIVITY_LIST", arrayOf("*"))
-            }
-        ))
-        bMain.putParcelableArray("ASSOCIATED_APPS", arrayOf(
-            Bundle().apply {
-                putString("PACKAGE_NAME", context.packageName)
-                putStringArray("ACTIVITY_LIST", arrayOf("*"))
-            }
-        ))
+        // Associated apps: Link your application to this DataWedge profile.
+        // DataWedge will only process scans for apps listed here when this profile is active.
+        val appConfig = Bundle()
+        appConfig.putString("PACKAGE_NAME", "com.example.gostock") // Set your app's package name
+        appConfig.putStringArray("ACTIVITY_LIST", arrayOf("*")) // Apply to all activities in this package
+        bMain.putParcelableArray("APP_LIST", arrayOf(appConfig))
 
 
         // 4. Send the SET_CONFIG Intent
         val i = Intent()
-        i.action = DataWedgeConstants.ACTION_DATAWEDGE_API // Use DataWedgeConstants
-        i.putExtra(DataWedgeConstants.EXTRA_SET_CONFIG, bMain) // Use DataWedgeConstants
-        i.putExtra(DataWedgeConstants.EXTRA_COMMAND_IDENTIFIER, "SET_CONFIG_$PROFILE_NAME") // Use DataWedgeConstants
-        i.putExtra(DataWedgeConstants.EXTRA_SEND_RESULT, "true") // Use DataWedgeConstants
+        i.action = DataWedgeConstants.ACTION_DATAWEDGE_API // Use the general API action
+        i.putExtra(DataWedgeConstants.EXTRA_SET_CONFIG, bMain) // Pass the full profile configuration bundle
+        i.putExtra(DataWedgeConstants.EXTRA_COMMAND_IDENTIFIER, "SET_CONFIG_$PROFILE_NAME") // Unique ID for this command
+        i.putExtra(DataWedgeConstants.EXTRA_SEND_RESULT, DataWedgeConstants.SEND_RESULT_LAST_RESULT) // Use "LAST_RESULT" for robust result feedback
 
         context.sendBroadcast(i)
-        Log.d(TAG, "Sent SET_CONFIG intent for profile: $PROFILE_NAME")
+        Log.d("DataWedge", "Sent SET_CONFIG intent for profile: ${DataWedgeConstants.PROFILE_NAME}")
     }
 
     /** Registers the BroadcastReceiver for DataWedge scanned data. */
