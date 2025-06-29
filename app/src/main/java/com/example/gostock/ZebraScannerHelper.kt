@@ -64,12 +64,27 @@ class ZebraScannerHelper(private val context: Context, private val listener: Zeb
         bConfig.putString("RESET_CONFIG", "false") // Set to false as per reference
         bConfig.putBundle("PARAM_LIST", bParams) // Add parameters to the plugin config
 
+        // 3.5 Configure Keystroke Plugin
+        val keystrokeConfig = Bundle()
+        val keystrokeParams = Bundle()
+
+        keystrokeParams.putString("keystroke_output_enabled", "false")
+        keystrokeConfig.putString("PLUGIN_NAME", "KEYSTROKE")
+        keystrokeConfig.putString("RESET_CONFIG", "false")
+        keystrokeConfig.putBundle("PARAM_LIST", keystrokeParams)
+
+        val pluginConfigList = ArrayList<Bundle>()
+        pluginConfigList.add(keystrokeConfig)
+        pluginConfigList.add(bConfig)
+
         // 3. Configure the main Profile
         bMain.putString("PROFILE_NAME", DataWedgeConstants.PROFILE_NAME)
         bMain.putString("PROFILE_ENABLED", "true")
         // Use CREATE_IF_NOT_EXIST for CONFIG_MODE as per reference
         bMain.putString("CONFIG_MODE", "CREATE_IF_NOT_EXIST")
-        bMain.putBundle("PLUGIN_CONFIG", bConfig) // Add plugin config to main profile bundle
+        bMain.putParcelableArrayList("PLUGIN_CONFIG", pluginConfigList)
+
+        //bMain.putBundle("PLUGIN_CONFIG", bConfig) // Add plugin config to main profile bundle
 
         // Associated apps: Link your application to this DataWedge profile.
         // DataWedge will only process scans for apps listed here when this profile is active.
