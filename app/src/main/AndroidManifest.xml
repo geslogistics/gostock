@@ -7,6 +7,11 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
 
+<!--    <uses-permission android:name="com.zebra.emdk.permission.EMDK" />-->
+    <uses-permission android:name="com.symbol.datawedge.permission.SEND_SOFT_SCAN_TRIGGER" />
+    <uses-permission android:name="com.symbol.datawedge.permission.SET_CONFIG" />
+    <uses-permission android:name="com.symbol.datawedge.permission.REGISTER_FOR_NOTIFICATION" />
+    <uses-permission android:name="com.symbol.datawedge.permission.UNREGISTER_FOR_NOTIFICATION" />
 
     <application
         android:name=".GoStockApp"
@@ -19,6 +24,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GoStock"
         tools:targetApi="31">
+        <activity
+            android:name=".SubActivity"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="com.example.gostock.ACTION" />
+            <category android:name="android.intent.category.DEFAULT" />
+        </intent-filter>
+    </activity>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -29,6 +42,10 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+
+
+
 
         <activity
             android:name=".LoginActivity"
@@ -65,12 +82,10 @@
             android:exported="false" />
         <activity
             android:name=".ResetPasswordActivity"
-            android:exported="false"></activity>
-
+            android:exported="false" />
         <activity
             android:name=".SettingsActivity"
-            android:exported="false">
-        </activity>
+            android:exported="false"></activity>
     </application>
 
 </manifest>

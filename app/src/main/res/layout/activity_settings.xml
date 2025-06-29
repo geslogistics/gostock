@@ -164,6 +164,77 @@
 
                 </LinearLayout>
 
+                <LinearLayout
+                    android:id="@+id/ll_enable_zebra"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_bg_outline_gray"
+                    android:padding="16dp"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:id="@+id/iv_zebra_label"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="10dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_zebra_icon"
+                            app:tint="@android:color/darker_gray"
+                            />
+
+                        <TextView
+                            android:id="@+id/tv_enable_zebra_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/enable_zebra_label"
+                            android:textColor="@android:color/darker_gray"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+
+
+                    <Switch
+                        android:id="@+id/switch_enable_zebra_device"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Enable Zebra Device"
+                        android:layout_marginTop="15dp"
+                        android:minHeight="20dp"
+                        android:thumbTextPadding="12dp"
+                        android:trackTint="@color/purple_500"
+                        android:thumbTint="@color/purple_200"
+                        />
+
+                    <Button
+                        android:id="@+id/btn_check_zebra"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Check Zebra"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/tv_zebra_status"
+                        android:text="Zebra Status"
+                        android:textColor="@android:color/darker_gray"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+
+
+                </LinearLayout>
+
+
+
             </LinearLayout>
 
         </ScrollView>

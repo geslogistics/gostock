@@ -65,6 +65,8 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var btnSettings: LinearLayout
 
+    private lateinit var btnSub: LinearLayout
+
     private lateinit var tvLoggedInUser: TextView
 
     private lateinit var fileHandler: FileHandler
@@ -104,6 +106,8 @@ class HomeActivity : AppCompatActivity() {
         btnImportRecords = findViewById(R.id.btn_import_records)
         btnManageUsers = findViewById(R.id.btn_manage_users)
         btnSettings = findViewById(R.id.btn_settings)
+
+        btnSub = findViewById(R.id.btn_sub)
 
         btnBluetoothConnect = findViewById(R.id.btn_bluetooth_connect)
 
@@ -382,6 +386,13 @@ class HomeActivity : AppCompatActivity() {
             val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
         }
+
+        btnSub.setOnClickListener {
+            val intent = Intent(this, SubActivity::class.java)
+            startActivity(intent)
+        }
+
+
     }
 
     // New: Generic function to initiate SAF export
