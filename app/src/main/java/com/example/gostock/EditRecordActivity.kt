@@ -32,7 +32,7 @@ class EditRecordActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_record)
 
-        fileHandler = FileHandler(this)
+        fileHandler = FileHandler(this, "stock_data.json")
 
         // Initialize UI elements
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)

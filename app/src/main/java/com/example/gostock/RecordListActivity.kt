@@ -54,7 +54,7 @@ class RecordListActivity : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.recyclerView_records)
         tvNoRecords = findViewById(R.id.tv_no_records)
-        fileHandler = FileHandler(this) // Initialize FileHandler
+        fileHandler = FileHandler(this, "stock_data.json")
 
         setupRecyclerView()
 

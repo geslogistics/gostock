@@ -136,7 +136,7 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
 
 
         // Initialize FileHandler
-        fileHandler = FileHandler(this)
+        fileHandler = FileHandler(this, "stock_data.json")
 
         // Set logged-in user for stock entries
         GoStockApp.loggedInUser?.let {

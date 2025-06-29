@@ -113,7 +113,7 @@ class HomeActivity : AppCompatActivity() {
 
         tvLoggedInUser = findViewById(R.id.tv_logged_in_user)
 
-        fileHandler = FileHandler(this)
+        fileHandler = FileHandler(this, "stock_data.json")
 
         val loggedInUser = GoStockApp.loggedInUser
         if (loggedInUser != null) {
@@ -279,9 +279,22 @@ class HomeActivity : AppCompatActivity() {
     private fun setupRoleBasedVisibility() {
         val loggedInUser = GoStockApp.loggedInUser
         if (loggedInUser?.role == UserRole.ADMIN) {
+            btnExportRecords.visibility = View.VISIBLE
+            btnExportClose.visibility = View.VISIBLE
+            btnImportRecords.visibility = View.VISIBLE
+            btnBluetoothConnect.visibility = View.VISIBLE
+            btnSettings.visibility = View.VISIBLE
             btnManageUsers.visibility = View.VISIBLE
+            btnSub.visibility = View.VISIBLE
         } else {
+            btnExportRecords.visibility = View.GONE
+            btnExportClose.visibility = View.GONE
+            btnImportRecords.visibility = View.GONE
+            btnBluetoothConnect.visibility = View.GONE
+            btnSettings.visibility = View.GONE
             btnManageUsers.visibility = View.GONE
+            btnSub.visibility = View.GONE
+
         }
     }
 
