@@ -16,20 +16,27 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.google.android.material.card.MaterialCardView
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.view.isVisible
+import androidx.core.view.isVisible // Ensure this is needed, if not, remove
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-import androidx.recyclerview.widget.LinearLayoutManager // ADD THIS IMPORT
-import androidx.recyclerview.widget.RecyclerView // ADD THIS IMPORT
+// NEW IMPORTS FOR ZEBRA INTEGRATION
+import android.os.Build // ADDED for Build.MANUFACTURER check
+import android.util.Log // ADDED for logging
+import com.example.gostock.DataWedgeConstants // ADDED: Import your custom DataWedgeConstants
 
-class MainActivity : AppCompatActivity() {
+
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+
+// MainActivity now implements ZebraScanResultListener to receive callbacks from ZebraScannerHelper
+class MainActivity : AppCompatActivity(), ZebraScanResultListener {
 
     private lateinit var tvRecentEntriesTitle: TextView
     private lateinit var rvRecentEntries: RecyclerView
     private lateinit var tvNoRecentEntries: TextView
-    private lateinit var recentEntryAdapter: RecentEntryAdapter // Declare the new adapter
+    private lateinit var recentEntryAdapter: RecentEntryAdapter
 
     // Toolbar buttons (Back and Save)
     private lateinit var btnToolbarSave: ImageButton
@@ -38,13 +45,11 @@ class MainActivity : AppCompatActivity() {
     // Location Card elements
     private lateinit var cardLocation: MaterialCardView
     private lateinit var tvLocationValue: TextView
-    // private lateinit var ivLocationBarcodeIcon: ImageView // Not directly used in latest XML
     private lateinit var ivLocationCheckIcon: ImageView
 
     // SKU Card elements
     private lateinit var cardSku: MaterialCardView
     private lateinit var tvSkuValue: TextView
-    // private lateinit var ivSkuBarcodeIcon: ImageView // Not directly used in latest XML
     private lateinit var ivSkuCheckIcon: ImageView
 
     // Quantity Card elements
@@ -52,7 +57,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etQuantity: EditText
 
     // Internal state
-    private var selectedUser: String = "" // Captured from logged-in user
+    private var selectedUser: String = ""
     private lateinit var fileHandler: FileHandler
 
     // Enum to track current scan type
@@ -61,29 +66,20 @@ class MainActivity : AppCompatActivity() {
     }
     private var currentScanType: ScanType = ScanType.NONE
 
-    // Activity Result Launcher for Barcode Scanner
+    // Zebra Scanner related
+    private var isZebraDevice = false // Flag to check if running on a Zebra device
+    private lateinit var zebraScannerHelper: ZebraScannerHelper // NEW: Instance of our helper class
+
+    private val TAG = "MainActivity" // Tag for logging for MainActivity itself
+
+
+    // Activity Result Launcher for Barcode Scanner (Camera-based)
     private val barcodeScannerLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
             val scannedBarcode = result.data?.getStringExtra(BarcodeScannerActivity.EXTRA_BARCODE_RESULT)
-            scannedBarcode?.let {
-                if (currentScanType == ScanType.LOCATION) {
-                    tvLocationValue.text = it
-                    ivLocationCheckIcon.visibility = View.VISIBLE
-                    cardSku.isEnabled = true // ENABLE SKU card after successful location scan
-                } else if (currentScanType == ScanType.SKU) {
-                    tvSkuValue.text = it
-                    ivSkuCheckIcon.visibility = View.VISIBLE
-                    etQuantity.requestFocus()
-                    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        imm.showSoftInput(etQuantity, InputMethodManager.SHOW_IMPLICIT)
-                    }, 200)
-                }
-                updateSaveButtonState()
-                Toast.makeText(this, "Barcode scanned: $it", Toast.LENGTH_SHORT).show()
-            }
+            processCameraScanResult(scannedBarcode) // Call helper function for camera results
         } else {
             // If scan was cancelled/failed
             if (currentScanType == ScanType.LOCATION) {
@@ -97,32 +93,28 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Barcode scan cancelled or failed.", Toast.LENGTH_SHORT).show()
             updateSaveButtonState()
         }
-        currentScanType = ScanType.NONE
+        currentScanType = ScanType.NONE // Reset after processing scan
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-
-
+        // Initialize UI elements
         btnToolbarSave = findViewById(R.id.btn_toolbar_save)
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
 
-        // Initialize Location Card elements
         cardLocation = findViewById(R.id.card_location)
         tvLocationValue = findViewById(R.id.tv_location_value)
         ivLocationCheckIcon = findViewById(R.id.iv_location_check_icon)
-        // Initialize SKU Card elements
+
         cardSku = findViewById(R.id.card_sku)
         tvSkuValue = findViewById(R.id.tv_sku_value)
         ivSkuCheckIcon = findViewById(R.id.iv_sku_check_icon)
 
-        // Initialize Quantity Card element
         cardQuantity = findViewById(R.id.card_quantity)
         etQuantity = findViewById(R.id.et_quantity)
 
-        // NEW: Initialize Recent Entries UI elements
         tvRecentEntriesTitle = findViewById(R.id.tv_recent_entries_title)
         rvRecentEntries = findViewById(R.id.rv_recent_entries)
         tvNoRecentEntries = findViewById(R.id.tv_no_recent_entries)
@@ -139,26 +131,73 @@ class MainActivity : AppCompatActivity() {
             performLogout()
         }
 
+        // Determine if this is a Zebra device (more robust check)
+        isZebraDevice = Build.MANUFACTURER.equals("Zebra Technologies", ignoreCase = true) ||
+                Build.MODEL.startsWith("TC", ignoreCase = true) ||
+                Build.MODEL.startsWith("MC", ignoreCase = true) ||
+                Build.MODEL.startsWith("ET", ignoreCase = true)
+        Log.d(TAG, "Device Manufacturer: ${Build.MANUFACTURER}, Model: ${Build.MODEL}, Is Zebra Device: $isZebraDevice")
+
+        // Initialize ZebraScannerHelper. 'this' refers to MainActivity, which implements ZebraScanResultListener
+        zebraScannerHelper = ZebraScannerHelper(this, this)
+
+        // Setup DataWedge profile and register receiver if it's a Zebra device AND setting is enabled
+        if (isZebraDevice && AppSettings.enableZebraDevice) {
+            zebraScannerHelper.setupDataWedgeProfile() // Setup profile
+            zebraScannerHelper.registerReceiver() // Register the broadcast receiver
+            Toast.makeText(this, "Zebra DataWedge scanner enabled.", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Using camera for scanning.", Toast.LENGTH_SHORT).show()
+        }
+
+
         setupRecentEntriesRecyclerView()
         setupClickListeners()
-        resetInputFields() // Call this initially to set up states and text like ""
-        updateSaveButtonState() // Initial check for save button enablement
+        resetInputFields()
+        updateSaveButtonState()
     }
 
     override fun onResume() {
         super.onResume()
-        loadRecentEntries() // NEW: Load recent entries whenever activity resumes
+        // If it's a Zebra device and setting is enabled, ensure DataWedge profile is active and scanner is ready
+        if (isZebraDevice && AppSettings.enableZebraDevice) {
+            zebraScannerHelper.activateProfile(DataWedgeConstants.PROFILE_NAME) // Activate our profile using DataWedgeConstants
+            zebraScannerHelper.enableBarcodePlugin() // Ensure barcode scanner is enabled
+        }
+        loadRecentEntries()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // If it's a Zebra device and setting is enabled, stop active scans and disable plugin on pause
+        if (isZebraDevice && AppSettings.enableZebraDevice) {
+            zebraScannerHelper.stopSoftScan() // Stop any active scan
+            zebraScannerHelper.disableBarcodePlugin() // Disable barcode scanner plugin
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Unregister DataWedge receiver and deactivate profile if it was enabled
+        if (isZebraDevice && AppSettings.enableZebraDevice) {
+            try {
+                zebraScannerHelper.unregisterReceiver() // Unregister the broadcast receiver
+            } catch (e: Exception) {
+                // Handle cases where receiver might already be unregistered
+                Log.e(TAG, "Error unregistering DataWedge receiver: ${e.message}")
+            }
+            zebraScannerHelper.activateProfile("") // Deactivate our profile to clean up
+        }
     }
 
     private fun setupRecentEntriesRecyclerView() {
-        recentEntryAdapter = RecentEntryAdapter(emptyList()) // Initialize with empty list
+        recentEntryAdapter = RecentEntryAdapter(emptyList())
         rvRecentEntries.layoutManager = LinearLayoutManager(this)
         rvRecentEntries.adapter = recentEntryAdapter
     }
 
     private fun loadRecentEntries() {
         val allEntries = fileHandler.loadStockEntries()
-        // Sort by timestamp in descending order and take the top 3
         val recentEntries = allEntries.sortedByDescending { it.timestamp }.take(3)
 
         if (recentEntries.isNotEmpty()) {
@@ -182,37 +221,52 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "Logged out successfully!", Toast.LENGTH_SHORT).show()
     }
 
+
     /**
      * Sets up click listeners for all interactive UI elements.
      */
     private fun setupClickListeners() {
-        // Toolbar Back button
         btnToolbarBack.setOnClickListener {
-            finish() // Go back to HomeActivity
+            finish()
         }
 
-        // Toolbar Save button
         btnToolbarSave.setOnClickListener {
-            saveStockEntry(resetFields = true) // Save and clear fields, stay on page
+            saveStockEntry(resetFields = true)
         }
 
-        // --- CardView and ImageButton click listeners for scan actions ---
         // Location Card click (triggers scan)
         cardLocation.setOnClickListener {
             currentScanType = ScanType.LOCATION
-            val intent = Intent(this, BarcodeScannerActivity::class.java)
-            barcodeScannerLauncher.launch(intent)
-        }
 
+            // Conditional logic for Zebra or Camera scan
+            if (isZebraDevice && AppSettings.enableZebraDevice) {
+                zebraScannerHelper.startSoftScan() // Trigger Zebra scan
+                Toast.makeText(this, "Ready to scan location (Zebra).", Toast.LENGTH_SHORT).show()
+            } else {
+                val intent = Intent(this, BarcodeScannerActivity::class.java)
+                barcodeScannerLauncher.launch(intent)
+                Toast.makeText(this, "Ready to scan location (Camera).", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         // SKU Card click (triggers scan - Initially disabled, enabled after Location Scan)
         cardSku.setOnClickListener {
-            currentScanType = ScanType.SKU
-            val intent = Intent(this, BarcodeScannerActivity::class.java)
-            barcodeScannerLauncher.launch(intent)
-        }
+            // Prevent scan if card is disabled (location not scanned yet)
+            if (!cardSku.isEnabled) {
+                Toast.makeText(this, "Please scan Location first.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-        // --- END CardView and ImageButton click listeners ---
+            currentScanType = ScanType.SKU
+            if (isZebraDevice && AppSettings.enableZebraDevice) {
+                zebraScannerHelper.startSoftScan() // Trigger Zebra scan
+                Toast.makeText(this, "Ready to scan SKU (Zebra).", Toast.LENGTH_SHORT).show()
+            } else {
+                val intent = Intent(this, BarcodeScannerActivity::class.java)
+                barcodeScannerLauncher.launch(intent)
+                Toast.makeText(this, "Ready to scan SKU (Camera).", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         // TextWatcher for quantity to enable/disable save button
         etQuantity.addTextChangedListener(object : android.text.TextWatcher {
@@ -264,13 +318,13 @@ class MainActivity : AppCompatActivity() {
      * Resets the UI fields and state for a new entry.
      */
     private fun resetInputFields() {
-        tvLocationValue.text = "" // Reset text to empty
-        ivLocationCheckIcon.visibility = View.GONE // Hide check icon
-        tvSkuValue.text = "" // Reset text to empty
-        ivSkuCheckIcon.visibility = View.GONE // Hide check icon
-        etQuantity.text.clear() // Clear quantity
-        cardSku.isEnabled = false // DISABLE SKU card initially
-        updateSaveButtonState() // Update save button state (which will disable Save button if fields are empty)
+        tvLocationValue.text = ""
+        ivLocationCheckIcon.visibility = View.GONE
+        tvSkuValue.text = ""
+        ivSkuCheckIcon.visibility = View.GONE
+        etQuantity.text.clear()
+        cardSku.isEnabled = false
+        updateSaveButtonState()
     }
 
     /**
@@ -282,7 +336,64 @@ class MainActivity : AppCompatActivity() {
         val isQuantityEntered = etQuantity.text.isNotBlank() && etQuantity.text.toString().toIntOrNull() != null && etQuantity.text.toString().toIntOrNull()!! > 0
 
         val canSave = isLocationScanned && isSkuScanned && isQuantityEntered
-        btnToolbarSave.isEnabled = canSave // Control the toolbar save button
-        btnToolbarBack.isEnabled = true // Back button should always be enabled
+        btnToolbarSave.isEnabled = canSave
+        btnToolbarBack.isEnabled = true
+    }
+
+    // --- ZebraScanResultListener Implementation ---
+    override fun onZebraScanResult(scanData: String?) {
+        // This method is called by ZebraScannerHelper when a scan result is received
+        processZebraScanResult(scanData)
+    }
+
+    override fun onZebraScanError(errorMessage: String) {
+        // Handle scan errors, e.g., show a toast or log
+        Toast.makeText(this, "Zebra Scan Error: $errorMessage", Toast.LENGTH_LONG).show()
+        Log.e(TAG, "Zebra Scan Error: $errorMessage")
+        currentScanType = ScanType.NONE // Reset scan type on error
+    }
+
+    /** Processes the scan result received directly from DataWedge (from ZebraScannerHelper). */
+    private fun processZebraScanResult(scanData: String?) {
+        scanData?.let {
+            if (currentScanType == ScanType.LOCATION) {
+                tvLocationValue.text = it
+                ivLocationCheckIcon.visibility = View.VISIBLE
+                cardSku.isEnabled = true
+            } else if (currentScanType == ScanType.SKU) {
+                tvSkuValue.text = it
+                ivSkuCheckIcon.visibility = View.VISIBLE
+                etQuantity.requestFocus()
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                Handler(Looper.getMainLooper()).postDelayed({
+                    imm.showSoftInput(etQuantity, InputMethodManager.SHOW_IMPLICIT)
+                }, 200)
+            }
+            updateSaveButtonState()
+            Toast.makeText(this, "Scanned: $it", Toast.LENGTH_SHORT).show()
+        }
+        currentScanType = ScanType.NONE // Reset after processing scan
+    }
+
+    /** Processes the scan result received from the Camera (BarcodeScannerActivity). */
+    private fun processCameraScanResult(scanData: String?) {
+        scanData?.let {
+            if (currentScanType == ScanType.LOCATION) {
+                tvLocationValue.text = it
+                ivLocationCheckIcon.visibility = View.VISIBLE
+                cardSku.isEnabled = true
+            } else if (currentScanType == ScanType.SKU) {
+                tvSkuValue.text = it
+                ivSkuCheckIcon.visibility = View.VISIBLE
+                etQuantity.requestFocus()
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                Handler(Looper.getMainLooper()).postDelayed({
+                    imm.showSoftInput(etQuantity, InputMethodManager.SHOW_IMPLICIT)
+                }, 200)
+            }
+            updateSaveButtonState()
+            Toast.makeText(this, "Barcode scanned: $it", Toast.LENGTH_SHORT).show()
+        }
+        currentScanType = ScanType.NONE // Reset after processing scan
     }
 }

@@ -12,7 +12,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat // Import for ContextCompat
 
 // Constants for DataWedge API actions and extras
-object DataWedgeConstants {
+object DataWedgeConstantsOld {
     // General API Action for most DataWedge API calls
     const val ACTION_DATAWEDGE_API = "com.symbol.datawedge.api.ACTION"
 
@@ -82,8 +82,8 @@ class SubActivity : AppCompatActivity() {
                         Log.d("DataWedge", "----------------------------------")
 
                         // CORRECTED: Directly extract the barcode data string and symbology string
-                        val barcodeData: String? = getStringExtra(DataWedgeConstants.EXTRA_SCANNED_DATA_STRING)
-                        val symbology: String? = getStringExtra(DataWedgeConstants.EXTRA_SYMBOLOGY_TYPE_STRING)
+                        val barcodeData: String? = getStringExtra(DataWedgeConstantsOld.EXTRA_SCANNED_DATA_STRING)
+                        val symbology: String? = getStringExtra(DataWedgeConstantsOld.EXTRA_SYMBOLOGY_TYPE_STRING)
 
                         if (!barcodeData.isNullOrBlank()) {
                             val displayText = "Scanned: $barcodeData\nSymbology: $symbology"
@@ -95,9 +95,9 @@ class SubActivity : AppCompatActivity() {
                         }
                     }
                     // Action for receiving scanner status notifications
-                    DataWedgeConstants.ACTION_RESULT_NOTIFICATION -> {
-                        if (hasExtra(DataWedgeConstants.EXTRA_NOTIFICATION_STATUS)) {
-                            val bundle = getBundleExtra(DataWedgeConstants.EXTRA_NOTIFICATION_STATUS)
+                    DataWedgeConstantsOld.ACTION_RESULT_NOTIFICATION -> {
+                        if (hasExtra(DataWedgeConstantsOld.EXTRA_NOTIFICATION_STATUS)) {
+                            val bundle = getBundleExtra(DataWedgeConstantsOld.EXTRA_NOTIFICATION_STATUS)
                             val status = bundle?.getString("SCANNER_STATUS")
                             val profile = bundle?.getString("PROFILE_NAME")
                             val displayText = "Scanner Status: $status\nProfile: $profile"
@@ -106,12 +106,12 @@ class SubActivity : AppCompatActivity() {
                         }
                     }
                     // Action for receiving results of DataWedge API commands (e.g., SET_CONFIG)
-                    DataWedgeConstants.ACTION_RESULT -> {
-                        val command: String? = getStringExtra(DataWedgeConstants.EXTRA_COMMAND)
-                        val result: String? = getStringExtra(DataWedgeConstants.EXTRA_RESULT)
-                        val commandIdentifier: String? = getStringExtra(DataWedgeConstants.EXTRA_COMMAND_IDENTIFIER) // Added CID
+                    DataWedgeConstantsOld.ACTION_RESULT -> {
+                        val command: String? = getStringExtra(DataWedgeConstantsOld.EXTRA_COMMAND)
+                        val result: String? = getStringExtra(DataWedgeConstantsOld.EXTRA_RESULT)
+                        val commandIdentifier: String? = getStringExtra(DataWedgeConstantsOld.EXTRA_COMMAND_IDENTIFIER) // Added CID
 
-                        val resultInfo: Bundle? = getBundleExtra(DataWedgeConstants.EXTRA_RESULT_INFO)
+                        val resultInfo: Bundle? = getBundleExtra(DataWedgeConstantsOld.EXTRA_RESULT_INFO)
 
                         // Log all available result info for debugging
                         Log.d("DataWedge", "--- API Result Received ---")
@@ -127,7 +127,7 @@ class SubActivity : AppCompatActivity() {
                         Log.d("DataWedge", "---------------------------")
 
 
-                        if (command == DataWedgeConstants.EXTRA_SET_CONFIG) { // Note: The 'COMMAND' extra returns the full API name
+                        if (command == DataWedgeConstantsOld.EXTRA_SET_CONFIG) { // Note: The 'COMMAND' extra returns the full API name
                             val configStatus = resultInfo?.getString("RESULT_CODE") ?: "UNKNOWN"
                             if (result == "FAILURE") {
                                 val errorMessage = resultInfo?.getString("ERROR_MESSAGE") ?: "No error message provided."
@@ -135,16 +135,16 @@ class SubActivity : AppCompatActivity() {
                                 statusTextView.text = "Config Failed: $errorMessage"
                             } else {
                                 statusTextView.text = "Config Applied Successfully."
-                                Log.i("DataWedge", "SET_CONFIG successful for profile ${DataWedgeConstants.PROFILE_NAME}.")
+                                Log.i("DataWedge", "SET_CONFIG successful for profile ${DataWedgeConstantsOld.PROFILE_NAME}.")
                             }
-                        } else if (command == DataWedgeConstants.EXTRA_CREATE_PROFILE) { // Note: The 'COMMAND' extra returns the full API name
+                        } else if (command == DataWedgeConstantsOld.EXTRA_CREATE_PROFILE) { // Note: The 'COMMAND' extra returns the full API name
                             val createStatus = resultInfo?.getString("RESULT_CODE") ?: "UNKNOWN"
                             if (result == "FAILURE") {
                                 val errorMessage = resultInfo?.getString("ERROR_MESSAGE") ?: "No error message provided."
                                 Log.e("DataWedge", "CREATE_PROFILE Failed. Error Info: $errorMessage")
                                 statusTextView.text = "Profile Creation Failed: $errorMessage"
                             } else {
-                                Log.i("DataWedge", "CREATE_PROFILE successful for profile ${DataWedgeConstants.PROFILE_NAME}.")
+                                Log.i("DataWedge", "CREATE_PROFILE successful for profile ${DataWedgeConstantsOld.PROFILE_NAME}.")
                             }
                         }
                     }
@@ -219,9 +219,9 @@ class SubActivity : AppCompatActivity() {
         // with the `intent_action` configured in the DataWedge profile.
         filter.addAction(resources.getString(R.string.activity_intent_filter_action))
         // Action for receiving scanner status notifications from DataWedge.
-        filter.addAction(DataWedgeConstants.ACTION_RESULT_NOTIFICATION)
+        filter.addAction(DataWedgeConstantsOld.ACTION_RESULT_NOTIFICATION)
         // Action for receiving results of DataWedge API calls (e.g., SET_CONFIG success/failure)
-        filter.addAction(DataWedgeConstants.ACTION_RESULT)
+        filter.addAction(DataWedgeConstantsOld.ACTION_RESULT)
 
 
         // Check Android SDK version to apply the correct flag
@@ -246,7 +246,7 @@ class SubActivity : AppCompatActivity() {
      * as demonstrated in the provided reference.
      */
     private fun createAndConfigureDataWedgeProfile() {
-        Log.d("DataWedge", "Configuring DataWedge profile '${DataWedgeConstants.PROFILE_NAME}'...")
+        Log.d("DataWedge", "Configuring DataWedge profile '${DataWedgeConstantsOld.PROFILE_NAME}'...")
 
         val bMain = Bundle() // Main bundle for SET_CONFIG payload
         val bConfig = Bundle() // Bundle for PLUGIN_CONFIG
@@ -267,7 +267,7 @@ class SubActivity : AppCompatActivity() {
         bConfig.putBundle("PARAM_LIST", bParams) // Add parameters to the plugin config
 
         // 3. Configure the main Profile
-        bMain.putString("PROFILE_NAME", DataWedgeConstants.PROFILE_NAME)
+        bMain.putString("PROFILE_NAME", DataWedgeConstantsOld.PROFILE_NAME)
         bMain.putString("PROFILE_ENABLED", "true")
         // Use CREATE_IF_NOT_EXIST for CONFIG_MODE as per reference
         bMain.putString("CONFIG_MODE", "CREATE_IF_NOT_EXIST")
@@ -283,13 +283,13 @@ class SubActivity : AppCompatActivity() {
 
         // 4. Send the SET_CONFIG Intent
         val i = Intent()
-        i.action = DataWedgeConstants.ACTION_DATAWEDGE_API // Use the general API action
-        i.putExtra(DataWedgeConstants.EXTRA_SET_CONFIG, bMain) // Pass the full profile configuration bundle
-        i.putExtra(DataWedgeConstants.EXTRA_COMMAND_IDENTIFIER, "SET_CONFIG_GoStockProfile") // Unique ID for this command
-        i.putExtra(DataWedgeConstants.EXTRA_SEND_RESULT, DataWedgeConstants.SEND_RESULT_LAST_RESULT) // Use "LAST_RESULT" for robust result feedback
+        i.action = DataWedgeConstantsOld.ACTION_DATAWEDGE_API // Use the general API action
+        i.putExtra(DataWedgeConstantsOld.EXTRA_SET_CONFIG, bMain) // Pass the full profile configuration bundle
+        i.putExtra(DataWedgeConstantsOld.EXTRA_COMMAND_IDENTIFIER, "SET_CONFIG_GoStockProfile") // Unique ID for this command
+        i.putExtra(DataWedgeConstantsOld.EXTRA_SEND_RESULT, DataWedgeConstantsOld.SEND_RESULT_LAST_RESULT) // Use "LAST_RESULT" for robust result feedback
 
         applicationContext.sendBroadcast(i)
-        Log.d("DataWedge", "Sent SET_CONFIG intent for profile: ${DataWedgeConstants.PROFILE_NAME}")
+        Log.d("DataWedge", "Sent SET_CONFIG intent for profile: ${DataWedgeConstantsOld.PROFILE_NAME}")
     }
 
     /**
@@ -299,8 +299,8 @@ class SubActivity : AppCompatActivity() {
      */
     private fun triggerSoftScan(enable: Boolean) {
         val i = Intent()
-        i.action = DataWedgeConstants.ACTION_DATAWEDGE_API // Use the general API action
-        i.putExtra(DataWedgeConstants.EXTRA_SOFT_SCAN_TRIGGER, if (enable) "START_SCANNING" else "STOP_SCANNING") // Correct extra key
+        i.action = DataWedgeConstantsOld.ACTION_DATAWEDGE_API // Use the general API action
+        i.putExtra(DataWedgeConstantsOld.EXTRA_SOFT_SCAN_TRIGGER, if (enable) "START_SCANNING" else "STOP_SCANNING") // Correct extra key
         applicationContext.sendBroadcast(i)
         Log.d("DataWedge", "Soft scan trigger sent: ${if (enable) "START_SCANNING" else "STOP_SCANNING"}")
     }
@@ -313,13 +313,13 @@ class SubActivity : AppCompatActivity() {
     private fun registerForScannerStatusNotifications(register: Boolean) {
         val i = Intent()
         // Use the appropriate action for registering/unregistering notifications
-        i.action = if (register) DataWedgeConstants.ACTION_REGISTER_FOR_NOTIFICATION else DataWedgeConstants.ACTION_UNREGISTER_FOR_NOTIFICATION
+        i.action = if (register) DataWedgeConstantsOld.ACTION_REGISTER_FOR_NOTIFICATION else DataWedgeConstantsOld.ACTION_UNREGISTER_FOR_NOTIFICATION
 
         val bundle = Bundle()
         // Key for the type of notification inside the NOTIFICATION_BUNDLE
-        bundle.putString(DataWedgeConstants.EXTRA_NOTIFICATION_TYPE_KEY_IN_BUNDLE, "SCANNER_STATUS")
+        bundle.putString(DataWedgeConstantsOld.EXTRA_NOTIFICATION_TYPE_KEY_IN_BUNDLE, "SCANNER_STATUS")
         // The top-level extra which contains the notification bundle
-        i.putExtra(DataWedgeConstants.EXTRA_NOTIFICATION_BUNDLE, bundle)
+        i.putExtra(DataWedgeConstantsOld.EXTRA_NOTIFICATION_BUNDLE, bundle)
 
         applicationContext.sendBroadcast(i)
         Log.d("DataWedge", "${if (register) "Registering" else "Unregistering"} for scanner status notifications.")
