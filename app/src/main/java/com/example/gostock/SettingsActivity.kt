@@ -11,6 +11,8 @@ import android.widget.ImageButton
 import android.widget.Switch
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.util.Locale
+import android.text.TextUtils
 
 
 class SettingsActivity : AppCompatActivity() {
@@ -20,8 +22,9 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var btnToolbarSave: ImageButton
     private lateinit var btnToolbarBack: ImageButton
     private lateinit var switchEnableZebraDevice: Switch
-    private lateinit var btnCheckZebra: Button
-    private lateinit var tvZebraStatus: TextView
+    private lateinit var etAcceptedLocationFormats: EditText
+    private lateinit var etAcceptedSkuFormats: EditText
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,8 +35,11 @@ class SettingsActivity : AppCompatActivity() {
         btnToolbarSave = findViewById(R.id.btn_toolbar_save)
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
         switchEnableZebraDevice = findViewById(R.id.switch_enable_zebra_device)
-        btnCheckZebra = findViewById(R.id.btn_check_zebra)
-        tvZebraStatus = findViewById(R.id.tv_zebra_status)
+        etAcceptedLocationFormats = findViewById(R.id.et_accepted_location_formats)
+        etAcceptedSkuFormats = findViewById(R.id.et_accepted_sku_formats)
+
+
+
 
         loadSettings() // Load current settings on creation
         setupClickListeners()
@@ -43,6 +49,8 @@ class SettingsActivity : AppCompatActivity() {
         etMaxBatchSize.setText(AppSettings.maxBatchSize.toString())
         etMaxBatchTime.setText(AppSettings.maxBatchTime.toString())
         switchEnableZebraDevice.isChecked = AppSettings.enableZebraDevice
+        etAcceptedLocationFormats.setText(TextUtils.join(", ", AppSettings.acceptedLocationFormats))
+        etAcceptedSkuFormats.setText(TextUtils.join(", ", AppSettings.acceptedSkuFormats))
     }
 
     private fun setupClickListeners() {
@@ -52,35 +60,16 @@ class SettingsActivity : AppCompatActivity() {
         btnToolbarBack.setOnClickListener {
             finish() // Go back without saving
         }
-        btnCheckZebra.setOnClickListener {
-            checkZebra()
-        }
-    }
-    private fun checkZebra() {
-        val i = Intent()
-        i.setAction("com.symbol.datawedge.api.ACTION")
-        i.putExtra("com.symbol.datawedge.api.GET_DATAWEDGE_STATUS", "")
-        this.sendBroadcast(i)
-
-
-        val broadcastReceiverDWStatus: BroadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                if (intent.hasExtra("com.symbol.datawedge.api.RESULT_GET_DATAWEDGE_STATUS")) {
-                    val dwStatus = intent.getStringExtra("com.symbol.datawedge.api.RESULT_GET_DATAWEDGE_STATUS")
-                }
-            }
-        }
-
-        tvZebraStatus.text = broadcastReceiverDWStatus.toString()
-
-
-
 
     }
+
 
     private fun saveSettings() {
         val maxBatchSizeStr = etMaxBatchSize.text.toString()
         val maxBatchTimeStr = etMaxBatchTime.text.toString()
+        val acceptedLocationFormatsStr = etAcceptedLocationFormats.text.toString().trim()
+        val acceptedSkuFormatsStr = etAcceptedSkuFormats.text.toString().trim()
+
 
         // Validate input
         val newMaxBatchSize = maxBatchSizeStr.toIntOrNull()
@@ -96,10 +85,24 @@ class SettingsActivity : AppCompatActivity() {
             return
         }
 
+        val newAcceptedLocationFormats = if (acceptedLocationFormatsStr.isNotEmpty()) {
+            acceptedLocationFormatsStr.split(",").map { it.trim().uppercase(Locale.ROOT) }.toSet()
+        } else {
+            emptySet()
+        }
+        val newAcceptedSkuFormats = if (acceptedSkuFormatsStr.isNotEmpty()) {
+            acceptedSkuFormatsStr.split(",").map { it.trim().uppercase(Locale.ROOT) }.toSet()
+        } else {
+            emptySet()
+        }
+
         // Save settings using AppSettings object
         AppSettings.maxBatchSize = newMaxBatchSize
         AppSettings.maxBatchTime = newMaxBatchTime
         AppSettings.enableZebraDevice = newEnableZebraDevice
+        AppSettings.acceptedLocationFormats = newAcceptedLocationFormats // SAVE NEW SETTING
+        AppSettings.acceptedSkuFormats = newAcceptedSkuFormats // SAVE NEW SETTING
+
 
         Toast.makeText(this, "Settings saved successfully!", Toast.LENGTH_SHORT).show()
         setResult(RESULT_OK) // Indicate success

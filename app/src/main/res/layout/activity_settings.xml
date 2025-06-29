@@ -200,8 +200,6 @@
 
                     </LinearLayout>
 
-
-
                     <Switch
                         android:id="@+id/switch_enable_zebra_device"
                         android:layout_width="match_parent"
@@ -214,22 +212,99 @@
                         android:thumbTint="@color/purple_200"
                         />
 
-                    <Button
-                        android:id="@+id/btn_check_zebra"
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_accepted_location_formats"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_bg_outline_gray"
+                    android:padding="16dp"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:id="@+id/iv_accepted_location_formats_label"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="10dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_warehouse_icon"
+                            app:tint="@android:color/darker_gray"
+                            />
+
+                        <TextView
+                            android:id="@+id/tv_accepted_location_formats_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/accepted_location_formats_label"
+                            android:textColor="@android:color/darker_gray"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <EditText
+                        android:id="@+id/et_accepted_location_formats"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Check Zebra"/>
+                        android:hint="e.g., EAN13,Code 128"
+                        android:inputType="text"
+                        android:minHeight="20dp"
+                        />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_accepted_sku_formats"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_bg_outline_gray"
+                    android:padding="16dp"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:id="@+id/iv_accepted_sku_formats_label"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="10dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_box_icon"
+                            app:tint="@android:color/darker_gray"
+                            />
+
+                        <TextView
+                            android:id="@+id/tv_accepted_sku_formats_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/accepted_sku_formats_label"
+                            android:textColor="@android:color/darker_gray"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <EditText
+                        android:id="@+id/et_accepted_sku_formats"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:id="@+id/tv_zebra_status"
-                        android:text="Zebra Status"
-                        android:textColor="@android:color/darker_gray"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-
+                        android:hint="e.g., EAN13,Code 128"
+                        android:inputType="text"
+                        android:minHeight="20dp"
+                        />
 
                 </LinearLayout>
 

@@ -27,6 +27,8 @@
     <string name="max_batch_size_label">Maximum Batch Size (items)</string>
     <string name="max_batch_time_label">Maximum Batch Time (hours)</string>
     <string name="enable_zebra_label">Zebra Integration</string>
+    <string name="accepted_location_formats_label">Accepted Location Decorders</string>
+    <string name="accepted_sku_formats_label">Accepted SKU Formats</string>
     <string name="new_page_title_label">New</string>
     <string name="list_page_title_label">List</string>
     <string name="edit_page_title_label">Edit</string>
