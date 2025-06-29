@@ -12,17 +12,18 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.google.android.material.card.MaterialCardView
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.view.isVisible
+import androidx.core.view.isVisible // Ensure this is needed, if not, remove
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 import android.os.Build
-import android.util.Log
+import android.util.Log // ADDED for logging
 import com.example.gostock.DataWedgeConstants
 
 
@@ -32,6 +33,17 @@ import androidx.recyclerview.widget.RecyclerView
 // MainActivity now implements ZebraScanResultListener to receive callbacks from ZebraScannerHelper
 class MainActivity : AppCompatActivity(), ZebraScanResultListener {
 
+    private fun showSnackbar(message: String, duration: Int = Snackbar.LENGTH_LONG) {
+        val snackbar = Snackbar.make(findViewById(android.R.id.content), message, duration)
+
+        // Make Snackbar text multiline (works up to a certain point before system truncates)
+        val snackbarTextView = snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+        snackbarTextView.maxLines = 5 // Allow up to 5 lines (adjust as needed)
+        snackbarTextView.ellipsize = null // Remove ellipsis if text exceeds maxLines
+
+        snackbar.show()
+    }
+
     private lateinit var tvRecentEntriesTitle: TextView
     private lateinit var rvRecentEntries: RecyclerView
     private lateinit var tvNoRecentEntries: TextView
@@ -39,8 +51,8 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
 
     // Toolbar buttons (Back and Save)
     private lateinit var btnToolbarSave: ImageButton
-    private lateinit var btnToolbarClear: ImageButton
     private lateinit var btnToolbarBack: ImageButton
+    private lateinit var btnToolbarClear: ImageButton
 
     // Location Card elements
     private lateinit var cardLocation: MaterialCardView
@@ -70,7 +82,7 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
     private var isZebraDevice = false
     private lateinit var zebraScannerHelper: ZebraScannerHelper
 
-    private val TAG = "MainActivity"
+    private val TAG = "MainActivity" // Tag for logging for MainActivity itself
 
 
     // Activity Result Launcher for Barcode Scanner (Camera-based)
@@ -79,13 +91,14 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
     ) { result ->
         if (result.resultCode == RESULT_OK) {
             val scannedBarcode = result.data?.getStringExtra(BarcodeScannerActivity.EXTRA_BARCODE_RESULT)
-            processCameraScanResult(scannedBarcode) // Call helper function for camera results
+            val scannedSymbology = result.data?.getStringExtra(BarcodeScannerActivity.EXTRA_SYMBOLOGY_TYPE) // Get symbology from Camera scan
+            processCameraScanResult(scannedBarcode, scannedSymbology) // Pass symbology
         } else {
-            // If scan was cancelled/failed, revert state for current scan type
+            // If scan was cancelled/failed
             if (currentScanType == ScanType.LOCATION) {
                 tvLocationValue.text = ""
                 ivLocationCheckIcon.visibility = View.GONE
-                cardSku.isEnabled = false // Re-disable SKU card
+                cardSku.isEnabled = false
             } else if (currentScanType == ScanType.SKU) {
                 tvSkuValue.text = ""
                 ivSkuCheckIcon.visibility = View.GONE
@@ -102,8 +115,9 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
 
         // Initialize UI elements
         btnToolbarSave = findViewById(R.id.btn_toolbar_save)
-        btnToolbarClear = findViewById(R.id.btn_toolbar_clear)
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
+        btnToolbarClear = findViewById(R.id.btn_toolbar_clear) // Initialize the clear button
+
 
         cardLocation = findViewById(R.id.card_location)
         tvLocationValue = findViewById(R.id.tv_location_value)
@@ -143,9 +157,9 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
         zebraScannerHelper = ZebraScannerHelper(this, this)
 
         // Setup DataWedge profile and register receiver if it's a Zebra device AND setting is enabled
-        // This is done on app start (or main activity launch) regardless of which activity is primary
         if (isZebraDevice && AppSettings.enableZebraDevice) {
-            zebraScannerHelper.setupDataWedgeProfile()
+            zebraScannerHelper.setupDataWedgeProfile() // Setup profile
+            zebraScannerHelper.registerReceiver() // Register the broadcast receiver
             Toast.makeText(this, "Zebra DataWedge scanner enabled.", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "Using camera for scanning.", Toast.LENGTH_SHORT).show()
@@ -160,10 +174,9 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
 
     override fun onResume() {
         super.onResume()
-        // Register receiver and activate profile if Zebra is enabled
+        // If it's a Zebra device and setting is enabled, ensure DataWedge profile is active and scanner is ready
         if (isZebraDevice && AppSettings.enableZebraDevice) {
-            zebraScannerHelper.registerReceiver() // Register receiver on resume
-            zebraScannerHelper.activateProfile(DataWedgeConstants.PROFILE_NAME)
+            zebraScannerHelper.activateProfile(DataWedgeConstants.PROFILE_NAME) // Activate our profile using DataWedgeConstants
             zebraScannerHelper.enableBarcodePlugin() // Ensure barcode scanner is enabled
         }
         loadRecentEntries() // Reload recent entries on resume
@@ -171,19 +184,24 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
 
     override fun onPause() {
         super.onPause()
-        // Unregister receiver and disable plugin on pause for Zebra devices
+        // If it's a Zebra device and setting is enabled, stop active scans and disable plugin on pause
         if (isZebraDevice && AppSettings.enableZebraDevice) {
-            zebraScannerHelper.stopSoftScan()
-            zebraScannerHelper.disableBarcodePlugin()
-            zebraScannerHelper.unregisterReceiver() // Unregister receiver on pause
+            zebraScannerHelper.stopSoftScan() // Stop any active scan
+            zebraScannerHelper.disableBarcodePlugin() // Disable barcode scanner plugin
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Clean up DataWedge profile on destroy (final cleanup)
+        // Unregister DataWedge receiver and deactivate profile if it was enabled
         if (isZebraDevice && AppSettings.enableZebraDevice) {
-            zebraScannerHelper.activateProfile("") // Deactivate our profile
+            try {
+                zebraScannerHelper.unregisterReceiver() // Unregister the broadcast receiver
+            } catch (e: Exception) {
+                // Handle cases where receiver might already be unregistered
+                Log.e(TAG, "Error unregistering DataWedge receiver: ${e.message}")
+            }
+            zebraScannerHelper.activateProfile("") // Deactivate our profile to clean up
         }
     }
 
@@ -229,7 +247,7 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
         }
 
         btnToolbarClear.setOnClickListener {
-            resetInputFields() // Call the existing reset function
+            resetInputFields()
             Toast.makeText(this, "Fields cleared.", Toast.LENGTH_SHORT).show()
         }
 
@@ -237,19 +255,16 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
             saveStockEntry(resetFields = true)
         }
 
-
-
-        // --- Scan Triggers (Conditional for Zebra vs Camera) ---
-
-        // Location Card/Button click
+        // Location Card click (triggers scan)
         cardLocation.setOnClickListener {
+            // In Zebra mode, card click does NOT initiate scan directly from here.
+            // Scan is triggered by physical button press, and result comes via BroadcastReceiver.
+            // This click is now an optional prompt/focus indicator.
             if (isZebraDevice && AppSettings.enableZebraDevice) {
-                // In seamless Zebra mode, card click does NOT initiate scan.
-                // Scan is triggered by physical button press.
-                // This click is now a prompt/focus indicator.
                 Toast.makeText(this, "Scan Location with physical scanner.", Toast.LENGTH_SHORT).show()
-                // Optionally, request soft scan if you also want a screen button to trigger it
+                // Optionally: request soft scan if you also want a screen button to trigger it
                 // zebraScannerHelper.startSoftScan()
+                currentScanType = ScanType.LOCATION // Set context for incoming Zebra scan
             } else {
                 // Camera mode: launch camera activity
                 currentScanType = ScanType.LOCATION // Set scan type for camera activity result
@@ -259,7 +274,7 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
             }
         }
 
-        // SKU Card/Button click
+        // SKU Card click (triggers scan - Initially disabled, enabled after Location Scan)
         cardSku.setOnClickListener {
             // Prevent scan if card is disabled (location not scanned yet)
             if (!cardSku.isEnabled) {
@@ -267,13 +282,14 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
                 return@setOnClickListener
             }
 
+            // In Zebra mode, card click does NOT initiate scan directly from here.
+            // Scan is triggered by physical button press, and result comes via BroadcastReceiver.
+            // This click is now an optional prompt/focus indicator.
             if (isZebraDevice && AppSettings.enableZebraDevice) {
-                // In seamless Zebra mode, card click does NOT initiate scan.
-                // Scan is triggered by physical button press.
-                // This click is now a prompt/focus indicator.
                 Toast.makeText(this, "Scan SKU with physical scanner.", Toast.LENGTH_SHORT).show()
-                // Optionally, request soft scan if you also want a screen button to trigger it
+                // Optionally: request soft scan if you also want a screen button to trigger it
                 // zebraScannerHelper.startSoftScan()
+                currentScanType = ScanType.SKU // Set context for incoming Zebra scan
             } else {
                 // Camera mode: launch camera activity
                 currentScanType = ScanType.SKU // Set scan type for camera activity result
@@ -303,7 +319,8 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
         val quantity = etQuantity.text.toString().toIntOrNull()
 
         // Validation based on empty text
-        if (selectedUser.isEmpty() || location.isEmpty() || sku.isEmpty() || quantity == null || quantity <= 0) {
+        // Note: selectedUser is guaranteed to be non-empty due to GoStockApp.loggedInUser check
+        if (location.isEmpty() || sku.isEmpty() || quantity == null || quantity <= 0) {
             Toast.makeText(this, "Please complete all fields correctly (Location, SKU, Quantity > 0)", Toast.LENGTH_LONG).show()
             return
         }
@@ -332,7 +349,7 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
     /**
      * Resets the UI fields and state for a new entry.
      */
-    private fun resetInputFields() { // Renamed from resetInputFields for now to avoid conflict
+    private fun resetInputFields() {
         tvLocationValue.text = ""
         ivLocationCheckIcon.visibility = View.GONE
         tvSkuValue.text = ""
@@ -357,10 +374,10 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
     }
 
     // --- ZebraScanResultListener Implementation ---
-    override fun onZebraScanResult(scanData: String?) {
+    override fun onZebraScanResult(scanData: String?, symbology: String?) { // MODIFIED: Added symbology
         // This method is called by ZebraScannerHelper when a scan result is received
         // This is the seamless scanning part
-        processZebraScanResult(scanData)
+        processZebraScanResult(scanData, symbology)
     }
 
     override fun onZebraScanError(errorMessage: String) {
@@ -371,22 +388,43 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
     }
 
     /** Processes the scan result received directly from DataWedge (from ZebraScannerHelper). */
-    private fun processZebraScanResult(scanData: String?) {
+    private fun processZebraScanResult(scanData: String?, scannedSymbology: String?) { // ADDED scannedSymbology
         scanData?.let {
-            // Determine scan destination based on current UI state, not currentScanType
-            // This is the core logic for automatic progression
+            val acceptedFormats: Set<String>
+            val scanPurpose: String
+
+            // Determine scan destination based on current UI state
             if (tvLocationValue.text.toString().isEmpty()) { // Location is empty, fill location
+                acceptedFormats = AppSettings.acceptedLocationFormats
+                scanPurpose = "Location"
+            } else if (tvSkuValue.text.toString().isEmpty()) { // Location is filled, SKU is empty, fill SKU
+                acceptedFormats = AppSettings.acceptedSkuFormats
+                scanPurpose = "SKU"
+            } else {
+                Toast.makeText(this, "Location and SKU already scanned. Save or clear to continue.", Toast.LENGTH_LONG).show()
+                Log.d(TAG, "Scan ignored: Both Location and SKU already filled.")
+                return // Do not update state or process further
+            }
+
+            // Validate scanned format
+            if (!AppSettings.isFormatAccepted(scannedSymbology, acceptedFormats)) {
+                val acceptedFormatsString = if (acceptedFormats.isEmpty()) "any format" else acceptedFormats.joinToString(", ")
+                showSnackbar("Scanned $scanPurpose barcode format ($scannedSymbology) is not accepted. Only $acceptedFormatsString barcodes are accepted for $scanPurpose.", Snackbar.LENGTH_LONG)
+
+
+
+
+                Log.w(TAG, "Zebra scan rejected: Format '$scannedSymbology' not accepted for $scanPurpose.")
+                return // Reject scan if format is not accepted
+            }
+
+            // Apply valid scan result to appropriate field
+            if (scanPurpose == "Location") {
                 tvLocationValue.text = it
                 ivLocationCheckIcon.visibility = View.VISIBLE
                 cardSku.isEnabled = true
-                // Do NOT set currentScanType here, it will be automatically handled by next scan
                 Toast.makeText(this, "Location scanned: $it", Toast.LENGTH_SHORT).show()
-                // Optionally immediately focus SKU and keyboard if you want to force next step
-                // tvSkuValue.requestFocus()
-                // val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                // imm.showSoftInput(tvSkuValue, InputMethodManager.SHOW_IMPLICIT)
-
-            } else if (tvSkuValue.text.toString().isEmpty()) { // Location is filled, SKU is empty, fill SKU
+            } else if (scanPurpose == "SKU") {
                 tvSkuValue.text = it
                 ivSkuCheckIcon.visibility = View.VISIBLE
                 etQuantity.requestFocus() // Focus quantity field after SKU scan
@@ -395,26 +433,44 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
                     imm.showSoftInput(etQuantity, InputMethodManager.SHOW_IMPLICIT)
                 }, 200)
                 Toast.makeText(this, "SKU scanned: $it", Toast.LENGTH_SHORT).show()
-            } else {
-                // Both Location and SKU are filled. Do not accept more scans until saved/cleared.
-                Toast.makeText(this, "Location and SKU already scanned. Save or clear to continue.", Toast.LENGTH_LONG).show()
-                Log.d(TAG, "Scan ignored: Both Location and SKU already filled.")
-                return // Do not update state or process further
             }
-            updateSaveButtonState()
+            updateSaveButtonState() // Update save button state after successful scan
         }
-        // currentScanType remains what it was for camera, but for zebra, it's state-driven
-        // No explicit currentScanType = ScanType.NONE here because we're reacting to physical scans.
     }
 
     /** Processes the scan result received from the Camera (BarcodeScannerActivity). */
-    private fun processCameraScanResult(scanData: String?) {
+    private fun processCameraScanResult(scanData: String?, scannedSymbology: String?) { // ADDED scannedSymbology
         scanData?.let {
-            if (currentScanType == ScanType.LOCATION) { // Still relies on currentScanType
+            val acceptedFormats: Set<String>
+            val scanPurpose: String
+
+            // Determine scan purpose based on currentScanType (set before launching camera)
+            if (currentScanType == ScanType.LOCATION) {
+                acceptedFormats = AppSettings.acceptedLocationFormats
+                scanPurpose = "Location"
+            } else if (currentScanType == ScanType.SKU) {
+                acceptedFormats = AppSettings.acceptedSkuFormats
+                scanPurpose = "SKU"
+            } else {
+                Toast.makeText(this, "Unknown scan type. Scan ignored.", Toast.LENGTH_LONG).show()
+                Log.w(TAG, "Camera scan ignored: Unknown currentScanType.")
+                return
+            }
+
+            // Validate scanned format
+            if (!AppSettings.isFormatAccepted(scannedSymbology, acceptedFormats)) {
+                val acceptedFormatsString = if (acceptedFormats.isEmpty()) "any format" else acceptedFormats.joinToString(", ")
+                Toast.makeText(this, "Scanned $scanPurpose barcode format ($scannedSymbology) is not accepted. Only $acceptedFormatsString barcodes are accepted for $scanPurpose.", Toast.LENGTH_LONG).show()
+                Log.w(TAG, "Camera scan rejected: Format '$scannedSymbology' not accepted for $scanPurpose.")
+                return // Reject scan if format is not accepted
+            }
+
+            // Apply valid scan result to appropriate field
+            if (scanPurpose == "Location") {
                 tvLocationValue.text = it
                 ivLocationCheckIcon.visibility = View.VISIBLE
                 cardSku.isEnabled = true
-            } else if (currentScanType == ScanType.SKU) { // Still relies on currentScanType
+            } else if (scanPurpose == "SKU") {
                 tvSkuValue.text = it
                 ivSkuCheckIcon.visibility = View.VISIBLE
                 etQuantity.requestFocus()

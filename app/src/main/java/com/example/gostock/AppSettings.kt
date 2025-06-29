@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import java.util.Locale // ADD THIS IMPORT for uppercase conversion
 
 object AppSettings {
 
@@ -14,7 +15,6 @@ object AppSettings {
     private const val KEY_ENABLE_ZEBRA_DEVICE = "enable_zebra_device"
     private const val KEY_ACCEPTED_LOCATION_FORMATS = "accepted_location_formats"
     private const val KEY_ACCEPTED_SKU_FORMATS = "accepted_sku_formats"
-
 
 
     // Default values
@@ -39,7 +39,7 @@ object AppSettings {
         get() = sharedPreferences.getInt(KEY_MAX_BATCH_TIME, DEFAULT_MAX_BATCH_TIME)
         set(value) = sharedPreferences.edit().putInt(KEY_MAX_BATCH_TIME, value).apply()
 
-    var enableZebraDevice: Boolean // NEW PROPERTY
+    var enableZebraDevice: Boolean
         get() = sharedPreferences.getBoolean(KEY_ENABLE_ZEBRA_DEVICE, DEFAULT_ENABLE_ZEBRA_DEVICE)
         set(value) = sharedPreferences.edit().putBoolean(KEY_ENABLE_ZEBRA_DEVICE, value).apply()
 
@@ -71,4 +71,21 @@ object AppSettings {
             sharedPreferences.edit().putString(KEY_ACCEPTED_SKU_FORMATS, json).apply()
         }
 
+    /**
+     * Checks if a scanned barcode format is among the accepted formats.
+     * If acceptedFormats is empty, all formats are accepted.
+     * @param scannedFormat The format string returned by the scanner (e.g., "CODE_128", "QR_CODE").
+     * @param acceptedFormats The Set of accepted format strings from settings.
+     * @return True if the scannedFormat is accepted, false otherwise.
+     */
+    fun isFormatAccepted(scannedFormat: String?, acceptedFormats: Set<String>): Boolean {
+        if (scannedFormat.isNullOrEmpty()) {
+            return false // Cannot accept empty format
+        }
+        if (acceptedFormats.isEmpty()) {
+            return true // If no formats are configured, implicitly accept all
+        }
+        // Check if the uppercase scanned format is in the set of accepted formats
+        return acceptedFormats.contains(scannedFormat.uppercase(Locale.ROOT))
+    }
 }

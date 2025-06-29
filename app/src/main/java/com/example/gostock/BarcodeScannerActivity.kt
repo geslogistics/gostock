@@ -14,7 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.barcode.common.Barcode // ADDED for Barcode.FORMAT_... and Barcode.TYPE_...
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -30,7 +30,8 @@ class BarcodeScannerActivity : AppCompatActivity() {
         private const val TAG = "BarcodeScannerActivity"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-        const val EXTRA_BARCODE_RESULT = "barcode_result" // Key for returning the scanned result
+        const val EXTRA_BARCODE_RESULT = "barcode_result"
+        const val EXTRA_SYMBOLOGY_TYPE = "symbology_type" // NEW: Key for returning symbology type
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,46 +56,39 @@ class BarcodeScannerActivity : AppCompatActivity() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         cameraProviderFuture.addListener({
-            // Used to bind the lifecycle of cameras to the lifecycle owner
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-            // Preview
             val preview = Preview.Builder()
                 .build()
                 .also {
                     it.setSurfaceProvider(viewFinder.surfaceProvider)
                 }
 
-            // Barcode scanner analyzer
             val barcodeScannerOptions = BarcodeScannerOptions.Builder()
                 .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS) // Scan all barcode types
                 .build()
             val barcodeScanner = BarcodeScanning.getClient(barcodeScannerOptions)
 
             val imageAnalyzer = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST) // Only analyze the latest frame
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
                 .also {
-                    it.setAnalyzer(cameraExecutor, BarcodeAnalyzer(barcodeScanner) { barcodeValue ->
-                        // This lambda is called when a barcode is successfully detected
+                    // MODIFIED: Pass a lambda that takes both barcode value AND symbology
+                    it.setAnalyzer(cameraExecutor, BarcodeAnalyzer(barcodeScanner) { barcodeValue, symbology ->
                         if (barcodeValue != null) {
-                            // Return the result to the calling activity (MainActivity)
                             val resultIntent = intent
                             resultIntent.putExtra(EXTRA_BARCODE_RESULT, barcodeValue)
+                            resultIntent.putExtra(EXTRA_SYMBOLOGY_TYPE, symbology) // NEW: Pass symbology type
                             setResult(RESULT_OK, resultIntent)
-                            finish() // Close scanner activity
+                            finish()
                         }
                     })
                 }
 
-            // Select back camera as a default
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
-                // Unbind use cases before rebinding
                 cameraProvider.unbindAll()
-
-                // Bind use cases to camera
                 cameraProvider.bindToLifecycle(
                     this, cameraSelector, preview, imageAnalyzer
                 )
@@ -119,21 +113,22 @@ class BarcodeScannerActivity : AppCompatActivity() {
                 startCamera()
             } else {
                 Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show()
-                finish() // Close activity if permissions are denied
+                finish()
             }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        cameraExecutor.shutdown() // Shut down the camera thread
+        cameraExecutor.shutdown()
     }
 }
 
 // Custom ImageAnalysis.Analyzer to process camera frames
+// MODIFIED: Listener now passes both barcode value and symbology string
 class BarcodeAnalyzer(
     private val barcodeScanner: com.google.mlkit.vision.barcode.BarcodeScanner,
-    private val listener: (String?) -> Unit // Callback to return the scanned barcode
+    private val listener: (String?, String?) -> Unit // MODIFIED: Listener takes value and symbology
 ) : ImageAnalysis.Analyzer {
 
     @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
@@ -142,16 +137,16 @@ class BarcodeAnalyzer(
         if (mediaImage != null) {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
-            // Process image for barcodes
             barcodeScanner.process(image)
                 .addOnSuccessListener { barcodes ->
                     for (barcode in barcodes) {
-                        barcode.rawValue?.let {
-                            listener(it) // Send the barcode value back via the listener
+                        barcode.rawValue?.let { barcodeValue ->
+                            // Convert the integer format code to a readable string (e.g., Barcode.FORMAT_QR_CODE -> "QR_CODE")
+                            val symbology = getSymbologyString(barcode.format)
+                            listener(barcodeValue, symbology) // Pass both value and symbology
                         }
-                        // We only care about the first barcode found for simplicity
                         if (barcodes.isNotEmpty()) {
-                            return@addOnSuccessListener // Stop processing after first barcode found
+                            return@addOnSuccessListener
                         }
                     }
                 }
@@ -159,10 +154,31 @@ class BarcodeAnalyzer(
                     Log.e("BarcodeAnalyzer", "Barcode scanning failed", e)
                 }
                 .addOnCompleteListener {
-                    imageProxy.close() // VERY IMPORTANT: Close the image proxy when done
+                    imageProxy.close()
                 }
         } else {
-            imageProxy.close() // Close even if mediaImage is null
+            imageProxy.close()
+        }
+    }
+
+    // Helper function to convert Barcode.FORMAT_X to a readable string
+    private fun getSymbologyString(format: Int): String {
+        return when (format) {
+            Barcode.FORMAT_CODE_128 -> "CODE_128"
+            Barcode.FORMAT_CODE_39 -> "CODE_39"
+            Barcode.FORMAT_CODE_93 -> "CODE_93"
+            Barcode.FORMAT_CODABAR -> "CODABAR"
+            Barcode.FORMAT_EAN_13 -> "EAN_13"
+            Barcode.FORMAT_EAN_8 -> "EAN_8"
+            Barcode.FORMAT_ITF -> "ITF"
+            Barcode.FORMAT_UPC_A -> "UPC_A"
+            Barcode.FORMAT_UPC_E -> "UPC_E"
+            Barcode.FORMAT_QR_CODE -> "QR_CODE"
+            Barcode.FORMAT_AZTEC -> "AZTEC"
+            Barcode.FORMAT_DATA_MATRIX -> "DATA_MATRIX"
+            Barcode.FORMAT_PDF417 -> "PDF_417"
+            Barcode.FORMAT_ALL_FORMATS -> "ALL_FORMATS" // This format might not be returned, but for completeness
+            else -> "UNKNOWN_FORMAT"
         }
     }
 }

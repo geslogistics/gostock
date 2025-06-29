@@ -8,17 +8,18 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.example.gostock.DataWedgeConstants // Correct import for your custom constants
 
 
 // Callback interface for scan results
 interface ZebraScanResultListener {
-    fun onZebraScanResult(scanData: String?)
+    fun onZebraScanResult(scanData: String?, symbology: String?) // MODIFIED: Added symbology
     fun onZebraScanError(errorMessage: String)
 }
 
 class ZebraScannerHelper(private val context: Context, private val listener: ZebraScanResultListener) {
 
-    private val PROFILE_NAME = DataWedgeConstants.PROFILE_NAME // Use constant
+    private val PROFILE_NAME = DataWedgeConstants.PROFILE_NAME
     private val TAG = "ZebraScannerHelper"
 
     // BroadcastReceiver for DataWedge scan results
@@ -28,14 +29,17 @@ class ZebraScannerHelper(private val context: Context, private val listener: Zeb
             val receivedContext = context ?: return
 
             if (receivedIntent.action == receivedContext.resources.getString(R.string.activity_intent_filter_action)) {
-                if (receivedIntent.hasExtra(DataWedgeConstants.EXTRA_SCANNED_DATA_STRING)) { // Use DataWedgeConstants
-                    val scanData = receivedIntent.getStringExtra(DataWedgeConstants.EXTRA_SCANNED_DATA_STRING) // Use DataWedgeConstants
-                    Log.d(TAG, "DataWedge scanned: $scanData")
-                    listener.onZebraScanResult(scanData)
+                if (receivedIntent.hasExtra(DataWedgeConstants.EXTRA_SCANNED_DATA_STRING)) {
+                    val scanData = receivedIntent.getStringExtra(DataWedgeConstants.EXTRA_SCANNED_DATA_STRING)
+                    val symbology = receivedIntent.getStringExtra(DataWedgeConstants.EXTRA_SYMBOLOGY_TYPE_STRING) // NEW: Get symbology
+                    Log.d(TAG, "DataWedge scanned: $scanData (Symbology: $symbology)")
+                    listener.onZebraScanResult(scanData, symbology) // Pass both to listener
                 } else {
                     Log.w(TAG, "DataWedge scan intent received but no scan data found.")
                     listener.onZebraScanError("No scan data received from scanner.")
                 }
+            } else {
+                Log.d(TAG, "Received unknown intent action: ${receivedIntent.action}")
             }
         }
     }
@@ -114,38 +118,38 @@ class ZebraScannerHelper(private val context: Context, private val listener: Zeb
     fun sendDataWedgeCommand(action: String, command: String) {
         val i = Intent()
         i.action = action
-        i.putExtra(DataWedgeConstants.EXTRA_SEND_COMMAND, command) // Use DataWedgeConstants
+        i.putExtra(DataWedgeConstants.EXTRA_SEND_COMMAND, command)
         context.sendBroadcast(i)
         Log.d(TAG, "Sent DataWedge command: $action - $command")
     }
 
     /** Activates a specific DataWedge profile. */
     fun activateProfile(profileName: String) {
-        sendDataWedgeCommand(DataWedgeConstants.ACTION_SET_ACTIVE_PROFILE, profileName) // Use DataWedgeConstants
+        sendDataWedgeCommand(DataWedgeConstants.ACTION_SET_ACTIVE_PROFILE, profileName)
         Log.d(TAG, "Activated DataWedge profile: $profileName")
     }
 
     /** Starts the soft scan trigger. */
     fun startSoftScan() {
-        sendDataWedgeCommand(DataWedgeConstants.ACTION_SOFTSCANTRIGGER, DataWedgeConstants.START_SCANNING) // Use DataWedgeConstants
+        sendDataWedgeCommand(DataWedgeConstants.ACTION_SOFTSCANTRIGGER, DataWedgeConstants.START_SCANNING)
         Log.d(TAG, "Soft scan initiated.")
     }
 
     /** Stops the soft scan trigger. */
     fun stopSoftScan() {
-        sendDataWedgeCommand(DataWedgeConstants.ACTION_SOFTSCANTRIGGER, DataWedgeConstants.STOP_SCANNING) // Use DataWedgeConstants
+        sendDataWedgeCommand(DataWedgeConstants.ACTION_SOFTSCANTRIGGER, DataWedgeConstants.STOP_SCANNING)
         Log.d(TAG, "Soft scan stopped.")
     }
 
     /** Enables the barcode plugin. */
     fun enableBarcodePlugin() {
-        sendDataWedgeCommand(DataWedgeConstants.ACTION_SCANNERINPUTPLUGIN, DataWedgeConstants.ENABLE_PLUGIN) // Use DataWedgeConstants
+        sendDataWedgeCommand(DataWedgeConstants.ACTION_SCANNERINPUTPLUGIN, DataWedgeConstants.ENABLE_PLUGIN)
         Log.d(TAG, "Barcode plugin enabled.")
     }
 
     /** Disables the barcode plugin. */
     fun disableBarcodePlugin() {
-        sendDataWedgeCommand(DataWedgeConstants.ACTION_SCANNERINPUTPLUGIN, DataWedgeConstants.DISABLE_PLUGIN) // Use DataWedgeConstants
+        sendDataWedgeCommand(DataWedgeConstants.ACTION_SCANNERINPUTPLUGIN, DataWedgeConstants.DISABLE_PLUGIN)
         Log.d(TAG, "Barcode plugin disabled.")
     }
 }
