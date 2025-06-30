@@ -65,6 +65,8 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var btnTransferData: LinearLayout
 
+    private lateinit var btnBatchData: LinearLayout
+
     private lateinit var btnSettings: LinearLayout
 
     private lateinit var btnSub: LinearLayout
@@ -114,6 +116,8 @@ class HomeActivity : AppCompatActivity() {
         btnBluetoothConnect = findViewById(R.id.btn_bluetooth_connect)
 
         btnTransferData = findViewById(R.id.btn_transfer_data)
+
+        btnBatchData = findViewById(R.id.btn_batch_data)
 
         tvLoggedInUser = findViewById(R.id.tv_logged_in_user)
 
@@ -288,6 +292,7 @@ class HomeActivity : AppCompatActivity() {
             btnImportRecords.visibility = View.VISIBLE
             btnBluetoothConnect.visibility = View.VISIBLE
             //btnTransferData.visibility = View.VISIBLE
+            btnBatchData.visibility = View.VISIBLE
             btnSettings.visibility = View.VISIBLE
             btnManageUsers.visibility = View.VISIBLE
             btnSub.visibility = View.VISIBLE
@@ -297,6 +302,7 @@ class HomeActivity : AppCompatActivity() {
             btnImportRecords.visibility = View.GONE
             btnBluetoothConnect.visibility = View.GONE
             //btnTransferData.visibility = View.GONE
+            btnBatchData.visibility = View.GONE
             btnSettings.visibility = View.GONE
             btnManageUsers.visibility = View.GONE
             btnSub.visibility = View.GONE
@@ -400,6 +406,11 @@ class HomeActivity : AppCompatActivity() {
 
         btnTransferData.setOnClickListener {
             val intent = Intent(this, TransferDataActivity::class.java)
+            startActivity(intent)
+        }
+
+        btnBatchData.setOnClickListener {
+            val intent = Intent(this, GoDataListActivity::class.java)
             startActivity(intent)
         }
 
@@ -568,7 +579,7 @@ class HomeActivity : AppCompatActivity() {
             llHdash.visibility = View.GONE
             btnMenuContinueBatch.visibility = View.GONE // Hide continue button
             btnStartNewRecord.visibility = View.VISIBLE // Show start new button
-            btnTransferData.visibility = View.GONE
+
 
             // Set default texts for dashboard elements when hidden/empty
             tvBatchSizeProgress.text = "0"
@@ -590,7 +601,6 @@ class HomeActivity : AppCompatActivity() {
             llHdash.visibility = View.VISIBLE
             btnMenuContinueBatch.visibility = View.VISIBLE // Show continue button
             btnStartNewRecord.visibility = View.GONE // Hide start new button
-            btnTransferData.visibility = View.VISIBLE
 
             // --- Existing Dashboard Calculations (only run if entries exist) ---
             if (maxBatchSize > 0) {
