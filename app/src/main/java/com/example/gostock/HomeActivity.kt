@@ -388,6 +388,8 @@ class HomeActivity : AppCompatActivity() {
 
         btnBluetoothConnect.setOnClickListener {
             Toast.makeText(this, "Coming Soon!", Toast.LENGTH_SHORT).show()
+//            val intent = Intent(this, TransferDataActivity::class.java)
+//            startActivity(intent)
         }
 
         btnManageUsers.setOnClickListener {
