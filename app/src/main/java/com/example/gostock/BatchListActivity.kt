@@ -58,22 +58,21 @@ class BatchListActivity : AppCompatActivity() {
             return
         }
 
-        // The user's StockEntry has nullable fields like batch_id, sender_user etc.
-        // We need to handle them safely.
         val groupedBatches = allEntries
-            .filter { !it.batch_id.isNullOrBlank() } // Use the field name from your updated StockEntry
+            .filter { !it.batch_id.isNullOrBlank() }
             .groupBy { it.batch_id!! }
             .map { (batchId, entriesInBatch) ->
                 val firstEntry = entriesInBatch.first()
 
-                // --- FIX: CONVERT STRING TIMESTAMPS TO LONG FOR CALCULATION ---
+                // --- NEW COMPUTATION LOGIC ---
+
                 // 1. Calculate Batch Timer
                 val timestampsAsLong = entriesInBatch.mapNotNull { it.timestamp.toLongOrNull() }
                 val minTimestamp = timestampsAsLong.minOrNull() ?: 0L
                 val maxTimestamp = timestampsAsLong.maxOrNull() ?: 0L
                 val durationMillis = maxTimestamp - minTimestamp
-                // Convert milliseconds to hours as a float
-                val durationHours = TimeUnit.MILLISECONDS.toMinutes(durationMillis) / 60.0f
+                // Convert milliseconds to hours as a float, rounded to 2 decimal places
+                val durationHours = (TimeUnit.MILLISECONDS.toMinutes(durationMillis) / 60.0).toFloat()
 
                 // 2. Count Unique Locations
                 val uniqueLocations = entriesInBatch.map { it.locationBarcode }.distinct().count()
@@ -83,12 +82,12 @@ class BatchListActivity : AppCompatActivity() {
 
                 // 4. Sum all Quantities
                 val totalQuantity = entriesInBatch.sumOf { it.quantity }
-                // --- END OF FIX ---
+                // --- END OF NEW LOGIC ---
 
                 // Construct the Batch object with all the computed data
                 Batch(
                     batch_id = batchId,
-                    batch_user = firstEntry.batch_user, // Assuming batch_user is the sender
+                    batch_user = firstEntry.batch_user,
                     transfer_date = firstEntry.transfer_date,
                     receiver_user = firstEntry.receiver_user,
                     item_count = entriesInBatch.size,

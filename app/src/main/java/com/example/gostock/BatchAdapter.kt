@@ -33,9 +33,9 @@ class BatchAdapter(
     }
 
     class BatchViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        // Assuming your item_batch.xml has these IDs.
-        // If they are different, please adjust them here.
+        // Find all the TextViews from your item_batch.xml layout
         private val tvBatchId: TextView = itemView.findViewById(R.id.tv_batch_id)
+        private val tvBatchUser: TextView = itemView.findViewById(R.id.tv_batch_user)
         private val tvBatchTimestamp: TextView = itemView.findViewById(R.id.tv_batch_timestamp)
         private val tvItemCount: TextView = itemView.findViewById(R.id.tv_batch_item_count)
         private val tvBatchTimer: TextView = itemView.findViewById(R.id.tv_batch_timer)
@@ -45,20 +45,22 @@ class BatchAdapter(
 
         fun bind(batch: Batch) {
             tvBatchId.text = batch.batch_id
-            tvItemCount.text = "Items: ${batch.item_count}"
+            tvBatchUser.text = batch.batch_user ?: "N/A"
+            tvItemCount.text = "${batch.item_count}"
 
             batch.transfer_date?.let {
                 val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                tvBatchTimestamp.text = "On: ${sdf.format(Date(it))}"
+                tvBatchTimestamp.text = sdf.format(Date(it))
             } ?: run {
-                tvBatchTimestamp.text = "On: N/A"
+                tvBatchTimestamp.text = "N/A"
             }
 
             // --- NEW DISPLAY LOGIC ---
-            tvBatchTimer.text = "Duration: ${"%.2f".format(batch.batch_timer)} hrs"
-            tvLocationsCounted.text = "Locations: ${batch.locations_counted}"
-            tvSkuCounted.text = "SKUs: ${batch.sku_counted}"
-            tvQuantityCounted.text = "Total Qty: ${batch.quantity_counted}"
+            // Set the text for the new computed fields
+            tvBatchTimer.text = String.format("%.2f hrs", batch.batch_timer)
+            tvLocationsCounted.text = "${batch.locations_counted}"
+            tvSkuCounted.text = "${batch.sku_counted}"
+            tvQuantityCounted.text = "${batch.quantity_counted}"
             // --- END OF NEW LOGIC ---
         }
     }
