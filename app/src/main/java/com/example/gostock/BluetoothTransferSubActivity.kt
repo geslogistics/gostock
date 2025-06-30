@@ -24,6 +24,7 @@ import android.widget.ListView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import com.google.android.material.snackbar.Snackbar
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -42,11 +43,23 @@ import com.example.gostock.FileHandler
 @SuppressLint("MissingPermission") // We handle permissions explicitly with our checks
 class BluetoothTransferSubActivity : AppCompatActivity() {
 
+    private fun showSnackbar(message: String, duration: Int = Snackbar.LENGTH_LONG) {
+        val snackbar = Snackbar.make(findViewById(android.R.id.content), message, duration)
+
+        // Make Snackbar text multiline (works up to a certain point before system truncates)
+        val snackbarTextView = snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+        snackbarTextView.maxLines = 5 // Allow up to 5 lines (adjust as needed)
+        snackbarTextView.ellipsize = null // Remove ellipsis if text exceeds maxLines
+
+        snackbar.show()
+    }
+
     // --- UI elements declarations ---
     private lateinit var btnToolbarBack: ImageButton
     private lateinit var tvTransferStatus: TextView
     private lateinit var btnEnableBluetooth: Button
     private lateinit var btnMakeDiscoverable: Button
+    private lateinit var btnMakeDiscoverableDivider: View
     private lateinit var btnScanDevices: Button
     private lateinit var lvPairedDevices: ListView
     private lateinit var lvDiscoveredDevices: ListView
@@ -86,7 +99,20 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
             Toast.makeText(this, "Bluetooth permissions granted.", Toast.LENGTH_SHORT).show()
             checkBluetoothState()
         } else {
-            Toast.makeText(this, "Permissions denied. Cannot use Bluetooth.", Toast.LENGTH_LONG).show()
+            // User denied at least one permission. Show a helpful dialog.
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Permissions Required")
+                .setMessage("This feature cannot work without Bluetooth and Location permissions. Location is required by Android to scan for nearby devices. Please grant the necessary permissions from the app settings.")
+                .setPositiveButton("Go to Settings") { _, _ ->
+                    // Create an intent that opens this specific app's settings page
+                    val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    val uri = android.net.Uri.fromParts("package", packageName, null)
+                    intent.data = uri
+                    startActivity(intent)
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+
             updateUiForBluetoothState(BluetoothState.PERMISSIONS_DENIED)
         }
     }
@@ -263,6 +289,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         tvTransferStatus = findViewById(R.id.tv_transfer_status_sub)
         btnEnableBluetooth = findViewById(R.id.btn_enable_bluetooth_sub)
         btnMakeDiscoverable = findViewById(R.id.btn_make_discoverable_sub)
+        btnMakeDiscoverableDivider = findViewById(R.id.btn_make_discoverable_sub_divider)
         btnScanDevices = findViewById(R.id.btn_scan_devices_sub)
         lvPairedDevices = findViewById(R.id.lv_paired_devices_sub)
         lvDiscoveredDevices = findViewById(R.id.lv_discovered_devices_sub)
@@ -287,12 +314,35 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         registerReceiver(bluetoothReceiver, filter)
 
         setupClickListeners()
+        requestAllPermissions()
+
+        val loggedInUser = GoStockApp.loggedInUser
+        if (loggedInUser != null) {
+            if (loggedInUser.role == UserRole.STOCKTAKER) {
+                btnMakeDiscoverable.visibility = View.GONE
+                btnMakeDiscoverableDivider.visibility = View.GONE
+            } else {
+                btnMakeDiscoverable.visibility = View.VISIBLE
+                btnMakeDiscoverableDivider.visibility = View.VISIBLE
+            }
+        } else {
+            showSnackbar("User not logged in. Redirecting to login.", Snackbar.LENGTH_LONG)
+            performLogout()
+        }
+    }
+    private fun performLogout() {
+        (application as GoStockApp).clearLoginSession()
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
+        showSnackbar( "Logged out successfully!", Snackbar.LENGTH_SHORT)
     }
 
-    override fun onResume() {
-        super.onResume()
-        requestAllPermissions()
-    }
+//    override fun onResume() {
+//        super.onResume()
+//        requestAllPermissions()
+//    }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -359,15 +409,37 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
     }
 
     private fun requestAllPermissions() {
+        Log.d(TAG, "--- Checking Permissions for SDK version ${Build.VERSION.SDK_INT} ---")
+
         val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_ADVERTISE)
+            arrayOf(
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.BLUETOOTH_ADVERTISE,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
         } else {
-            arrayOf(Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.ACCESS_FINE_LOCATION)
+            arrayOf(
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.BLUETOOTH_ADMIN,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
         }
-        val missingPermissions = permissionsToRequest.filter { !checkPermission(it) }
+
+        // This block will log the status of each permission individually
+        val missingPermissions = permissionsToRequest.filter { permission ->
+            val hasPermission = checkPermission(permission)
+            Log.d(TAG, "Verifying Permission: $permission, Granted: $hasPermission")
+            !hasPermission
+        }
+        Log.d(TAG, "----------------------------------------------------")
+
+
         if (missingPermissions.isNotEmpty()) {
+            Log.w(TAG, "Found missing permissions. Requesting: ${missingPermissions.joinToString()}")
             requestBluetoothPermissionsLauncher.launch(missingPermissions.toTypedArray())
         } else {
+            Log.d(TAG, "All necessary permissions are already granted.")
             checkBluetoothState()
         }
     }
@@ -497,6 +569,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
             }
         } catch (e: Exception) {
             Toast.makeText(this, "Received invalid data.", Toast.LENGTH_LONG).show()
+            Log.e(TAG, "Error processing received data: ${e.message}", e)
         }
     }
 }

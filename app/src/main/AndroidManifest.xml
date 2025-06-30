@@ -14,16 +14,15 @@
     <uses-permission android:name="com.symbol.datawedge.permission.REGISTER_FOR_NOTIFICATION" />
     <uses-permission android:name="com.symbol.datawedge.permission.UNREGISTER_FOR_NOTIFICATION" />
 
-    <!-- NEW: Bluetooth Permissions for older Android (API < 31) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
 
-    <!-- NEW: Bluetooth Permissions for Android 12 (API 31) and above -->
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /> <!-- For location services to work with Bluetooth scanning (even on newer devices for Wi-Fi/BT scans) -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
     <application
         android:name=".GoStockApp"

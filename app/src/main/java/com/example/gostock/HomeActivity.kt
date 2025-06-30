@@ -287,7 +287,7 @@ class HomeActivity : AppCompatActivity() {
             btnExportClose.visibility = View.VISIBLE
             btnImportRecords.visibility = View.VISIBLE
             btnBluetoothConnect.visibility = View.VISIBLE
-            btnTransferData.visibility = View.VISIBLE
+            //btnTransferData.visibility = View.VISIBLE
             btnSettings.visibility = View.VISIBLE
             btnManageUsers.visibility = View.VISIBLE
             btnSub.visibility = View.VISIBLE
@@ -296,7 +296,7 @@ class HomeActivity : AppCompatActivity() {
             btnExportClose.visibility = View.GONE
             btnImportRecords.visibility = View.GONE
             btnBluetoothConnect.visibility = View.GONE
-            btnTransferData.visibility = View.GONE
+            //btnTransferData.visibility = View.GONE
             btnSettings.visibility = View.GONE
             btnManageUsers.visibility = View.GONE
             btnSub.visibility = View.GONE
@@ -568,6 +568,7 @@ class HomeActivity : AppCompatActivity() {
             llHdash.visibility = View.GONE
             btnMenuContinueBatch.visibility = View.GONE // Hide continue button
             btnStartNewRecord.visibility = View.VISIBLE // Show start new button
+            btnTransferData.visibility = View.GONE
 
             // Set default texts for dashboard elements when hidden/empty
             tvBatchSizeProgress.text = "0"
@@ -589,6 +590,7 @@ class HomeActivity : AppCompatActivity() {
             llHdash.visibility = View.VISIBLE
             btnMenuContinueBatch.visibility = View.VISIBLE // Show continue button
             btnStartNewRecord.visibility = View.GONE // Hide start new button
+            btnTransferData.visibility = View.VISIBLE
 
             // --- Existing Dashboard Calculations (only run if entries exist) ---
             if (maxBatchSize > 0) {
