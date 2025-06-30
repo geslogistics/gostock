@@ -81,7 +81,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:text="Status: Initializing..."
+                        android:text="🟡  Initializing..."
                         android:textAlignment="center"
                         android:textSize="15sp"
                         android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
@@ -90,13 +90,13 @@
                 </LinearLayout>
 
 
-                <ProgressBar
-                    android:id="@+id/progress_bar_sub"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="8dp"
-                    android:visibility="gone" />
+<!--                <ProgressBar-->
+<!--                    android:id="@+id/progress_bar_sub"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_gravity="center_horizontal"-->
+<!--                    android:layout_marginBottom="8dp"-->
+<!--                    android:visibility="gone" />-->
 
                 <Button
                     android:id="@+id/btn_enable_bluetooth_sub"
@@ -148,6 +148,8 @@
                     android:orientation="vertical"
                     android:background="@drawable/rounded_bg_outline_gray"
                     android:padding="16dp"
+                    android:visibility="gone"
+                    tools:visibility="visible"
                     android:layout_marginBottom="16dp">
 
                     <ProgressBar
