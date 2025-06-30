@@ -1,6 +1,8 @@
 package com.example.gostock
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
@@ -8,6 +10,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class BatchListActivity : AppCompatActivity() {
@@ -40,15 +45,38 @@ class BatchListActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         batchAdapter = BatchAdapter(batches) { clickedBatch ->
-            Toast.makeText(this, "Batch ${clickedBatch.batch_id} clicked with ${clickedBatch.item_count} items.", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, BatchEntryListActivity::class.java).apply {
+                putExtra(BatchEntryListActivity.EXTRA_BATCH_ID, clickedBatch.batch_id)
+                putParcelableArrayListExtra(BatchEntryListActivity.EXTRA_BATCH_ENTRIES, ArrayList(clickedBatch.entries))
+            }
+            startActivity(intent)
         }
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = batchAdapter
     }
 
-    /**
-     * This function now correctly calculates all the required batch statistics.
-     */
+    private fun parseTimestamp(timestampStr: String): Long? {
+        // First, try to parse it as a raw millisecond Long.
+        timestampStr.toLongOrNull()?.let { return it }
+
+        // If that fails, try common date formats.
+        val possibleFormats = listOf(
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US),
+            SimpleDateFormat("MMM dd, yyyy, h:mm:ss a", Locale.US)
+        )
+
+        for (format in possibleFormats) {
+            try {
+                format.parse(timestampStr)?.let { return it.time }
+            } catch (e: Exception) {
+                // Ignore and try the next format
+            }
+        }
+
+        Log.e("BatchListActivity", "Could not parse timestamp string: '$timestampStr'")
+        return null
+    }
+
     private fun loadAndDisplayBatches() {
         val allEntries = fileHandler.loadStockEntries()
 
@@ -64,25 +92,21 @@ class BatchListActivity : AppCompatActivity() {
             .map { (batchId, entriesInBatch) ->
                 val firstEntry = entriesInBatch.first()
 
-                // --- NEW COMPUTATION LOGIC ---
+                // Calculate all batch statistics
+                val timestampsAsLong = entriesInBatch.mapNotNull { parseTimestamp(it.timestamp) }
+                val minTimestamp = timestampsAsLong.minOrNull()
+                val maxTimestamp = timestampsAsLong.maxOrNull()
 
-                // 1. Calculate Batch Timer
-                val timestampsAsLong = entriesInBatch.mapNotNull { it.timestamp.toLongOrNull() }
-                val minTimestamp = timestampsAsLong.minOrNull() ?: 0L
-                val maxTimestamp = timestampsAsLong.maxOrNull() ?: 0L
-                val durationMillis = maxTimestamp - minTimestamp
-                // Convert milliseconds to hours as a float, rounded to 2 decimal places
-                val durationHours = (TimeUnit.MILLISECONDS.toMinutes(durationMillis) / 60.0).toFloat()
+                val durationMillis = if (minTimestamp != null && maxTimestamp != null) {
+                    maxTimestamp - minTimestamp
+                } else {
+                    0L
+                }
 
-                // 2. Count Unique Locations
+                val durationHours = durationMillis / (1000.0f * 60 * 60)
                 val uniqueLocations = entriesInBatch.map { it.locationBarcode }.distinct().count()
-
-                // 3. Count Unique SKUs
                 val uniqueSkus = entriesInBatch.map { it.skuBarcode }.distinct().count()
-
-                // 4. Sum all Quantities
                 val totalQuantity = entriesInBatch.sumOf { it.quantity }
-                // --- END OF NEW LOGIC ---
 
                 // Construct the Batch object with all the computed data
                 Batch(
@@ -95,7 +119,10 @@ class BatchListActivity : AppCompatActivity() {
                     locations_counted = uniqueLocations,
                     sku_counted = uniqueSkus,
                     quantity_counted = totalQuantity,
-                    entries = entriesInBatch
+                    entries = entriesInBatch,
+                    // Populate the new date fields
+                    first_entry_date = minTimestamp,
+                    last_entry_date = maxTimestamp
                 )
             }
             .sortedByDescending { it.transfer_date }

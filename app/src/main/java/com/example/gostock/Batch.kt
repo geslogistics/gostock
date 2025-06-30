@@ -7,6 +7,8 @@ package com.example.gostock
 data class Batch(
     val batch_id: String,
     val batch_user: String?,
+    val first_entry_date: Long?,
+    val last_entry_date: Long?,
     val transfer_date: Long?,
     val receiver_user: String?,
     val item_count: Int,
@@ -14,5 +16,5 @@ data class Batch(
     val locations_counted: Int,
     val sku_counted: Int,
     val quantity_counted: Int,
-    val entries: List<StockEntry> // The actual records in this batch
+    val entries: List<StockEntry>
 )

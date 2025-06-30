@@ -62,6 +62,91 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/rl_first_entry"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_marginVertical="3dp"
+                    android:layout_marginEnd="10dp"
+                    android:src="@drawable/ic_date_icon"
+                    app:tint="@android:color/darker_gray"
+                    android:contentDescription="First entry icon"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="First Entry"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_first_entry_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:layout_marginStart="20dp"
+                android:text="2025-07-01 10:00:00"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- NEW: Last Entry Date Section -->
+        <LinearLayout
+            android:id="@+id/rl_last_entry"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_marginVertical="3dp"
+                    android:layout_marginEnd="10dp"
+                    android:src="@drawable/ic_date_icon"
+                    app:tint="@android:color/darker_gray"
+                    android:contentDescription="Last entry icon"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Last Entry"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_last_entry_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:layout_marginStart="20dp"
+                android:text="2025-07-01 12:30:00"
+                android:textColor="@color/primary_text_dark"
+                android:textSize="12sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/rl_batch_item_count"
             android:orientation="vertical"
             android:layout_width="match_parent"

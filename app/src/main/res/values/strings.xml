@@ -45,7 +45,6 @@
     <string name="quantity_counted_label">Total Quantity</string>
 
 
-
     <string name="activity_intent_filter_action">com.example.gostock.ACTION</string> <!-- Updated action for your package -->
 
 

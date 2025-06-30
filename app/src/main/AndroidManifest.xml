@@ -43,6 +43,9 @@
         android:theme="@style/Theme.GoStock"
         tools:targetApi="31">
         <activity
+            android:name=".BatchEntryListActivity"
+            android:exported="false" />
+        <activity
             android:name=".BatchListActivity"
             android:exported="false" />
         <activity
