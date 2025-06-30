@@ -63,6 +63,8 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var btnBluetoothConnect: LinearLayout
 
+    private lateinit var btnTransferData: LinearLayout
+
     private lateinit var btnSettings: LinearLayout
 
     private lateinit var btnSub: LinearLayout
@@ -110,6 +112,8 @@ class HomeActivity : AppCompatActivity() {
         btnSub = findViewById(R.id.btn_sub)
 
         btnBluetoothConnect = findViewById(R.id.btn_bluetooth_connect)
+
+        btnTransferData = findViewById(R.id.btn_transfer_data)
 
         tvLoggedInUser = findViewById(R.id.tv_logged_in_user)
 
@@ -283,6 +287,7 @@ class HomeActivity : AppCompatActivity() {
             btnExportClose.visibility = View.VISIBLE
             btnImportRecords.visibility = View.VISIBLE
             btnBluetoothConnect.visibility = View.VISIBLE
+            btnTransferData.visibility = View.VISIBLE
             btnSettings.visibility = View.VISIBLE
             btnManageUsers.visibility = View.VISIBLE
             btnSub.visibility = View.VISIBLE
@@ -291,6 +296,7 @@ class HomeActivity : AppCompatActivity() {
             btnExportClose.visibility = View.GONE
             btnImportRecords.visibility = View.GONE
             btnBluetoothConnect.visibility = View.GONE
+            btnTransferData.visibility = View.GONE
             btnSettings.visibility = View.GONE
             btnManageUsers.visibility = View.GONE
             btnSub.visibility = View.GONE
@@ -390,6 +396,11 @@ class HomeActivity : AppCompatActivity() {
             Toast.makeText(this, "Coming Soon!", Toast.LENGTH_SHORT).show()
 //            val intent = Intent(this, TransferDataActivity::class.java)
 //            startActivity(intent)
+        }
+
+        btnTransferData.setOnClickListener {
+            val intent = Intent(this, TransferDataActivity::class.java)
+            startActivity(intent)
         }
 
         btnManageUsers.setOnClickListener {
