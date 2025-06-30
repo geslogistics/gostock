@@ -25,14 +25,16 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.*
+import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.min
 import kotlin.concurrent.thread
+import kotlin.math.min
 
 // Your existing imports
 import com.example.gostock.StockEntry
@@ -69,6 +71,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         private const val APP_NAME = "GoStockAppTransfer"
         private const val TAG = "BluetoothTransfer"
         const val STOCK_DATA_FILENAME = "stock_data.json"
+        const val GO_DATA_FILENAME = "go_data.json"
     }
 
     // --- ActivityResultLaunchers (no changes needed) ---
@@ -251,24 +254,53 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
 
     private fun sendData(socket: BluetoothSocket) {
         lifecycleScope.launch(Dispatchers.IO) {
-            val file = File(filesDir, STOCK_DATA_FILENAME)
-            if (!file.exists() || file.length() == 0L) {
+            val stockDataFileHandler = FileHandler(this@BluetoothTransferSubActivity, STOCK_DATA_FILENAME)
+            val originalEntries = stockDataFileHandler.loadStockEntries()
+
+            if (originalEntries.isEmpty()) {
                 withContext(Dispatchers.Main) { Toast.makeText(this@BluetoothTransferSubActivity, "No data to send.", Toast.LENGTH_SHORT).show() }
                 return@launch
             }
 
-            withContext(Dispatchers.Main) { updateUiForTransfer("Sending...") }
+            withContext(Dispatchers.Main) { updateUiForTransfer("Preparing data...") }
 
+            // 1. Enrich each record with the transfer metadata
+            val senderUser = GoStockApp.loggedInUser
+            val transferTimestamp = System.currentTimeMillis()
+            val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
+            val batchId = "${senderUser?.username}_${dateFormat.format(Date(transferTimestamp))}"
+
+            val entriesToSend: List<StockEntry> = originalEntries.map { entry ->
+                entry.copy(
+                    batchID = batchId,
+                    sender_user = senderUser?.username,
+                    transfer_date = transferTimestamp
+                )
+            }
+
+            // 2. Archive the enriched data to the sender's own go_data.json
+            archiveSentDataOnSender(entriesToSend)
+
+            // 3. Write the enriched data to a temporary file for streaming
+            val tempFile = File(cacheDir, "temp_send_data.json")
             try {
-                // Use DataOutputStream to easily send the file size first
-                DataOutputStream(socket.outputStream).use { dataOut ->
-                    FileInputStream(file).use { fileIn ->
-                        // 1. Handshake: Send file size (as a Long)
-                        val fileSize = file.length()
-                        dataOut.writeLong(fileSize)
-                        Log.d(TAG, "Sender: Sent file size: $fileSize")
+                FileWriter(tempFile).use { writer ->
+                    Gson().toJson(entriesToSend, writer)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to create temporary send file", e)
+                withContext(Dispatchers.Main) { updateUiForReadyState("❗  Failed to prepare data") }
+                return@launch
+            }
 
-                        // 2. Stream file content in chunks
+            // 4. Stream the temporary file
+            var transferSucceeded = false
+            withContext(Dispatchers.Main) { updateUiForTransfer("Sending...") }
+            try {
+                DataOutputStream(socket.outputStream).use { dataOut ->
+                    FileInputStream(tempFile).use { fileIn ->
+                        val fileSize = tempFile.length()
+                        dataOut.writeLong(fileSize)
                         val buffer = ByteArray(8192)
                         var bytesRead: Int
                         var totalBytesSent: Long = 0
@@ -276,21 +308,59 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
                             dataOut.write(buffer, 0, bytesRead)
                             totalBytesSent += bytesRead
                             val progress = (totalBytesSent * 100 / fileSize).toInt()
-                            // Update UI on the main thread
                             withContext(Dispatchers.Main) { updateProgress(progress) }
                         }
                         dataOut.flush()
-                        Log.d(TAG, "Sender: File sending complete.")
+                        transferSucceeded = true
                     }
                 }
-                // If we reach here, the transfer was successful
-                navigateToHome()
             } catch (e: IOException) {
                 Log.e(TAG, "Error during sending", e)
                 withContext(Dispatchers.Main) { updateUiForReadyState("❗  Send failed") }
             } finally {
                 socket.close()
+                tempFile.delete()
             }
+
+            // 5. If transfer succeeded, clear the original stock_data.json and navigate home
+            if (transferSucceeded) {
+                Log.d(TAG, "Sender: Clearing local stock_data.json")
+                stockDataFileHandler.clearData()
+                navigateToHome()
+            }
+        }
+    }
+
+    private fun archiveSentDataOnSender(entriesToArchive: List<StockEntry>) {
+        Log.d(TAG, "Sender: Archiving sent data to go_data.json")
+        // This function manually reads, updates, and writes to go_data.json
+        // to avoid changing FileHandler.kt
+        val goDataFile = File(filesDir, GO_DATA_FILENAME)
+        val gson = GsonBuilder().setPrettyPrinting().create()
+        val listType = object : TypeToken<MutableList<StockEntry>>() {}.type
+
+        val allGoDataEntries: MutableList<StockEntry> = if (goDataFile.exists() && goDataFile.length() > 0) {
+            try {
+                FileReader(goDataFile).use { reader ->
+                    gson.fromJson(reader, listType) ?: mutableListOf()
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not parse go_data.json on sender. Starting new list.", e)
+                mutableListOf()
+            }
+        } else {
+            mutableListOf()
+        }
+
+        allGoDataEntries.addAll(entriesToArchive)
+
+        try {
+            FileWriter(goDataFile).use { writer ->
+                gson.toJson(allGoDataEntries, writer)
+            }
+            Log.d(TAG, "Sender: Successfully archived ${entriesToArchive.size} records.")
+        } catch (e: IOException) {
+            Log.e(TAG, "Sender: Failed to write archive to go_data.json", e)
         }
     }
 
@@ -298,19 +368,11 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val tempFile = File(cacheDir, "received_transfer.json")
             withContext(Dispatchers.Main) { updateUiForTransfer("\uD83D\uDD35 Receiving...") }
-
             try {
                 DataInputStream(socket.inputStream).use { dataIn ->
                     FileOutputStream(tempFile).use { fileOut ->
-                        // 1. Handshake: Read incoming file size
                         val fileSize = dataIn.readLong()
-                        Log.d(TAG, "Receiver: Expecting file size: $fileSize")
-                        if (fileSize == 0L) {
-                            withContext(Dispatchers.Main) { Toast.makeText(this@BluetoothTransferSubActivity, "Received empty file.", Toast.LENGTH_SHORT).show() }
-                            return@launch
-                        }
-
-                        // 2. Stream file content in chunks to a temporary file
+                        if (fileSize == 0L) return@launch
                         val buffer = ByteArray(8192)
                         var bytesRead: Int
                         var totalBytesReceived: Long = 0
@@ -322,13 +384,9 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
                             val progress = (totalBytesReceived * 100 / fileSize).toInt()
                             withContext(Dispatchers.Main) { updateProgress(progress) }
                         }
-                        Log.d(TAG, "Receiver: File receiving complete. Total bytes: $totalBytesReceived")
                     }
                 }
-
-                // 3. If reception was successful, process the file from disk
                 processReceivedFile(tempFile)
-
             } catch (e: IOException) {
                 Log.e(TAG, "Error during receiving", e)
                 withContext(Dispatchers.Main) { updateUiForReadyState("❗  Receive failed") }
@@ -341,21 +399,27 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
 
     private fun processReceivedFile(receivedFile: File) {
         try {
-            FileReader(receivedFile).use { reader ->
-                val listType = object : TypeToken<List<StockEntry>>() {}.type
-                val receivedEntries: List<StockEntry> = Gson().fromJson(reader, listType)
+            val listType = object : TypeToken<MutableList<StockEntry>>() {}.type
+            val receivedEntries: MutableList<StockEntry> = FileReader(receivedFile).use { reader ->
+                Gson().fromJson(reader, listType) ?: mutableListOf()
+            }
 
-                if (receivedEntries.isNotEmpty()) {
-                    val fileHandler = FileHandler(this, STOCK_DATA_FILENAME)
-                    fileHandler.addMultipleStockEntries(receivedEntries)
-                    navigateToHome()
-                } else {
-                    runOnUiThread { Toast.makeText(this, "Received file contained no records.", Toast.LENGTH_SHORT).show() }
-                }
+            if (receivedEntries.isNotEmpty()) {
+                val receiverUser = GoStockApp.loggedInUser
+                receivedEntries.forEach { it.receiver_user = receiverUser?.username }
+
+                // Use the existing FileHandler to append to go_data.json
+                val goDataFileHandler = FileHandler(this, GO_DATA_FILENAME)
+                goDataFileHandler.addMultipleStockEntries(receivedEntries)
+
+                Log.d(TAG, "Successfully added new batch to go_data.json")
+                navigateToHome()
+            } else {
+                runOnUiThread { Toast.makeText(this, "Received file contained no records.", Toast.LENGTH_SHORT).show() }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse received file", e)
-            runOnUiThread { Toast.makeText(this, "Failed to process: Invalid file format.", Toast.LENGTH_LONG).show() }
+            Log.e(TAG, "Failed to parse or save received file", e)
+            runOnUiThread { Toast.makeText(this, "Failed to process: Invalid data format.", Toast.LENGTH_LONG).show() }
         }
     }
 

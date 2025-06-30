@@ -1,48 +1,27 @@
 package com.example.gostock
 
-import android.os.Parcel
 import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 import java.util.UUID
 
-// Data class to represent a single stock entry
-// Implement Parcelable to pass between activities
+// The @Parcelize annotation automatically handles all the boilerplate code
+// for making a class Parcelable, which is the modern Android standard.
+@Parcelize
 data class StockEntry(
     val id: String = UUID.randomUUID().toString(),
-    val timestamp: String,
-    val username: String,
-    val locationBarcode: String,
-    val skuBarcode: String,
-    val quantity: Int
-) : Parcelable {
-    constructor(parcel: Parcel) : this(
-        parcel.readString()!!,
-        parcel.readString()!!,
-        parcel.readString()!!,
-        parcel.readString()!!,
-        parcel.readString()!!,
-        parcel.readInt()
-    )
+    // Changed to Long for correct sorting and calculations.
+    var timestamp: String,
+    var username: String,
+    // Renamed for consistency with the rest of the app's logic.
+    var locationBarcode: String,
+    var skuBarcode: String,
+    var quantity: Int,
 
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(id)
-        parcel.writeString(timestamp)
-        parcel.writeString(username)
-        parcel.writeString(locationBarcode)
-        parcel.writeString(skuBarcode)
-        parcel.writeInt(quantity)
-    }
-
-    override fun describeContents(): Int {
-        return 0
-    }
-
-    companion object CREATOR : Parcelable.Creator<StockEntry> {
-        override fun createFromParcel(parcel: Parcel): StockEntry {
-            return StockEntry(parcel)
-        }
-
-        override fun newArray(size: Int): Array<StockEntry?> {
-            return arrayOfNulls(size)
-        }
-    }
-}
+    // --- NEW NULLABLE FIELDS ---
+    // These are added for the transfer process. They are nullable
+    // so they don't break existing records or activities.
+    var batchID: String? = null,
+    var sender_user: String? = null,
+    var transfer_date: Long? = null,
+    var receiver_user: String? = null
+) : Parcelable

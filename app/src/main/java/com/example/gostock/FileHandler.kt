@@ -132,4 +132,15 @@ class FileHandler(private val context: Context, private val filename: String) {
             null
         }
     }
+
+    fun clearData() {
+        try {
+            val file = File(context.filesDir, filename)
+            // Overwrite the file with an empty JSON array "[]"
+            file.writeText("[]", Charsets.UTF_8)
+            Log.d("FileHandler", "Successfully cleared data from $filename.")
+        } catch (e: IOException) {
+            Log.e("FileHandler", "Error clearing data from $filename", e)
+        }
+    }
 }
