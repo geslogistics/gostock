@@ -2,6 +2,7 @@ package com.example.gostock
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
@@ -9,6 +10,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class BatchEntryListActivity : AppCompatActivity() {
 
@@ -33,9 +36,8 @@ class BatchEntryListActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView_records)
         tvNoRecords = findViewById(R.id.tv_no_records)
 
-        // Retrieve the data passed from BatchListActivity
         val batchId = intent.getStringExtra(EXTRA_BATCH_ID)
-        pageTitle.text = "Entries for: $batchId" // Set the title dynamically
+        pageTitle.text = "Entries for: $batchId"
 
         entries = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableArrayListExtra(EXTRA_BATCH_ENTRIES, StockEntry::class.java)
@@ -44,15 +46,17 @@ class BatchEntryListActivity : AppCompatActivity() {
             intent.getParcelableArrayListExtra(EXTRA_BATCH_ENTRIES)
         } ?: arrayListOf()
 
+        // --- NEW: Sort the entries by timestamp in descending order ---
+        entries.sortByDescending { parseTimestamp(it.timestamp) }
+        // --- END OF NEW LOGIC ---
+
         setupRecyclerView()
         displayEntries()
         setupClickListeners()
     }
 
     private fun setupRecyclerView() {
-        // We reuse the existing EntryAdapter, which is great!
         entryAdapter = EntryAdapter(entries) { clickedEntry ->
-            // As requested, just show a toast for now.
             Toast.makeText(this, "Clicked entry with SKU: ${clickedEntry.skuBarcode}", Toast.LENGTH_SHORT).show()
         }
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -66,8 +70,6 @@ class BatchEntryListActivity : AppCompatActivity() {
         } else {
             recyclerView.visibility = View.VISIBLE
             tvNoRecords.visibility = View.GONE
-            // The adapter already has the data from its constructor, but we call
-            // updateData to be safe and consistent.
             entryAdapter.updateData(entries)
         }
     }
@@ -76,5 +78,25 @@ class BatchEntryListActivity : AppCompatActivity() {
         btnToolbarBack.setOnClickListener {
             finish()
         }
+    }
+
+    /**
+     * Helper function to parse different possible timestamp formats.
+     */
+    private fun parseTimestamp(timestampStr: String): Long? {
+        timestampStr.toLongOrNull()?.let { return it }
+        val possibleFormats = listOf(
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US),
+            SimpleDateFormat("MMM dd, yyyy, h:mm:ss a", Locale.US)
+        )
+        for (format in possibleFormats) {
+            try {
+                format.parse(timestampStr)?.let { return it.time }
+            } catch (e: Exception) {
+                // Ignore and try the next format
+            }
+        }
+        Log.e("BatchEntryListActivity", "Could not parse timestamp string: '$timestampStr'")
+        return null
     }
 }
