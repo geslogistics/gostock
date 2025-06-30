@@ -3,28 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="true"/>
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
-    <uses-permission
-        android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="com.symbol.datawedge.permission.SEND_SOFT_SCAN_TRIGGER" />
     <uses-permission android:name="com.symbol.datawedge.permission.SET_CONFIG" />
     <uses-permission android:name="com.symbol.datawedge.permission.REGISTER_FOR_NOTIFICATION" />
-    <uses-permission android:name="com.symbol.datawedge.permission.UNREGISTER_FOR_NOTIFICATION" /> <!-- NEW: Bluetooth Permissions for older Android (API < 31) -->
-    <uses-permission
-        android:name="android.permission.BLUETOOTH"
-        android:maxSdkVersion="30" />
-    <uses-permission
-        android:name="android.permission.BLUETOOTH_ADMIN"
-        android:maxSdkVersion="30" />
-    <uses-permission
-        android:name="android.permission.ACCESS_FINE_LOCATION"
-        android:maxSdkVersion="30" /> <!-- NEW: Bluetooth Permissions for Android 12 (API 31) and above -->
+    <uses-permission android:name="com.symbol.datawedge.permission.UNREGISTER_FOR_NOTIFICATION" />
+
+    <!-- NEW: Bluetooth Permissions for older Android (API < 31) -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
+
+    <!-- NEW: Bluetooth Permissions for Android 12 (API 31) and above -->
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /> <!-- For location services to work with Bluetooth scanning (even on newer devices for Wi-Fi/BT scans) -->
@@ -41,12 +36,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GoStock"
         tools:targetApi="31">
+
         <activity
             android:name=".BluetoothTransferSubActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.GoStock" />
+
         <activity
             android:name=".TransferDataActivity"
-            android:exported="false"></activity>
+            android:exported="false">
+        </activity>
         <activity
             android:name=".SubActivity"
             android:exported="true">

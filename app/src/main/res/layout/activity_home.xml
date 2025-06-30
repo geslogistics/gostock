@@ -745,14 +745,14 @@
                             android:textSize="22dp"
                             android:textStyle="bold"
                             android:layout_gravity="center_vertical"
-                            android:textColor="@android:color/white" />
+                            android:textColor="@color/primary_text_dark" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Send/Receive records"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/primary_text_dark"
                             android:textSize="15sp"
                             android:textStyle="normal" />
 
@@ -763,7 +763,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="top|end"
                         app:srcCompat="@drawable/ic_transfer_data_icon"
-                        app:tint="@android:color/white"/>
+                        app:tint="@color/primary_text_dark"/>
 
                 </LinearLayout>
 

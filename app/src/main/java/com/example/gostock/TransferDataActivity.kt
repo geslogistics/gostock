@@ -35,7 +35,9 @@ class TransferDataActivity : AppCompatActivity() {
 
         btnTransferBluetooth.setOnClickListener {
             // TODO: Launch BluetoothTransferSubActivity (will create next)
-            Toast.makeText(this, "Bluetooth Transfer Coming Soon!", Toast.LENGTH_SHORT).show()
+            //Toast.makeText(this, "Bluetooth Transfer Coming Soon!", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, BluetoothTransferSubActivity::class.java)
+            startActivity(intent)
         }
 
         btnTransferEmail.setOnClickListener {

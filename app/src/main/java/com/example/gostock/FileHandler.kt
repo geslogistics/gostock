@@ -111,4 +111,25 @@ class FileHandler(private val context: Context, private val filename: String) {
         saveStockEntries(currentEntries)
         Log.d(TAG, "Added ${newEntries.size} new entries to $filename. Total entries: ${currentEntries.size}") // Log filename
     }
+
+    // --- Add this function to your FileHandler.kt file ---
+
+    /**
+     * Reads the entire content of the JSON file into a single string.
+     * @return The file content as a String, or null if the file doesn't exist or an error occurs.
+     */
+    fun readJsonFromFile(): String? {
+        return try {
+            val file = File(context.filesDir, filename)
+            if (!file.exists()) {
+                Log.w("FileHandler", "File not found: $filename")
+                null
+            } else {
+                file.readText(Charsets.UTF_8)
+            }
+        } catch (e: IOException) {
+            Log.e("FileHandler", "Error reading from file $filename", e)
+            null
+        }
+    }
 }
