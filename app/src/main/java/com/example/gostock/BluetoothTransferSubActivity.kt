@@ -34,6 +34,8 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.UUID
+import java.io.ByteArrayOutputStream
+
 
 // Corrected imports to use your package structure
 import com.example.gostock.StockEntry
@@ -181,32 +183,65 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         private val mmInStream: InputStream = mmSocket.inputStream
         private val mmOutStream: OutputStream = mmSocket.outputStream
         @Volatile var isConnected: Boolean = true
+
         override fun run() {
+            val byteArrayOutputStream = ByteArrayOutputStream()
             val buffer = ByteArray(4096)
-            var numBytes: Int
-            while (isConnected) {
-                try {
-                    numBytes = mmInStream.read(buffer)
-                    val receivedData = String(buffer, 0, numBytes)
-                    runOnUiThread { processReceivedData(receivedData) }
-                } catch (e: IOException) {
-                    connectionLost()
-                    break
-                }
-            }
-        }
-        fun write(bytes: ByteArray) {
+            var bytes: Int
+            Log.d(TAG, "Receiver: Read loop started.")
+
+            // Keep reading from the stream until an exception occurs.
             try {
-                mmOutStream.write(bytes)
+                while (true) {
+                    bytes = mmInStream.read(buffer)
+                    if (bytes == -1) break // End of stream
+                    byteArrayOutputStream.write(buffer, 0, bytes)
+                }
             } catch (e: IOException) {
+                Log.w(TAG, "Receiver: Read loop exited with exception, which is expected.")
+            }
+
+            // After the loop ends, process the data.
+            if (byteArrayOutputStream.size() > 0) {
+                val receivedData = byteArrayOutputStream.toString("UTF-8")
+                runOnUiThread {
+                    // Call processReceivedData and wait for its result.
+                    processReceivedData(receivedData) { success ->
+                        if (success) {
+                            // If data was processed correctly, navigate home.
+                            navigateToHome()
+                        } else {
+                            // If data was invalid, show the connection lost message.
+                            connectionLost()
+                        }
+                    }
+                }
+            } else {
+                // If no data was received at all, show connection lost.
+                Log.w(TAG, "Receiver: Connection closed and no data was received.")
                 connectionLost()
             }
         }
+
+        fun write(bytes: ByteArray) {
+            try {
+                Log.d(TAG, "Sender: Writing ${bytes.size} bytes...")
+                mmOutStream.write(bytes)
+                mmOutStream.flush()
+                Log.d(TAG, "Sender: Write and flush complete.")
+            } catch (e: IOException) {
+                Log.e(TAG, "Sender: Exception during write.", e)
+                connectionLost()
+            }
+        }
+
         fun cancel() {
             try {
                 isConnected = false
                 mmSocket.close()
-            } catch (e: IOException) { Log.e(TAG, "Could not close the connect socket", e) }
+            } catch (e: IOException) {
+                Log.e(TAG, "Could not close the connect socket", e)
+            }
         }
     }
 
@@ -392,9 +427,18 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
             if (bluetoothService != null && bluetoothService!!.isConnected) {
                 val fileHandler = FileHandler(this, STOCK_DATA_FILENAME)
                 val jsonString = fileHandler.readJsonFromFile()
+
                 if (!jsonString.isNullOrEmpty()) {
-                    bluetoothService?.write(jsonString.toByteArray())
-                    Toast.makeText(this, "Data sent!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Sending data...", Toast.LENGTH_SHORT).show()
+                    btnSendData.isEnabled = false // Disable button
+
+                    Thread {
+                        bluetoothService?.write(jsonString.toByteArray())
+                        // After writing, close the connection to signal completion
+                        bluetoothService?.cancel()
+                        // Instead of resetting the UI, navigate home
+                        navigateToHome()
+                    }.start()
                 } else {
                     Toast.makeText(this, "No data to send.", Toast.LENGTH_SHORT).show()
                 }
@@ -451,7 +495,8 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         }
         if (bluetoothAdapter?.isEnabled == true) {
             updateUiForBluetoothState(BluetoothState.ENABLED)
-            listPairedDevices()
+            // This is a UI operation and must run on the main thread.
+            runOnUiThread { listPairedDevices() }
         } else {
             updateUiForBluetoothState(BluetoothState.DISABLED)
         }
@@ -467,28 +512,28 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         when (state) {
             BluetoothState.PERMISSIONS_DENIED -> tvTransferStatus.text = deviceName ?: "Status: Bluetooth permissions required"
             BluetoothState.DISABLED -> {
-                tvTransferStatus.text = "Status: Bluetooth is disabled"
+                tvTransferStatus.text = "Status:  \uD83D\uDEAB  Bluetooth is disabled"
                 btnEnableBluetooth.visibility = View.VISIBLE
             }
             BluetoothState.ENABLED -> {
-                tvTransferStatus.text = "Status: Ready"
+                tvTransferStatus.text = "Status:  ⚪  Ready"
                 btnScanDevices.isEnabled = true
                 btnMakeDiscoverable.isEnabled = true
             }
             BluetoothState.DISCOVERING -> {
-                tvTransferStatus.text = "Status: Scanning for devices..."
+                tvTransferStatus.text = "Status:  \uD83D\uDD35  Scanning for devices..."
                 progressBar.visibility = View.VISIBLE
             }
             BluetoothState.LISTENING -> {
-                tvTransferStatus.text = "Status: Listening for connections..."
+                tvTransferStatus.text = "Status:  \uD83D\uDD35  Listening for connections..."
                 progressBar.visibility = View.VISIBLE
             }
             BluetoothState.CONNECTING -> {
-                tvTransferStatus.text = "Status: Connecting to $deviceName..."
+                tvTransferStatus.text = "Status:  \uD83D\uDFE1  Connecting to $deviceName..."
                 progressBar.visibility = View.VISIBLE
             }
             BluetoothState.CONNECTED -> {
-                tvTransferStatus.text = "Status: Connected to $deviceName"
+                tvTransferStatus.text = "Status:  \uD83D\uDFE2  Connected to $deviceName"
                 btnSendData.isEnabled = true
             }
         }
@@ -558,7 +603,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         }
     }
 
-    private fun processReceivedData(jsonData: String) {
+    private fun processReceivedData(jsonData: String, onResult: (success: Boolean) -> Unit) {
         val listType = object : TypeToken<List<StockEntry>>() {}.type
         try {
             val receivedEntries: List<StockEntry> = Gson().fromJson(jsonData, listType)
@@ -566,10 +611,29 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
                 val fileHandler = FileHandler(this, STOCK_DATA_FILENAME)
                 fileHandler.addMultipleStockEntries(receivedEntries)
                 Toast.makeText(this, "Imported ${receivedEntries.size} records!", Toast.LENGTH_LONG).show()
+                onResult(true) // Report SUCCESS
+            } else {
+                Toast.makeText(this, "Received empty record list.", Toast.LENGTH_SHORT).show()
+                onResult(false) // Report FAILURE
             }
         } catch (e: Exception) {
             Toast.makeText(this, "Received invalid data.", Toast.LENGTH_LONG).show()
-            Log.e(TAG, "Error processing received data: ${e.message}", e)
+            Log.e(TAG, "Error parsing received JSON", e)
+            onResult(false) // Report FAILURE
+        }
+    }
+
+    private fun navigateToHome() {
+        // Use runOnUiThread to ensure this can be called safely from any thread
+        runOnUiThread {
+            finish() // Close this BluetoothTransferSubActivity
+            Toast.makeText(this, "✅ Transfer successful.", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, HomeActivity::class.java)
+            // These flags clear the other screens from history so the user can't press "back"
+            // to return to the transfer screen.
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+
         }
     }
 }
