@@ -625,6 +625,54 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/btn_batch_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:clickable="true"
+                    android:background="@drawable/rounded_bg_light"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:padding="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_weight="1">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Batch List"
+                            android:textSize="22dp"
+                            android:textStyle="bold"
+                            android:layout_gravity="center_vertical"
+                            android:textColor="@color/primary_text_dark" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="View batch list"
+                            android:textColor="@color/primary_text_dark"
+                            android:textSize="15sp"
+                            android:textStyle="normal" />
+
+                    </LinearLayout>
+
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top|end"
+                        app:srcCompat="@drawable/ic_batch_icon"
+                        app:tint="@color/primary_text_dark"/>
+
+                </LinearLayout>
+
+                <LinearLayout
                     android:id="@+id/btn_export_records"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

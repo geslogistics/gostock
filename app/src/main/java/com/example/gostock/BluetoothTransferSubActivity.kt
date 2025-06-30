@@ -272,8 +272,8 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
 
             val entriesToSend: List<StockEntry> = originalEntries.map { entry ->
                 entry.copy(
-                    batchID = batchId,
-                    sender_user = senderUser?.username,
+                    batch_id = batchId,
+                    batch_user = senderUser?.username,
                     transfer_date = transferTimestamp
                 )
             }

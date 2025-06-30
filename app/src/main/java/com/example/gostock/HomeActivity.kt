@@ -67,6 +67,8 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var btnBatchData: LinearLayout
 
+    private lateinit var btnBatchList: LinearLayout
+
     private lateinit var btnSettings: LinearLayout
 
     private lateinit var btnSub: LinearLayout
@@ -118,6 +120,8 @@ class HomeActivity : AppCompatActivity() {
         btnTransferData = findViewById(R.id.btn_transfer_data)
 
         btnBatchData = findViewById(R.id.btn_batch_data)
+
+        btnBatchList = findViewById(R.id.btn_batch_list)
 
         tvLoggedInUser = findViewById(R.id.tv_logged_in_user)
 
@@ -293,6 +297,7 @@ class HomeActivity : AppCompatActivity() {
             btnBluetoothConnect.visibility = View.VISIBLE
             //btnTransferData.visibility = View.VISIBLE
             btnBatchData.visibility = View.VISIBLE
+            btnBatchList.visibility = View.VISIBLE
             btnSettings.visibility = View.VISIBLE
             btnManageUsers.visibility = View.VISIBLE
             btnSub.visibility = View.VISIBLE
@@ -303,6 +308,7 @@ class HomeActivity : AppCompatActivity() {
             btnBluetoothConnect.visibility = View.GONE
             //btnTransferData.visibility = View.GONE
             btnBatchData.visibility = View.GONE
+            btnBatchList.visibility = View.GONE
             btnSettings.visibility = View.GONE
             btnManageUsers.visibility = View.GONE
             btnSub.visibility = View.GONE
@@ -411,6 +417,11 @@ class HomeActivity : AppCompatActivity() {
 
         btnBatchData.setOnClickListener {
             val intent = Intent(this, GoDataListActivity::class.java)
+            startActivity(intent)
+        }
+
+        btnBatchList.setOnClickListener {
+            val intent = Intent(this, BatchListActivity::class.java)
             startActivity(intent)
         }
 

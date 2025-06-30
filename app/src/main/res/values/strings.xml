@@ -34,6 +34,17 @@
     <string name="edit_page_title_label">Edit</string>
     <string name="not_logged_in">Not Logged In</string>
 
+    <string name="batch_list_page_title_label">Batch List</string>
+
+    <string name="batch_id_label">Batch</string>
+    <string name="batch_user_label">User</string>
+    <string name="batch_item_count_label">Batch Counter</string>
+    <string name="batch_timer_label">Batch Timer</string>
+    <string name="location_counted_label">Locations</string>
+    <string name="sku_counted_label">SKUs</string>
+    <string name="quantity_counted_label">Total Quantity</string>
+
+
 
     <string name="activity_intent_filter_action">com.example.gostock.ACTION</string> <!-- Updated action for your package -->
 

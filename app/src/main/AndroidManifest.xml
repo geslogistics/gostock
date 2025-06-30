@@ -43,6 +43,9 @@
         android:theme="@style/Theme.GoStock"
         tools:targetApi="31">
         <activity
+            android:name=".BatchListActivity"
+            android:exported="false" />
+        <activity
             android:name=".GoDataListActivity"
             android:exported="false" />
         <activity
@@ -52,7 +55,7 @@
             android:theme="@style/Theme.GoStock" />
         <activity
             android:name=".TransferDataActivity"
-            android:exported="false"></activity>
+            android:exported="false" />
         <activity
             android:name=".SubActivity"
             android:exported="true">
