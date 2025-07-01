@@ -10,6 +10,9 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import android.net.Uri
+import java.io.IOException
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
@@ -136,6 +139,11 @@ class BatchEntryListActivity : AppCompatActivity() {
         popup.menuInflater.inflate(R.menu.batch_more_menu, popup.menu)
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
+                R.id.action_export_batch -> {
+                    initiateBatchExport()
+                    true
+                }
+
                 R.id.action_delete_batch -> {
                     // Call the confirmation dialog
                     showDeleteConfirmationDialog()
@@ -197,5 +205,72 @@ class BatchEntryListActivity : AppCompatActivity() {
         }
         Log.e("BatchEntryListActivity", "Could not parse timestamp string: '$timestampStr'")
         return null
+    }
+
+    private val exportBatchLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                currentBatch?.let { batch ->
+                    writeBatchToCsv(uri, batch.entries)
+                }
+            }
+        } else {
+            Toast.makeText(this, "Export cancelled.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun initiateBatchExport() {
+        val batch = currentBatch ?: return
+        if (batch.entries.isEmpty()) {
+            Toast.makeText(this, "This batch has no entries to export.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val csvFileName = "batch_${batch.batch_id}.csv"
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/csv"
+            putExtra(Intent.EXTRA_TITLE, csvFileName)
+        }
+        exportBatchLauncher.launch(intent)
+    }
+
+    private fun writeBatchToCsv(uri: Uri, records: List<StockEntry>): Boolean {
+        val csvBuilder = StringBuilder()
+        // Create a detailed header for the CSV file
+        csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver\n")
+        for (record in records) {
+            csvBuilder.append("${escapeCsv(record.id)},")
+            csvBuilder.append("${escapeCsv(record.timestamp)},")
+            csvBuilder.append("${escapeCsv(record.username)},")
+            csvBuilder.append("${escapeCsv(record.locationBarcode)},")
+            csvBuilder.append("${escapeCsv(record.skuBarcode)},")
+            csvBuilder.append("${record.quantity},")
+            csvBuilder.append("${escapeCsv(record.batch_id ?: "")},")
+            csvBuilder.append("${escapeCsv(record.batch_user ?: "")},")
+            csvBuilder.append("${record.transfer_date ?: ""},")
+            csvBuilder.append("${escapeCsv(record.receiver_user ?: "")}\n")
+        }
+
+        return try {
+            contentResolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(csvBuilder.toString().toByteArray())
+                Toast.makeText(this, "Batch exported successfully!", Toast.LENGTH_LONG).show()
+                true
+            } ?: false
+        } catch (e: IOException) {
+            Toast.makeText(this, "Failed to write to file.", Toast.LENGTH_LONG).show()
+            e.printStackTrace()
+            false
+        }
+    }
+    private fun escapeCsv(field: String): String {
+        return if (field.contains(",") || field.contains("\"") || field.contains("\n")) {
+            "\"" + field.replace("\"", "\"\"") + "\""
+        } else {
+            field
+        }
     }
 }
