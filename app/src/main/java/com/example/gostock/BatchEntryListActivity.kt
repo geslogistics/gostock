@@ -2,22 +2,24 @@ package com.example.gostock
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import android.net.Uri
-import java.io.IOException
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.io.IOException
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -27,6 +29,7 @@ class BatchEntryListActivity : AppCompatActivity() {
     // --- UI Views ---
     private lateinit var btnToolbarBack: ImageButton
     private lateinit var btnToolbarMore: ImageButton
+    private lateinit var pageTitle: TextView
     private lateinit var recyclerView: RecyclerView
     private lateinit var tvNoRecords: TextView
 
@@ -42,11 +45,25 @@ class BatchEntryListActivity : AppCompatActivity() {
 
     // --- Data ---
     private lateinit var entryAdapter: EntryAdapter
-    // CHANGED: Made currentBatch a class property to access it in the delete function
     private var currentBatch: Batch? = null
 
     companion object {
         const val EXTRA_BATCH_OBJECT = "extra_batch_object"
+    }
+
+    // --- ActivityResultLauncher for SAF file export ---
+    private val exportBatchLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                currentBatch?.let { batch ->
+                    writeBatchToCsv(uri, batch.entries)
+                }
+            }
+        } else {
+            Toast.makeText(this, "Export cancelled.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,7 +86,6 @@ class BatchEntryListActivity : AppCompatActivity() {
             return
         }
 
-        // Use the safe-let block to ensure currentBatch is not null
         currentBatch?.let {
             populateHeader(it)
             setupRecyclerView(it.entries)
@@ -79,6 +95,7 @@ class BatchEntryListActivity : AppCompatActivity() {
     private fun initViews() {
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
         btnToolbarMore = findViewById(R.id.btn_toolbar_more)
+        pageTitle = findViewById(R.id.page_title)
         recyclerView = findViewById(R.id.recyclerView_records)
         tvNoRecords = findViewById(R.id.tv_no_records)
 
@@ -93,6 +110,7 @@ class BatchEntryListActivity : AppCompatActivity() {
     }
 
     private fun populateHeader(batch: Batch) {
+        //pageTitle.text = batch.batch_id // Use batch_id for the main title
         tvHeaderID.text = batch.batch_id
         tvHeaderSender.text = "User: ${batch.batch_user ?: "N/A"}"
         tvHeaderItemCount.text = "Counter: ${batch.item_count}"
@@ -101,11 +119,18 @@ class BatchEntryListActivity : AppCompatActivity() {
         tvHeaderTotalQty.text = "Total Qty: ${batch.quantity_counted}"
         tvHeaderSkus.text = "SKUs: ${batch.sku_counted}"
 
-        batch.transfer_date?.let {
-            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-            tvHeaderTransferDate.text = "Date: ${sdf.format(Date(it))}"
+        // --- FIX: Correctly format the transfer date ---
+        batch.transfer_date?.let { timestamp ->
+            try {
+                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                val formattedDate = sdf.format(Date(timestamp))
+                tvHeaderTransferDate.text = formattedDate
+            } catch (e: Exception) {
+                Log.e("BatchEntryListActivity", "Error formatting transfer date", e)
+                tvHeaderTransferDate.text = "Invalid Date"
+            }
         } ?: run {
-            tvHeaderTransferDate.text = "Date: N/A"
+            tvHeaderTransferDate.text = "N/A"
         }
     }
 
@@ -126,12 +151,8 @@ class BatchEntryListActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        btnToolbarBack.setOnClickListener {
-            finish()
-        }
-        btnToolbarMore.setOnClickListener { view ->
-            showMoreMenu(view)
-        }
+        btnToolbarBack.setOnClickListener { finish() }
+        btnToolbarMore.setOnClickListener { view -> showMoreMenu(view) }
     }
 
     private fun showMoreMenu(view: View) {
@@ -143,9 +164,7 @@ class BatchEntryListActivity : AppCompatActivity() {
                     initiateBatchExport()
                     true
                 }
-
                 R.id.action_delete_batch -> {
-                    // Call the confirmation dialog
                     showDeleteConfirmationDialog()
                     true
                 }
@@ -155,79 +174,12 @@ class BatchEntryListActivity : AppCompatActivity() {
         popup.show()
     }
 
-    // --- NEW: Functions for Deleting the Batch ---
-
-    private fun showDeleteConfirmationDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Confirm Deletion")
-            .setMessage("Are you sure you want to delete this entire batch and all its entries? This action cannot be undone.")
-            .setIcon(R.drawable.ic_delete_icon)
-            .setPositiveButton("Delete") { _, _ ->
-                deleteCurrentBatch()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun deleteCurrentBatch() {
-        val batchIdToDelete = currentBatch?.batch_id
-        if (batchIdToDelete == null) {
-            Toast.makeText(this, "Error: Could not identify batch to delete.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val fileHandler = FileHandler(this, "go_data.json")
-        val allEntries = fileHandler.loadStockEntries()
-
-        // Filter the list to keep only the entries that are NOT part of the batch being deleted
-        val remainingEntries = allEntries.filter { it.batch_id != batchIdToDelete }
-
-        // Save the filtered list back to the file, overwriting the old content
-        fileHandler.saveStockEntries(remainingEntries)
-
-        Toast.makeText(this, "Batch '$batchIdToDelete' deleted.", Toast.LENGTH_SHORT).show()
-
-        // Set a result so the previous screen (BatchListActivity) knows to refresh its list
-        setResult(Activity.RESULT_OK)
-        finish() // Close this activity
-    }
-
-    private fun parseTimestamp(timestampStr: String): Long? {
-        timestampStr.toLongOrNull()?.let { return it }
-        val possibleFormats = listOf(
-            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US),
-            SimpleDateFormat("MMM dd, yyyy, h:mm:ss a", Locale.US)
-        )
-        for (format in possibleFormats) {
-            try {
-                format.parse(timestampStr)?.let { return it.time }
-            } catch (e: Exception) { /* Ignore */ }
-        }
-        Log.e("BatchEntryListActivity", "Could not parse timestamp string: '$timestampStr'")
-        return null
-    }
-
-    private val exportBatchLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.data?.let { uri ->
-                currentBatch?.let { batch ->
-                    writeBatchToCsv(uri, batch.entries)
-                }
-            }
-        } else {
-            Toast.makeText(this, "Export cancelled.", Toast.LENGTH_SHORT).show()
-        }
-    }
-
     private fun initiateBatchExport() {
         val batch = currentBatch ?: return
         if (batch.entries.isEmpty()) {
             Toast.makeText(this, "This batch has no entries to export.", Toast.LENGTH_SHORT).show()
             return
         }
-
         val csvFileName = "batch_${batch.batch_id}.csv"
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
@@ -239,9 +191,15 @@ class BatchEntryListActivity : AppCompatActivity() {
 
     private fun writeBatchToCsv(uri: Uri, records: List<StockEntry>): Boolean {
         val csvBuilder = StringBuilder()
-        // Create a detailed header for the CSV file
         csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver\n")
+
+        // Create the date formatter once, outside the loop, for efficiency.
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+
         for (record in records) {
+            // --- FIX: Format the transfer_date Long into a readable string for the CSV ---
+            val formattedTransferDate = record.transfer_date?.let { sdf.format(Date(it)) } ?: ""
+
             csvBuilder.append("${escapeCsv(record.id)},")
             csvBuilder.append("${escapeCsv(record.timestamp)},")
             csvBuilder.append("${escapeCsv(record.username)},")
@@ -250,7 +208,7 @@ class BatchEntryListActivity : AppCompatActivity() {
             csvBuilder.append("${record.quantity},")
             csvBuilder.append("${escapeCsv(record.batch_id ?: "")},")
             csvBuilder.append("${escapeCsv(record.batch_user ?: "")},")
-            csvBuilder.append("${record.transfer_date ?: ""},")
+            csvBuilder.append("${escapeCsv(formattedTransferDate)},") // Use the formatted date
             csvBuilder.append("${escapeCsv(record.receiver_user ?: "")}\n")
         }
 
@@ -266,11 +224,52 @@ class BatchEntryListActivity : AppCompatActivity() {
             false
         }
     }
+
     private fun escapeCsv(field: String): String {
         return if (field.contains(",") || field.contains("\"") || field.contains("\n")) {
             "\"" + field.replace("\"", "\"\"") + "\""
         } else {
             field
         }
+    }
+
+    private fun showDeleteConfirmationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Confirm Deletion")
+            .setMessage("Are you sure you want to delete this entire batch and all its entries? This action cannot be undone.")
+            .setIcon(R.drawable.ic_delete_icon)
+            .setPositiveButton("Delete") { _, _ -> deleteCurrentBatch() }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteCurrentBatch() {
+        val batchIdToDelete = currentBatch?.batch_id
+        if (batchIdToDelete == null) {
+            Toast.makeText(this, "Error: Could not identify batch to delete.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val fileHandler = FileHandler(this, "go_data.json")
+        val allEntries = fileHandler.loadStockEntries()
+        val remainingEntries = allEntries.filter { it.batch_id != batchIdToDelete }
+        fileHandler.saveStockEntries(remainingEntries)
+        Toast.makeText(this, "Batch '$batchIdToDelete' deleted.", Toast.LENGTH_SHORT).show()
+        setResult(Activity.RESULT_OK)
+        finish()
+    }
+
+    private fun parseTimestamp(timestampStr: String): Long? {
+        timestampStr.toLongOrNull()?.let { return it }
+        val possibleFormats = listOf(
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US),
+            SimpleDateFormat("MMM dd, yyyy, h:mm:ss a", Locale.US)
+        )
+        for (format in possibleFormats) {
+            try {
+                format.parse(timestampStr)?.let { return it.time }
+            } catch (e: Exception) { /* Ignore */ }
+        }
+        Log.e("BatchEntryListActivity", "Could not parse timestamp string: '$timestampStr'")
+        return null
     }
 }
