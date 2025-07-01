@@ -57,21 +57,14 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var btnMenuContinueBatch: LinearLayout
     private lateinit var btnEditRecords: LinearLayout
     private lateinit var btnExportRecords: LinearLayout
-    private lateinit var btnExportClose: LinearLayout
     private lateinit var btnImportRecords: LinearLayout
     private lateinit var btnManageUsers: LinearLayout
 
-    private lateinit var btnBluetoothConnect: LinearLayout
-
     private lateinit var btnTransferData: LinearLayout
-
-    private lateinit var btnBatchData: LinearLayout
 
     private lateinit var btnBatchList: LinearLayout
 
     private lateinit var btnSettings: LinearLayout
-
-    private lateinit var btnSub: LinearLayout
 
     private lateinit var tvLoggedInUser: TextView
 
@@ -108,18 +101,12 @@ class HomeActivity : AppCompatActivity() {
         btnMenuContinueBatch = findViewById(R.id.btn_menu_continue_batch)
         btnEditRecords = findViewById(R.id.btn_edit_records)
         btnExportRecords = findViewById(R.id.btn_export_records)
-        btnExportClose = findViewById(R.id.btn_export_close) // Initialize new button
         btnImportRecords = findViewById(R.id.btn_import_records)
         btnManageUsers = findViewById(R.id.btn_manage_users)
         btnSettings = findViewById(R.id.btn_settings)
 
-        btnSub = findViewById(R.id.btn_sub)
-
-        btnBluetoothConnect = findViewById(R.id.btn_bluetooth_connect)
 
         btnTransferData = findViewById(R.id.btn_transfer_data)
-
-        btnBatchData = findViewById(R.id.btn_batch_data)
 
         btnBatchList = findViewById(R.id.btn_batch_list)
 
@@ -292,26 +279,16 @@ class HomeActivity : AppCompatActivity() {
         val loggedInUser = GoStockApp.loggedInUser
         if (loggedInUser?.role == UserRole.ADMIN) {
             btnExportRecords.visibility = View.VISIBLE
-            btnExportClose.visibility = View.VISIBLE
             btnImportRecords.visibility = View.VISIBLE
-            btnBluetoothConnect.visibility = View.VISIBLE
-            //btnTransferData.visibility = View.VISIBLE
-            btnBatchData.visibility = View.VISIBLE
             btnBatchList.visibility = View.VISIBLE
             btnSettings.visibility = View.VISIBLE
             btnManageUsers.visibility = View.VISIBLE
-            btnSub.visibility = View.VISIBLE
         } else {
             btnExportRecords.visibility = View.GONE
-            btnExportClose.visibility = View.GONE
             btnImportRecords.visibility = View.GONE
-            btnBluetoothConnect.visibility = View.GONE
-            //btnTransferData.visibility = View.GONE
-            btnBatchData.visibility = View.GONE
             btnBatchList.visibility = View.GONE
             btnSettings.visibility = View.GONE
             btnManageUsers.visibility = View.GONE
-            btnSub.visibility = View.GONE
 
         }
     }
@@ -391,10 +368,6 @@ class HomeActivity : AppCompatActivity() {
             initiateSafExport(ExportType.EXPORT_ONLY) // Export only
         }
 
-        btnExportClose.setOnClickListener {
-            initiateSafExport(ExportType.EXPORT_AND_CLEAR) // Export and clear
-        }
-
         btnImportRecords.setOnClickListener {
             // Trigger SAF to open a CSV file
             val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
@@ -404,21 +377,14 @@ class HomeActivity : AppCompatActivity() {
             importDocumentLauncher.launch(intent)
         }
 
-        btnBluetoothConnect.setOnClickListener {
-            Toast.makeText(this, "Coming Soon!", Toast.LENGTH_SHORT).show()
-//            val intent = Intent(this, TransferDataActivity::class.java)
-//            startActivity(intent)
-        }
+
 
         btnTransferData.setOnClickListener {
             val intent = Intent(this, TransferDataActivity::class.java)
             startActivity(intent)
         }
 
-        btnBatchData.setOnClickListener {
-            val intent = Intent(this, GoDataListActivity::class.java)
-            startActivity(intent)
-        }
+
 
         btnBatchList.setOnClickListener {
             val intent = Intent(this, BatchListActivity::class.java)
@@ -435,10 +401,7 @@ class HomeActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        btnSub.setOnClickListener {
-            val intent = Intent(this, SubActivity::class.java)
-            startActivity(intent)
-        }
+
 
 
     }
