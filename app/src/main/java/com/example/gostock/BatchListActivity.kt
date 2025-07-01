@@ -3,11 +3,13 @@ package com.example.gostock
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
@@ -18,6 +20,7 @@ import java.util.concurrent.TimeUnit
 class BatchListActivity : AppCompatActivity() {
 
     private lateinit var btnToolbarBack: ImageButton
+    private lateinit var btnToolbarMore: ImageButton
     private lateinit var recyclerView: RecyclerView
     private lateinit var tvNoBatches: TextView
     private lateinit var fileHandler: FileHandler
@@ -29,6 +32,7 @@ class BatchListActivity : AppCompatActivity() {
         setContentView(R.layout.activity_batch_list)
 
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
+        btnToolbarMore = findViewById(R.id.btn_toolbar_more)
         recyclerView = findViewById(R.id.recyclerView_batches)
         tvNoBatches = findViewById(R.id.tv_no_batches)
 
@@ -141,5 +145,33 @@ class BatchListActivity : AppCompatActivity() {
         btnToolbarBack.setOnClickListener {
             finish()
         }
+        btnToolbarMore.setOnClickListener { view -> showMoreMenu(view) }
+    }
+
+    private fun showMoreMenu(view: View) {
+        val popup = PopupMenu(this, view, Gravity.END)
+        popup.menuInflater.inflate(R.menu.batch_list_more_menu, popup.menu)
+        popup.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_export_all_batch -> {
+                    initiateAllBatchExport()
+                    true
+                }
+                R.id.action_export_all_clear_batch -> { // NEW
+                    initiateAllBatchExportAndClear()
+                    true
+                }
+                R.id.action_import_batch -> { // NEW
+
+                    true
+                }
+                R.id.action_delete_all_batch -> {
+                    showDeleteAllConfirmationDialog()
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
     }
 }
