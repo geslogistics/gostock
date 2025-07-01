@@ -49,7 +49,7 @@ class GoStockApp : Application() {
             Log.d("GoStockApp", "No users found. Creating default admin user.")
             val adminUser = User(
                 username = "admin",
-                passwordHash = PasswordHasher.hashPassword("admin"), // Hash 'admin' password
+                passwordHash = PasswordHasher.hashPassword("admin@159"), // Hash 'admin' password
                 firstName = "System",
                 lastName = "Admin",
                 role = UserRole.ADMIN
