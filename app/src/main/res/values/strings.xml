@@ -5,7 +5,7 @@
     <string name="export_button_label">Export</string>
     <string name="export_close_button_label">Export &amp; Close</string>
     <string name="import_button_label">Import</string>
-    <string name="manage_users_button_label">Manage Users</string>
+    <string name="manage_users_button_label">User Management</string>
     <string name="back_button_label">Back</string>
     <string name="save_button_label">Save</string>
     <string name="location_label">Location</string>
@@ -34,7 +34,7 @@
     <string name="edit_page_title_label">Edit</string>
     <string name="not_logged_in">Not Logged In</string>
 
-    <string name="batch_list_page_title_label">Batch List</string>
+    <string name="batch_list_page_title_label">Batch Management</string>
 
     <string name="batch_id_label">Batch</string>
     <string name="batch_user_label">User</string>

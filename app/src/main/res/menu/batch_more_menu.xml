@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/action_export_batch"
+        android:title="Export Batch" />
+    <item
         android:id="@+id/action_delete_batch"
         android:title="Delete Batch"
         />
