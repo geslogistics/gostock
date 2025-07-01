@@ -59,24 +59,26 @@ class BatchListActivity : AppCompatActivity() {
             result.data?.data?.let { uri ->
                 val recordsToExport = fileHandler.loadStockEntries()
 
-                // 1. Enrich the records with the correct action details
-                val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
-                val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-                val enrichedRecords = recordsToExport.map {
-                    it.copy(
-                        action_user = actionUser,
-                        action_timestamp = actionTimestamp,
-                        action = "Batch Exported and Cleared"
-                    )
-                }
+                // 1. Export the ORIGINAL, unenriched data to the CSV file.
+                val success = writeAllBatchesToCsv(uri, recordsToExport, "All batches exported. Clearing data...")
 
-                // 2. Write the enriched data to the CSV file
-                val success = writeAllBatchesToCsv(uri, enrichedRecords, "All batches exported. Clearing data...")
-
-                // 3. If export was successful, move the enriched data to the deleted log and clear the source
+                // 2. If export was successful, THEN enrich the data and move it.
                 if (success) {
+                    val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
+                    val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                    val enrichedRecords = recordsToExport.map {
+                        it.copy(
+                            action_user = actionUser,
+                            action_timestamp = actionTimestamp,
+                            action = "Batch Exported and Cleared"
+                        )
+                    }
+
+                    // Move the now-enriched data to the deleted log
                     val deletedFileHandler = FileHandler(this, "go_deleted.json")
                     deletedFileHandler.addMultipleStockEntries(enrichedRecords)
+
+                    // Clear the source file
                     fileHandler.clearData()
                     loadAndDisplayBatches() // Refresh the UI
                 }
@@ -236,7 +238,7 @@ class BatchListActivity : AppCompatActivity() {
 
     private fun writeAllBatchesToCsv(uri: Uri, records: List<StockEntry>, successMessage: String): Boolean {
         val csvBuilder = StringBuilder()
-        csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver,ActionUser,ActionTimestamp,Action\n")
+        csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver\n")
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         for (record in records) {
             val formattedTransferDate = record.transfer_date?.let { sdf.format(Date(it)) } ?: ""
@@ -250,9 +252,6 @@ class BatchListActivity : AppCompatActivity() {
             csvBuilder.append("${escapeCsv(record.batch_user ?: "")},")
             csvBuilder.append("${escapeCsv(formattedTransferDate)},")
             csvBuilder.append("${escapeCsv(record.receiver_user ?: "")},")
-            csvBuilder.append("${escapeCsv(record.action_user ?: "")},")
-            csvBuilder.append("${escapeCsv(record.action_timestamp ?: "")},")
-            csvBuilder.append("${escapeCsv(record.action ?: "")}\n")
         }
         return try {
             contentResolver.openOutputStream(uri)?.use { it.write(csvBuilder.toString().toByteArray()) }
@@ -279,27 +278,39 @@ class BatchListActivity : AppCompatActivity() {
                 BufferedReader(InputStreamReader(inputStream)).use { reader ->
                     reader.readLine() // Skip header
                     var line: String?
+                    var lineNumber = 1
                     while (reader.readLine().also { line = it } != null) {
+                        lineNumber++
                         val columns = parseCsvLine(line!!)
-                        if (columns.size >= 6) {
-                            try {
-                                val entry = StockEntry(
-                                    id = columns[0], timestamp = columns[1], username = columns[2],
-                                    locationBarcode = columns[3], skuBarcode = columns[4],
-                                    quantity = columns[5].toIntOrNull() ?: 0,
-                                    batch_id = if (columns.size > 6) columns[6].takeIf { it.isNotEmpty() } else null,
-                                    batch_user = if (columns.size > 7) columns[7].takeIf { it.isNotEmpty() } else null,
-                                    transfer_date = if (columns.size > 8) columns[8].toLongOrNull() else null,
-                                    receiver_user = if (columns.size > 9) columns[9].takeIf { it.isNotEmpty() } else null
-                                )
-                                importedEntries.add(entry)
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Skipping row due to parsing error: ${e.message}")
-                            }
+
+                        if (columns.size < 10 || columns.take(10).any { it.isBlank() }) {
+                            Toast.makeText(this, "Import Rejected: Malformed row found at line $lineNumber. All first 10 fields are required.", Toast.LENGTH_LONG).show()
+                            return
+                        }
+
+                        try {
+                            val entry = StockEntry(
+                                id = columns[0],
+                                timestamp = columns[1],
+                                username = columns[2],
+                                locationBarcode = columns[3],
+                                skuBarcode = columns[4],
+                                quantity = columns[5].toInt(),
+                                batch_id = columns[6],
+                                batch_user = columns[7],
+                                transfer_date = columns[8].toLong(),
+                                receiver_user = columns[9]
+                            )
+                            importedEntries.add(entry)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Skipping row due to parsing error: ${e.message}")
+                            Toast.makeText(this, "Import Rejected: Error parsing row $lineNumber.", Toast.LENGTH_LONG).show()
+                            return
                         }
                     }
                 }
             }
+
             if (importedEntries.isNotEmpty()) {
                 fileHandler.addMultipleStockEntries(importedEntries)
                 Toast.makeText(this, "Successfully imported ${importedEntries.size} records!", Toast.LENGTH_LONG).show()
@@ -352,6 +363,7 @@ class BatchListActivity : AppCompatActivity() {
 
     // --- Helper Functions ---
     private fun escapeCsv(field: String): String = if (field.contains(",") || field.contains("\"") || field.contains("\n")) "\"${field.replace("\"", "\"\"")}\"" else field
+
     private fun parseCsvLine(line: String): List<String> {
         val result = mutableListOf<String>()
         var currentPos = 0
@@ -370,6 +382,7 @@ class BatchListActivity : AppCompatActivity() {
         result.add(line.substring(fieldStart).replace("\"\"", "\"").removeSurrounding("\""))
         return result
     }
+
     private fun parseTimestamp(timestampStr: String): Long? {
         timestampStr.toLongOrNull()?.let { return it }
         val possibleFormats = listOf(SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US), SimpleDateFormat("MMM dd, yyyy, h:mm:ss a", Locale.US))

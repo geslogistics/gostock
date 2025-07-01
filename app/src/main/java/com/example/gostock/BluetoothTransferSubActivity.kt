@@ -1,4 +1,4 @@
-package com.example.gostock // Your package name
+package com.example.gostock
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -16,11 +16,13 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
@@ -36,10 +38,6 @@ import java.util.*
 import kotlin.concurrent.thread
 import kotlin.math.min
 
-// Your existing imports
-import com.example.gostock.StockEntry
-import com.example.gostock.FileHandler
-
 @SuppressLint("MissingPermission")
 class BluetoothTransferSubActivity : AppCompatActivity() {
 
@@ -54,7 +52,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
     private lateinit var lvDiscoveredDevices: ListView
     private lateinit var btnSendData: Button
     private lateinit var progressBar: ProgressBar
-    private lateinit var tvProgressPercent: TextView // For percentage text
+    private lateinit var tvProgressPercent: TextView
 
     // --- Bluetooth core components ---
     private var bluetoothAdapter: BluetoothAdapter? = null
@@ -64,6 +62,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
     private val discoveredDevicesList = mutableListOf<BluetoothDevice>()
     private var connectedSocket: BluetoothSocket? = null
     private var serverThread: Thread? = null
+    private var connectedReceiverUsername: String? = null // NEW: To store the receiver's name
 
     // --- Constants ---
     private companion object {
@@ -74,7 +73,11 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         const val GO_DATA_FILENAME = "go_data.json"
     }
 
-    // --- ActivityResultLaunchers (no changes needed) ---
+    private enum class BluetoothState {
+        PERMISSIONS_DENIED, DISABLED, ENABLED, DISCOVERING, LISTENING, CONNECTING, CONNECTED
+    }
+
+    // --- ActivityResultLaunchers ---
     private val requestBluetoothPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -151,37 +154,24 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         }
         btnMakeDiscoverable.setOnClickListener {
             val discoverableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
-                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300) // Discoverable for 5 minutes
+                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
             }
             requestDiscoverableLauncher.launch(discoverableIntent)
         }
         btnScanDevices.setOnClickListener { startDiscovery() }
-        btnScanDevices.setOnClickListener { startDiscovery() }
-
-        // This listener for already paired devices is correct.
         lvPairedDevices.setOnItemClickListener { _, _, pos, _ ->
             bluetoothAdapter?.cancelDiscovery()
             connectToDevice(pairedDevicesList[pos])
         }
-
-        // --- THIS IS THE FIX ---
-        // This listener is for newly discovered, unpaired devices.
         lvDiscoveredDevices.setOnItemClickListener { _, _, pos, _ ->
             bluetoothAdapter?.cancelDiscovery()
             val device = discoveredDevicesList[pos]
-
-            // Check if the device is already paired. This is a safety check;
-            // it shouldn't normally be in this list if it's already paired.
             if (device.bondState == BluetoothDevice.BOND_BONDED) {
                 connectToDevice(device)
             } else {
-                // If the device is not paired, call createBond() to start the pairing process.
-                // This will trigger the system pairing dialog on both devices.
-                Log.d(TAG, "Device not paired. Initiating bond with ${device.name}")
                 device.createBond()
             }
         }
-
         btnSendData.setOnClickListener {
             connectedSocket?.let { socket -> sendData(socket) }
                 ?: Toast.makeText(this, "Not connected to a device", Toast.LENGTH_SHORT).show()
@@ -201,7 +191,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         }
     }
 
-    // --- Core Bluetooth Logic (Rewritten with Coroutines and Streaming) ---
+    // --- Core Bluetooth Logic with Handshake ---
 
     private fun startServer() {
         updateUiForListening()
@@ -209,8 +199,8 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
             try {
                 val serverSocket: BluetoothServerSocket? = bluetoothAdapter?.listenUsingInsecureRfcommWithServiceRecord(APP_NAME, MY_UUID)
                 Log.d(TAG, "Server: Listening for connections...")
-                val socket = serverSocket?.accept() // This blocks the thread
-                serverSocket?.close() // We have a connection, stop listening
+                val socket = serverSocket?.accept()
+                serverSocket?.close()
                 socket?.let {
                     Log.d(TAG, "Server: Connection accepted.")
                     manageConnectedSocket(it, isServer = true)
@@ -239,18 +229,34 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
 
     private fun manageConnectedSocket(socket: BluetoothSocket, isServer: Boolean) {
         connectedSocket = socket
-        runOnUiThread {
-            updateUiForConnected(socket.remoteDevice.name)
-            if (isServer) {
-                // If this device is the server, start listening for data right away.
-                receiveData(socket)
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                if (isServer) {
+                    // SERVER (RECEIVER) LOGIC: Send username, then wait for data
+                    val receiverUsername = GoStockApp.loggedInUser?.username ?: "Unknown"
+                    DataOutputStream(socket.outputStream).writeUTF(receiverUsername)
+                    Log.d(TAG, "Server: Sent my username: $receiverUsername")
+                    withContext(Dispatchers.Main) {
+                        updateUiForConnected(socket.remoteDevice.name)
+                        receiveData(socket)
+                    }
+                } else {
+                    // CLIENT (SENDER) LOGIC: Receive username, then wait for user to click send
+                    val receiverUsername = DataInputStream(socket.inputStream).readUTF()
+                    connectedReceiverUsername = receiverUsername // Store for later
+                    Log.d(TAG, "Client: Received receiver's username: $receiverUsername")
+                    withContext(Dispatchers.Main) {
+                        updateUiForConnected(socket.remoteDevice.name)
+                    }
+                }
+            } catch (e: IOException) {
+                Log.e(TAG, "Handshake failed", e)
+                withContext(Dispatchers.Main) { updateUiForReadyState("❗ Handshake failed") }
             }
-            // If this device is the client (sender), do nothing. Just wait in the
-            // "Connected" state for the user to press the Send button.
         }
     }
 
-    // --- NEW STREAMING DATA TRANSFER LOGIC ---
+    // --- Data Transfer Logic ---
 
     private fun sendData(socket: BluetoothSocket) {
         lifecycleScope.launch(Dispatchers.IO) {
@@ -264,7 +270,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
 
             withContext(Dispatchers.Main) { updateUiForTransfer("Preparing data...") }
 
-            // 1. Enrich each record with the transfer metadata
+            // 1. Enrich each record with all metadata, including the receiver's username
             val senderUser = GoStockApp.loggedInUser
             val transferTimestamp = System.currentTimeMillis()
             val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
@@ -274,21 +280,19 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
                 entry.copy(
                     batch_id = batchId,
                     batch_user = senderUser?.username,
-                    transfer_date = transferTimestamp
+                    transfer_date = transferTimestamp,
+                    receiver_user = connectedReceiverUsername // Use the name received during handshake
                 )
             }
 
-            // 2. Archive the enriched data to the sender's own go_data.json
+            // 2. Archive the fully enriched data to the sender's own go_data.json
             archiveSentDataOnSender(entriesToSend)
 
             // 3. Write the enriched data to a temporary file for streaming
             val tempFile = File(cacheDir, "temp_send_data.json")
             try {
-                FileWriter(tempFile).use { writer ->
-                    Gson().toJson(entriesToSend, writer)
-                }
+                FileWriter(tempFile).use { writer -> Gson().toJson(entriesToSend, writer) }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to create temporary send file", e)
                 withContext(Dispatchers.Main) { updateUiForReadyState("❗  Failed to prepare data") }
                 return@launch
             }
@@ -315,7 +319,6 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: IOException) {
-                Log.e(TAG, "Error during sending", e)
                 withContext(Dispatchers.Main) { updateUiForReadyState("❗  Send failed") }
             } finally {
                 socket.close()
@@ -324,7 +327,6 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
 
             // 5. If transfer succeeded, clear the original stock_data.json and navigate home
             if (transferSucceeded) {
-                Log.d(TAG, "Sender: Clearing local stock_data.json")
                 stockDataFileHandler.clearData()
                 navigateToHome()
             }
@@ -332,36 +334,18 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
     }
 
     private fun archiveSentDataOnSender(entriesToArchive: List<StockEntry>) {
-        Log.d(TAG, "Sender: Archiving sent data to go_data.json")
-        // This function manually reads, updates, and writes to go_data.json
-        // to avoid changing FileHandler.kt
         val goDataFile = File(filesDir, GO_DATA_FILENAME)
         val gson = GsonBuilder().setPrettyPrinting().create()
         val listType = object : TypeToken<MutableList<StockEntry>>() {}.type
-
-        val allGoDataEntries: MutableList<StockEntry> = if (goDataFile.exists() && goDataFile.length() > 0) {
+        val allGoDataEntries: MutableList<StockEntry> = if (goDataFile.exists()) {
             try {
-                FileReader(goDataFile).use { reader ->
-                    gson.fromJson(reader, listType) ?: mutableListOf()
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Could not parse go_data.json on sender. Starting new list.", e)
-                mutableListOf()
-            }
-        } else {
-            mutableListOf()
-        }
-
+                FileReader(goDataFile).use { reader -> gson.fromJson(reader, listType) ?: mutableListOf() }
+            } catch (e: Exception) { mutableListOf() }
+        } else { mutableListOf() }
         allGoDataEntries.addAll(entriesToArchive)
-
         try {
-            FileWriter(goDataFile).use { writer ->
-                gson.toJson(allGoDataEntries, writer)
-            }
-            Log.d(TAG, "Sender: Successfully archived ${entriesToArchive.size} records.")
-        } catch (e: IOException) {
-            Log.e(TAG, "Sender: Failed to write archive to go_data.json", e)
-        }
+            FileWriter(goDataFile).use { writer -> gson.toJson(allGoDataEntries, writer) }
+        } catch (e: IOException) { Log.e(TAG, "Failed to write archive to go_data.json", e) }
     }
 
     private fun receiveData(socket: BluetoothSocket) {
@@ -388,7 +372,6 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
                 }
                 processReceivedFile(tempFile)
             } catch (e: IOException) {
-                Log.e(TAG, "Error during receiving", e)
                 withContext(Dispatchers.Main) { updateUiForReadyState("❗  Receive failed") }
             } finally {
                 socket.close()
@@ -403,51 +386,65 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
             val receivedEntries: MutableList<StockEntry> = FileReader(receivedFile).use { reader ->
                 Gson().fromJson(reader, listType) ?: mutableListOf()
             }
-
             if (receivedEntries.isNotEmpty()) {
-                val receiverUser = GoStockApp.loggedInUser
-                receivedEntries.forEach { it.receiver_user = receiverUser?.username }
-
-                // Use the existing FileHandler to append to go_data.json
+                // The receiver_user is now already set by the sender, so we just save.
                 val goDataFileHandler = FileHandler(this, GO_DATA_FILENAME)
                 goDataFileHandler.addMultipleStockEntries(receivedEntries)
-
-                Log.d(TAG, "Successfully added new batch to go_data.json")
                 navigateToHome()
             } else {
                 runOnUiThread { Toast.makeText(this, "Received file contained no records.", Toast.LENGTH_SHORT).show() }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse or save received file", e)
             runOnUiThread { Toast.makeText(this, "Failed to process: Invalid data format.", Toast.LENGTH_LONG).show() }
         }
     }
 
-    // --- UI State Management ---
+    // --- All other UI and helper functions remain here ---
+    private fun showSnackbar(message: String, duration: Int = Snackbar.LENGTH_LONG) {
+        val snackbar = Snackbar.make(findViewById(android.R.id.content), message, duration)
+        val snackbarTextView = snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+        snackbarTextView.maxLines = 5
+        snackbarTextView.ellipsize = null
+        snackbar.show()
+    }
+    private fun performLogout() {
+        (application as GoStockApp).clearLoginSession()
+        val intent = Intent(this, LoginActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
+        finish()
+    }
+    private fun navigateToHome() {
+        runOnUiThread {
+            Toast.makeText(this, "✅ Transfer successful.", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, HomeActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+            finish()
+        }
+    }
     private fun updateProgress(progress: Int) {
         progressBar.progress = progress
         tvProgressPercent.text = "$progress%"
     }
-
     private fun updateUiForTransfer(status: String) {
-        tvTransferStatus.text = "$status"
+        tvTransferStatus.text = status
         progressBar.visibility = View.VISIBLE
         tvProgressPercent.visibility = View.VISIBLE
-        listOf(btnSendData, btnScanDevices, btnMakeDiscoverable, lvPairedDevices, lvDiscoveredDevices).forEach { it.isEnabled = false }
+        listOf(btnSendData, btnScanDevices, btnMakeDiscoverable, lvPairedDevices, lvDiscoveredDevices, btnToolbarBack).forEach { it.isEnabled = false }
         updateProgress(0)
     }
-
     private fun updateUiForReadyState(status: String = "⚪  Ready") {
-        tvTransferStatus.text = "$status"
+        tvTransferStatus.text = status
         progressBar.visibility = View.GONE
         tvProgressPercent.visibility = View.GONE
         btnSendData.isEnabled = false
         btnScanDevices.isEnabled = true
         btnMakeDiscoverable.isEnabled = true
-        listOf(lvPairedDevices, lvDiscoveredDevices).forEach { it.isEnabled = true }
-        setupRoleBasedUI() // Re-apply role UI
+        listOf(lvPairedDevices, lvDiscoveredDevices, btnToolbarBack).forEach { it.isEnabled = true }
+        setupRoleBasedUI()
     }
-
     private fun updateUiForConnected(deviceName: String) {
         tvTransferStatus.text = "\uD83D\uDFE2  Connected to $deviceName"
         progressBar.visibility = View.GONE
@@ -456,7 +453,6 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         btnScanDevices.isEnabled = false
         btnMakeDiscoverable.isEnabled = false
     }
-
     private fun updateUiForListening() {
         runOnUiThread {
             tvTransferStatus.text = "\uD83D\uDD35  Listening for connections..."
@@ -464,16 +460,12 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
             btnMakeDiscoverable.isEnabled = false
         }
     }
-
     private fun updateUiForConnecting(deviceName: String) {
         tvTransferStatus.text = "\uD83D\uDFE1  Connecting to $deviceName..."
         btnScanDevices.isEnabled = false
         btnMakeDiscoverable.isEnabled = false
     }
-
-    // --- Permissions and Other Helpers (mostly unchanged) ---
     private fun checkPermission(p: String): Boolean = ContextCompat.checkSelfPermission(this, p) == PackageManager.PERMISSION_GRANTED
-
     private fun requestAllPermissions() {
         val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_ADVERTISE, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -487,14 +479,10 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
             checkBluetoothState()
         }
     }
-
     private fun checkBluetoothState() {
         if (bluetoothAdapter == null) {
             updateUiForReadyState("❗  Bluetooth not supported")
-            btnMakeDiscoverable.visibility = View.GONE
-            btnMakeDiscoverableDivider.visibility = View.GONE
-            btnScanDevices.visibility = View.GONE
-            btnSendData.visibility = View.GONE
+            listOf(btnMakeDiscoverable, btnMakeDiscoverableDivider, btnScanDevices, btnSendData).forEach { it.visibility = View.GONE }
             return
         }
         if (bluetoothAdapter?.isEnabled == true) {
@@ -502,14 +490,10 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
             listPairedDevices()
         } else {
             btnEnableBluetooth.visibility = View.VISIBLE
-            btnMakeDiscoverable.visibility = View.GONE
-            btnMakeDiscoverableDivider.visibility = View.GONE
-            btnScanDevices.visibility = View.GONE
-            btnSendData.visibility = View.GONE
+            listOf(btnMakeDiscoverable, btnMakeDiscoverableDivider, btnScanDevices, btnSendData).forEach { it.visibility = View.GONE }
             updateUiForReadyState("❗  Bluetooth is disabled")
         }
     }
-
     private fun listPairedDevices() {
         pairedDevicesArrayAdapter.clear()
         pairedDevicesList.clear()
@@ -519,7 +503,6 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         }
         pairedDevicesArrayAdapter.notifyDataSetChanged()
     }
-
     private fun startDiscovery() {
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
         if (!locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)) {
@@ -532,7 +515,6 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         }
         bluetoothAdapter?.startDiscovery()
     }
-
     private val bluetoothReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action
@@ -553,11 +535,10 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
             } else if (action == BluetoothAdapter.ACTION_DISCOVERY_STARTED) {
                 tvTransferStatus.text = "\uD83D\uDD35  Scanning..."
             } else if (action == BluetoothAdapter.ACTION_DISCOVERY_FINISHED) {
-                tvTransferStatus.text = "\uD83D\uDD35  Ready"
+                tvTransferStatus.text = "⚪  Ready"
             }
         }
     }
-
     private fun showPermissionsDeniedDialog() {
         AlertDialog.Builder(this)
             .setTitle("Permissions Required")
@@ -571,39 +552,5 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
             .setNegativeButton("Cancel") { _, _ -> finish() }
             .setCancelable(false)
             .show()
-    }
-
-    private fun performLogout() {
-        (application as GoStockApp).clearLoginSession()
-        val intent = Intent(this, LoginActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        startActivity(intent)
-        finish()
-    }
-
-    private fun showSnackbar(message: String, duration: Int = Snackbar.LENGTH_LONG) {
-        val snackbar = Snackbar.make(findViewById(android.R.id.content), message, duration)
-
-        // Make Snackbar text multiline (works up to a certain point before system truncates)
-        val snackbarTextView = snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-        snackbarTextView.maxLines = 5 // Allow up to 5 lines (adjust as needed)
-        snackbarTextView.ellipsize = null // Remove ellipsis if text exceeds maxLines
-
-        snackbar.show()
-    }
-
-    private fun navigateToHome() {
-        // Use runOnUiThread to ensure this can be called safely from any thread
-        runOnUiThread {
-            finish() // Close this BluetoothTransferSubActivity
-            Toast.makeText(this, "✅ Transfer successful.", Toast.LENGTH_SHORT).show()
-            val intent = Intent(this, HomeActivity::class.java)
-            // These flags clear the other screens from history so the user can't press "back"
-            // to return to the transfer screen.
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
-
-        }
     }
 }
