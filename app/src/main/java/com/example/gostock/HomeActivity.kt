@@ -57,6 +57,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var btnMenuContinueBatch: LinearLayout
     private lateinit var btnEditRecords: LinearLayout
     private lateinit var btnExportRecords: LinearLayout
+    private lateinit var btnExportClearRecords: LinearLayout
     private lateinit var btnImportRecords: LinearLayout
     private lateinit var btnManageUsers: LinearLayout
 
@@ -101,6 +102,7 @@ class HomeActivity : AppCompatActivity() {
         btnMenuContinueBatch = findViewById(R.id.btn_menu_continue_batch)
         btnEditRecords = findViewById(R.id.btn_edit_records)
         btnExportRecords = findViewById(R.id.btn_export_records)
+        btnExportClearRecords = findViewById(R.id.btn_export_clear)
         btnImportRecords = findViewById(R.id.btn_import_records)
         btnManageUsers = findViewById(R.id.btn_manage_users)
         btnSettings = findViewById(R.id.btn_settings)
@@ -279,12 +281,14 @@ class HomeActivity : AppCompatActivity() {
         val loggedInUser = GoStockApp.loggedInUser
         if (loggedInUser?.role == UserRole.ADMIN) {
             btnExportRecords.visibility = View.VISIBLE
+            btnExportClearRecords.visibility = View.VISIBLE
             btnImportRecords.visibility = View.VISIBLE
             btnBatchList.visibility = View.VISIBLE
             btnSettings.visibility = View.VISIBLE
             btnManageUsers.visibility = View.VISIBLE
         } else {
             btnExportRecords.visibility = View.GONE
+            btnExportClearRecords.visibility = View.GONE
             btnImportRecords.visibility = View.GONE
             btnBatchList.visibility = View.GONE
             btnSettings.visibility = View.GONE
@@ -366,6 +370,10 @@ class HomeActivity : AppCompatActivity() {
 
         btnExportRecords.setOnClickListener {
             initiateSafExport(ExportType.EXPORT_ONLY) // Export only
+        }
+
+        btnExportClearRecords.setOnClickListener {
+            initiateSafExport(ExportType.EXPORT_AND_CLEAR) // Export and clear
         }
 
         btnImportRecords.setOnClickListener {

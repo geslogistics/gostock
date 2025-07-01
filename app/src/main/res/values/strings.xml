@@ -3,7 +3,7 @@
     <string name="new_button_label">New</string>
     <string name="edit_button_label">Edit</string>
     <string name="export_button_label">Export</string>
-    <string name="export_close_button_label">Export &amp; Close</string>
+    <string name="export_clear_button_label">Export &amp; Clear</string>
     <string name="import_button_label">Import</string>
     <string name="manage_users_button_label">User Management</string>
     <string name="back_button_label">Back</string>

@@ -3,15 +3,21 @@
     <group android:id="@+id/group_export">
         <item
             android:id="@+id/action_export_batch"
-            android:title="Export" />
+            android:title="Export All" />
         <item
             android:id="@+id/action_export_clear_batch"
-            android:title="Export &amp; Clear" />
+            android:title="Export All &amp; Clear" />
+    </group>
+
+    <group android:id="@+id/group_import">
+        <item
+            android:id="@+id/action_import_batch"
+            android:title="Import" />
     </group>
 
     <group android:id="@+id/group_delete">
         <item
             android:id="@+id/action_delete_batch"
-            android:title="Delete" />
+            android:title="Delete All" />
     </group>
 </menu>
