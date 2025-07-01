@@ -51,25 +51,106 @@
 
         </LinearLayout>
 
-
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView_records"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="16dp"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:listitem="@layout/item_stock_entry" />
-
-        <TextView
-            android:id="@+id/tv_no_records"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="32dp"
-            android:text="No entries found in this batch."
-            android:textSize="18sp"
-            android:visibility="gone" />
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/rounded_bg_light"
+            >
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+
+                    android:paddingTop="10dp">
+
+
+                    <TextView
+                        android:id="@+id/tv_header_batch_id"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Batch ID 123"
+                        android:textStyle="bold"
+                        />
+                    <TextView
+                        android:id="@+id/tv_header_transfer_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="2025-07-01 12:30"
+                        android:textStyle="bold"
+                        />
+                </LinearLayout>
+
+
+
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:padding="12dp"
+                    android:rowCount="4">
+
+                    <!-- You can reuse the item_batch.xml views here for consistency -->
+                    <!-- For simplicity, we'll create new ones -->
+
+                    <TextView android:layout_columnWeight="1" tools:text="Sender: user1" android:id="@+id/tv_header_sender"/>
+                    <TextView android:layout_columnWeight="1" tools:text="Locations: 113" android:id="@+id/tv_header_locations"/>
+
+                    <TextView android:layout_columnWeight="1" tools:text="Items: 153" android:id="@+id/tv_header_item_count"/>
+                    <TextView android:layout_columnWeight="1" tools:text="SKUs: 138" android:id="@+id/tv_header_skus"/>
+
+                    <TextView android:layout_columnWeight="1" tools:text="Duration: 2.50 hrs" android:id="@+id/tv_header_duration"/>
+                    <TextView android:layout_columnWeight="1" tools:text="Total Qty: 5311" android:id="@+id/tv_header_total_qty"/>
+
+
+                </GridLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider"
+            android:layout_marginVertical="16dp"
+            android:layout_marginHorizontal="16dp"/>
+
+        <!-- List of Entries -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView_records"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingHorizontal="16dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_stock_entry" />
+
+            <TextView
+                android:id="@+id/tv_no_records"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="No entries found in this batch."
+                android:textSize="18sp"
+                android:visibility="gone" />
+        </FrameLayout>
+
+
+
+
 
     </LinearLayout>
 

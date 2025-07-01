@@ -11,66 +11,104 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 class BatchEntryListActivity : AppCompatActivity() {
 
     private lateinit var btnToolbarBack: ImageButton
-    private lateinit var pageTitle: TextView
     private lateinit var recyclerView: RecyclerView
     private lateinit var tvNoRecords: TextView
     private lateinit var entryAdapter: EntryAdapter
-    private var entries: ArrayList<StockEntry> = arrayListOf()
+
+    // TextViews for the new header
+    private lateinit var tvHeaderID: TextView
+    private lateinit var tvHeaderSender: TextView
+    private lateinit var tvHeaderItemCount: TextView
+    private lateinit var tvHeaderTotalQty: TextView
+    private lateinit var tvHeaderLocations: TextView
+    private lateinit var tvHeaderSkus: TextView
+    private lateinit var tvHeaderDuration: TextView
+    private lateinit var tvHeaderTransferDate: TextView
 
     companion object {
-        const val EXTRA_BATCH_ENTRIES = "extra_batch_entries"
-        const val EXTRA_BATCH_ID = "extra_batch_id"
+        const val EXTRA_BATCH_OBJECT = "extra_batch_object"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_batch_entry_list)
 
+        initViews()
+        setupClickListeners()
+
+        val batch = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(EXTRA_BATCH_OBJECT, Batch::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(EXTRA_BATCH_OBJECT)
+        }
+
+        if (batch == null) {
+            Toast.makeText(this, "Error: Batch data not found.", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+
+        populateHeader(batch)
+        setupRecyclerView(batch.entries)
+    }
+
+    private fun initViews() {
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
-        pageTitle = findViewById(R.id.page_title)
         recyclerView = findViewById(R.id.recyclerView_records)
         tvNoRecords = findViewById(R.id.tv_no_records)
 
-        val batchId = intent.getStringExtra(EXTRA_BATCH_ID)
-        pageTitle.text = "Entries for: $batchId"
-
-        entries = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableArrayListExtra(EXTRA_BATCH_ENTRIES, StockEntry::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getParcelableArrayListExtra(EXTRA_BATCH_ENTRIES)
-        } ?: arrayListOf()
-
-        // --- NEW: Sort the entries by timestamp in descending order ---
-        entries.sortByDescending { parseTimestamp(it.timestamp) }
-        // --- END OF NEW LOGIC ---
-
-        setupRecyclerView()
-        displayEntries()
-        setupClickListeners()
+        // Find header views
+        tvHeaderID = findViewById(R.id.tv_header_batch_id)
+        tvHeaderSender = findViewById(R.id.tv_header_sender)
+        tvHeaderItemCount = findViewById(R.id.tv_header_item_count)
+        tvHeaderTotalQty = findViewById(R.id.tv_header_total_qty)
+        tvHeaderLocations = findViewById(R.id.tv_header_locations)
+        tvHeaderSkus = findViewById(R.id.tv_header_skus)
+        tvHeaderDuration = findViewById(R.id.tv_header_duration)
+        tvHeaderTransferDate = findViewById(R.id.tv_header_transfer_date)
     }
 
-    private fun setupRecyclerView() {
-        entryAdapter = EntryAdapter(entries) { clickedEntry ->
-            Toast.makeText(this, "Clicked entry with SKU: ${clickedEntry.skuBarcode}", Toast.LENGTH_SHORT).show()
+    private fun populateHeader(batch: Batch) {
+
+        tvHeaderSender.text = "User: ${batch.batch_user ?: "N/A"}"
+        tvHeaderItemCount.text = "Counter: ${batch.item_count}"
+        tvHeaderDuration.text = "Timer: ${String.format("%.2f", batch.batch_timer)} hrs"
+        tvHeaderLocations.text = "Locations: ${batch.locations_counted}"
+        tvHeaderTotalQty.text = "Total Qty: ${batch.quantity_counted}"
+        tvHeaderSkus.text = "SKUs: ${batch.sku_counted}"
+
+
+        batch.transfer_date?.let {
+            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+            tvHeaderTransferDate.text = "Date: ${sdf.format(Date(it))}"
+        } ?: run {
+            tvHeaderTransferDate.text = "Date: N/A"
         }
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = entryAdapter
     }
 
-    private fun displayEntries() {
+    private fun setupRecyclerView(entries: List<StockEntry>) {
         if (entries.isEmpty()) {
             recyclerView.visibility = View.GONE
             tvNoRecords.visibility = View.VISIBLE
         } else {
             recyclerView.visibility = View.VISIBLE
             tvNoRecords.visibility = View.GONE
-            entryAdapter.updateData(entries)
+
+            val sortedEntries = entries.sortedByDescending { parseTimestamp(it.timestamp) }
+
+            // We reuse the existing EntryAdapter.
+            entryAdapter = EntryAdapter(sortedEntries) { clickedEntry ->
+                Toast.makeText(this, "Clicked entry with SKU: ${clickedEntry.skuBarcode}", Toast.LENGTH_SHORT).show()
+            }
+            recyclerView.layoutManager = LinearLayoutManager(this)
+            recyclerView.adapter = entryAdapter
         }
     }
 
@@ -80,9 +118,6 @@ class BatchEntryListActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Helper function to parse different possible timestamp formats.
-     */
     private fun parseTimestamp(timestampStr: String): Long? {
         timestampStr.toLongOrNull()?.let { return it }
         val possibleFormats = listOf(
@@ -92,9 +127,7 @@ class BatchEntryListActivity : AppCompatActivity() {
         for (format in possibleFormats) {
             try {
                 format.parse(timestampStr)?.let { return it.time }
-            } catch (e: Exception) {
-                // Ignore and try the next format
-            }
+            } catch (e: Exception) { /* Ignore */ }
         }
         Log.e("BatchEntryListActivity", "Could not parse timestamp string: '$timestampStr'")
         return null

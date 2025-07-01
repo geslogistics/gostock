@@ -43,11 +43,17 @@ class BatchListActivity : AppCompatActivity() {
         loadAndDisplayBatches()
     }
 
+    /**
+     * This is the function that has been updated.
+     * The click listener now opens the new activity and passes the full Batch object.
+     */
     private fun setupRecyclerView() {
         batchAdapter = BatchAdapter(batches) { clickedBatch ->
+            // This is the new logic.
+            // When a batch is clicked, open the new BatchEntryListActivity.
             val intent = Intent(this, BatchEntryListActivity::class.java).apply {
-                putExtra(BatchEntryListActivity.EXTRA_BATCH_ID, clickedBatch.batch_id)
-                putParcelableArrayListExtra(BatchEntryListActivity.EXTRA_BATCH_ENTRIES, ArrayList(clickedBatch.entries))
+                // The entire Batch object is Parcelable, so we can pass it directly.
+                putExtra(BatchEntryListActivity.EXTRA_BATCH_OBJECT, clickedBatch)
             }
             startActivity(intent)
         }
@@ -56,15 +62,11 @@ class BatchListActivity : AppCompatActivity() {
     }
 
     private fun parseTimestamp(timestampStr: String): Long? {
-        // First, try to parse it as a raw millisecond Long.
         timestampStr.toLongOrNull()?.let { return it }
-
-        // If that fails, try common date formats.
         val possibleFormats = listOf(
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US),
             SimpleDateFormat("MMM dd, yyyy, h:mm:ss a", Locale.US)
         )
-
         for (format in possibleFormats) {
             try {
                 format.parse(timestampStr)?.let { return it.time }
@@ -72,7 +74,6 @@ class BatchListActivity : AppCompatActivity() {
                 // Ignore and try the next format
             }
         }
-
         Log.e("BatchListActivity", "Could not parse timestamp string: '$timestampStr'")
         return null
     }
@@ -91,8 +92,6 @@ class BatchListActivity : AppCompatActivity() {
             .groupBy { it.batch_id!! }
             .map { (batchId, entriesInBatch) ->
                 val firstEntry = entriesInBatch.first()
-
-                // Calculate all batch statistics
                 val timestampsAsLong = entriesInBatch.mapNotNull { parseTimestamp(it.timestamp) }
                 val minTimestamp = timestampsAsLong.minOrNull()
                 val maxTimestamp = timestampsAsLong.maxOrNull()
@@ -108,7 +107,6 @@ class BatchListActivity : AppCompatActivity() {
                 val uniqueSkus = entriesInBatch.map { it.skuBarcode }.distinct().count()
                 val totalQuantity = entriesInBatch.sumOf { it.quantity }
 
-                // Construct the Batch object with all the computed data
                 Batch(
                     batch_id = batchId,
                     batch_user = firstEntry.batch_user,
@@ -120,7 +118,6 @@ class BatchListActivity : AppCompatActivity() {
                     sku_counted = uniqueSkus,
                     quantity_counted = totalQuantity,
                     entries = entriesInBatch,
-                    // Populate the new date fields
                     first_entry_date = minTimestamp,
                     last_entry_date = maxTimestamp
                 )
