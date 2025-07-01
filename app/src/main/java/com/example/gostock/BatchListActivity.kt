@@ -32,12 +32,10 @@ class BatchListActivity : AppCompatActivity() {
     private lateinit var btnToolbarMore: ImageButton
     private lateinit var recyclerView: RecyclerView
     private lateinit var tvNoBatches: TextView
-    private lateinit var fileHandler: FileHandler
+    private lateinit var fileHandler: FileHandler // For go_data.json
     private lateinit var batchAdapter: BatchAdapter
-
-    private val TAG = "BatchListActivity"
-
     private var batches: MutableList<Batch> = mutableListOf()
+    private val TAG = "BatchListActivity"
 
     // --- ActivityResultLaunchers for file operations ---
 
@@ -46,7 +44,8 @@ class BatchListActivity : AppCompatActivity() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                writeAllBatchesToCsv(uri, "All batches exported successfully!")
+                val recordsToExport = fileHandler.loadStockEntries()
+                writeAllBatchesToCsv(uri, recordsToExport, "All batches exported successfully!")
             }
         } else {
             Toast.makeText(this, "Export cancelled.", Toast.LENGTH_SHORT).show()
@@ -58,9 +57,28 @@ class BatchListActivity : AppCompatActivity() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                val success = writeAllBatchesToCsv(uri, "All batches exported. Clearing data...")
+                val recordsToExport = fileHandler.loadStockEntries()
+
+                // 1. Enrich the records with the correct action details
+                val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
+                val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                val enrichedRecords = recordsToExport.map {
+                    it.copy(
+                        action_user = actionUser,
+                        action_timestamp = actionTimestamp,
+                        action = "Batch Exported and Cleared"
+                    )
+                }
+
+                // 2. Write the enriched data to the CSV file
+                val success = writeAllBatchesToCsv(uri, enrichedRecords, "All batches exported. Clearing data...")
+
+                // 3. If export was successful, move the enriched data to the deleted log and clear the source
                 if (success) {
-                    deleteAllBatches(showToast = true)
+                    val deletedFileHandler = FileHandler(this, "go_deleted.json")
+                    deletedFileHandler.addMultipleStockEntries(enrichedRecords)
+                    fileHandler.clearData()
+                    loadAndDisplayBatches() // Refresh the UI
                 }
             }
         } else {
@@ -75,8 +93,6 @@ class BatchListActivity : AppCompatActivity() {
             result.data?.data?.let { uri ->
                 importBatchesFromCsv(uri)
             }
-        } else {
-            Toast.makeText(this, "Import cancelled.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -124,11 +140,11 @@ class BatchListActivity : AppCompatActivity() {
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.action_export_all_batch -> {
-                    initiateAllBatchExport()
+                    initiateAllBatchExport(isClearing = false)
                     true
                 }
                 R.id.action_export_all_clear_batch -> {
-                    initiateAllBatchExportAndClear()
+                    initiateAllBatchExport(isClearing = true)
                     true
                 }
                 R.id.action_import_batch -> {
@@ -197,48 +213,32 @@ class BatchListActivity : AppCompatActivity() {
 
     // --- Export, Import, and Delete Logic ---
 
-    private fun initiateAllBatchExport() {
+    private fun initiateAllBatchExport(isClearing: Boolean) {
         if (batches.isEmpty()) {
             Toast.makeText(this, "No batches to export.", Toast.LENGTH_SHORT).show()
             return
         }
-        val csvFileName = "gostock_all_batches_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.csv"
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = if (isClearing) "gostock_all_batches_cleared_$timestamp.csv" else "gostock_all_batches_$timestamp.csv"
+
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "text/csv"
-            putExtra(Intent.EXTRA_TITLE, csvFileName)
+            putExtra(Intent.EXTRA_TITLE, fileName)
         }
-        exportAllLauncher.launch(intent)
+
+        if (isClearing) {
+            exportAndClearAllLauncher.launch(intent)
+        } else {
+            exportAllLauncher.launch(intent)
+        }
     }
 
-    private fun initiateAllBatchExportAndClear() {
-        if (batches.isEmpty()) {
-            Toast.makeText(this, "No batches to export and clear.", Toast.LENGTH_SHORT).show()
-            return
-        }
-        val csvFileName = "gostock_all_batches_cleared_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.csv"
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "text/csv"
-            putExtra(Intent.EXTRA_TITLE, csvFileName)
-        }
-        exportAndClearAllLauncher.launch(intent)
-    }
-
-    private fun initiateBatchImport() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"
-        }
-        importLauncher.launch(intent)
-    }
-
-    private fun writeAllBatchesToCsv(uri: Uri, successMessage: String): Boolean {
-        val recordsToExport = fileHandler.loadStockEntries()
+    private fun writeAllBatchesToCsv(uri: Uri, records: List<StockEntry>, successMessage: String): Boolean {
         val csvBuilder = StringBuilder()
-        csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver\n")
+        csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver,ActionUser,ActionTimestamp,Action\n")
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        for (record in recordsToExport) {
+        for (record in records) {
             val formattedTransferDate = record.transfer_date?.let { sdf.format(Date(it)) } ?: ""
             csvBuilder.append("${escapeCsv(record.id)},")
             csvBuilder.append("${escapeCsv(record.timestamp)},")
@@ -249,7 +249,10 @@ class BatchListActivity : AppCompatActivity() {
             csvBuilder.append("${escapeCsv(record.batch_id ?: "")},")
             csvBuilder.append("${escapeCsv(record.batch_user ?: "")},")
             csvBuilder.append("${escapeCsv(formattedTransferDate)},")
-            csvBuilder.append("${escapeCsv(record.receiver_user ?: "")}\n")
+            csvBuilder.append("${escapeCsv(record.receiver_user ?: "")},")
+            csvBuilder.append("${escapeCsv(record.action_user ?: "")},")
+            csvBuilder.append("${escapeCsv(record.action_timestamp ?: "")},")
+            csvBuilder.append("${escapeCsv(record.action ?: "")}\n")
         }
         return try {
             contentResolver.openOutputStream(uri)?.use { it.write(csvBuilder.toString().toByteArray()) }
@@ -261,6 +264,14 @@ class BatchListActivity : AppCompatActivity() {
         }
     }
 
+    private fun initiateBatchImport() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }
+        importLauncher.launch(intent)
+    }
+
     private fun importBatchesFromCsv(uri: Uri) {
         val importedEntries = mutableListOf<StockEntry>()
         try {
@@ -270,16 +281,16 @@ class BatchListActivity : AppCompatActivity() {
                     var line: String?
                     while (reader.readLine().also { line = it } != null) {
                         val columns = parseCsvLine(line!!)
-                        if (columns.size >= 10) { // Check for all columns
+                        if (columns.size >= 6) {
                             try {
                                 val entry = StockEntry(
                                     id = columns[0], timestamp = columns[1], username = columns[2],
                                     locationBarcode = columns[3], skuBarcode = columns[4],
                                     quantity = columns[5].toIntOrNull() ?: 0,
-                                    batch_id = columns[6].takeIf { it.isNotEmpty() },
-                                    batch_user = columns[7].takeIf { it.isNotEmpty() },
-                                    transfer_date = columns[8].toLongOrNull(),
-                                    receiver_user = columns[9].takeIf { it.isNotEmpty() }
+                                    batch_id = if (columns.size > 6) columns[6].takeIf { it.isNotEmpty() } else null,
+                                    batch_user = if (columns.size > 7) columns[7].takeIf { it.isNotEmpty() } else null,
+                                    transfer_date = if (columns.size > 8) columns[8].toLongOrNull() else null,
+                                    receiver_user = if (columns.size > 9) columns[9].takeIf { it.isNotEmpty() } else null
                                 )
                                 importedEntries.add(entry)
                             } catch (e: Exception) {
@@ -292,7 +303,7 @@ class BatchListActivity : AppCompatActivity() {
             if (importedEntries.isNotEmpty()) {
                 fileHandler.addMultipleStockEntries(importedEntries)
                 Toast.makeText(this, "Successfully imported ${importedEntries.size} records!", Toast.LENGTH_LONG).show()
-                loadAndDisplayBatches() // Refresh the list
+                loadAndDisplayBatches()
             } else {
                 Toast.makeText(this, "No valid records found to import.", Toast.LENGTH_LONG).show()
             }
@@ -304,7 +315,7 @@ class BatchListActivity : AppCompatActivity() {
     private fun showDeleteAllConfirmationDialog() {
         AlertDialog.Builder(this)
             .setTitle("Delete All Batches")
-            .setMessage("Are you sure you want to delete ALL batch records? This action cannot be undone.")
+            .setMessage("Are you sure you want to delete ALL batch records? This action will move them to the deleted records file and cannot be undone.")
             .setIcon(R.drawable.ic_delete_icon)
             .setPositiveButton("Delete All") { _, _ -> deleteAllBatches(showToast = true) }
             .setNegativeButton("Cancel", null)
@@ -312,11 +323,31 @@ class BatchListActivity : AppCompatActivity() {
     }
 
     private fun deleteAllBatches(showToast: Boolean) {
-        fileHandler.clearData()
-        if (showToast) {
-            Toast.makeText(this, "All batch data cleared.", Toast.LENGTH_SHORT).show()
+        val allEntries = fileHandler.loadStockEntries()
+        if (allEntries.isEmpty()) {
+            if(showToast) Toast.makeText(this, "There is nothing to delete.", Toast.LENGTH_SHORT).show()
+            return
         }
-        loadAndDisplayBatches() // Refresh the list to show it's empty
+
+        val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
+        val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+        val enrichedEntries = allEntries.map {
+            it.copy(
+                action_user = actionUser,
+                action_timestamp = actionTimestamp,
+                action = "Batch Deleted"
+            )
+        }
+
+        val deletedFileHandler = FileHandler(this, "go_deleted.json")
+        deletedFileHandler.addMultipleStockEntries(enrichedEntries)
+
+        fileHandler.clearData()
+
+        if (showToast) {
+            Toast.makeText(this, "All batch data cleared and archived.", Toast.LENGTH_SHORT).show()
+        }
+        loadAndDisplayBatches()
     }
 
     // --- Helper Functions ---

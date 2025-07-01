@@ -17,11 +17,17 @@ data class StockEntry(
     var skuBarcode: String,
     var quantity: Int,
 
-    // --- NEW NULLABLE FIELDS ---
+    // --- TRANSFER NULLABLE FIELDS ---
     // These are added for the transfer process. They are nullable
     // so they don't break existing records or activities.
     var batch_id: String? = null,
     var batch_user: String? = null,
     var transfer_date: Long? = null,
-    var receiver_user: String? = null
+    var receiver_user: String? = null,
+
+    // ---  DELETION TRACKING FIELDS ---
+    var action_user: String? = null,
+    var action_timestamp: String? = null,
+    var action: String? = null
+
 ) : Parcelable

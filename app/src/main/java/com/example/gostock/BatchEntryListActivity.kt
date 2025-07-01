@@ -65,17 +65,16 @@ class BatchEntryListActivity : AppCompatActivity() {
         }
     }
 
-    // NEW: Launcher for the "Export & Clear" action
     private val exportAndClearBatchLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 currentBatch?.let { batch ->
-                    // First, write the file. If successful, then delete the batch.
                     val exportSuccess = writeBatchToCsv(uri, batch.entries, "Batch exported. Now clearing...")
                     if (exportSuccess) {
-                        deleteCurrentBatch(showToast = true) // Delete after successful export
+                        // Pass the correct action string for the audit trail
+                        deleteCurrentBatch(showToast = true, action = "Batch Exported and Cleared")
                     }
                 }
             }
@@ -138,9 +137,9 @@ class BatchEntryListActivity : AppCompatActivity() {
 
         batch.transfer_date?.let {
             val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-            tvHeaderTransferDate.text = "${sdf.format(Date(it))}"
+            tvHeaderTransferDate.text = "Date: ${sdf.format(Date(it))}"
         } ?: run {
-            tvHeaderTransferDate.text = "N/A"
+            tvHeaderTransferDate.text = "Date: N/A"
         }
     }
 
@@ -174,7 +173,7 @@ class BatchEntryListActivity : AppCompatActivity() {
                     initiateBatchExport()
                     true
                 }
-                R.id.action_export_clear_batch -> { // NEW
+                R.id.action_export_clear_batch -> {
                     initiateBatchExportAndClear()
                     true
                 }
@@ -203,7 +202,6 @@ class BatchEntryListActivity : AppCompatActivity() {
         exportBatchLauncher.launch(intent)
     }
 
-    // NEW: Function to handle the Export & Clear flow
     private fun initiateBatchExportAndClear() {
         val batch = currentBatch ?: return
         if (batch.entries.isEmpty()) {
@@ -219,10 +217,10 @@ class BatchEntryListActivity : AppCompatActivity() {
         exportAndClearBatchLauncher.launch(intent)
     }
 
-    // MODIFIED: Added successMessage parameter
     private fun writeBatchToCsv(uri: Uri, records: List<StockEntry>, successMessage: String): Boolean {
         val csvBuilder = StringBuilder()
-        csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver\n")
+        // Add new audit columns to the CSV header
+        csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver,ActionUser,ActionTimestamp,Action\n")
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         for (record in records) {
             val formattedTransferDate = record.transfer_date?.let { sdf.format(Date(it)) } ?: ""
@@ -235,7 +233,11 @@ class BatchEntryListActivity : AppCompatActivity() {
             csvBuilder.append("${escapeCsv(record.batch_id ?: "")},")
             csvBuilder.append("${escapeCsv(record.batch_user ?: "")},")
             csvBuilder.append("${escapeCsv(formattedTransferDate)},")
-            csvBuilder.append("${escapeCsv(record.receiver_user ?: "")}\n")
+            csvBuilder.append("${escapeCsv(record.receiver_user ?: "")},")
+            // Add the new action fields to each row
+            csvBuilder.append("${escapeCsv(record.action_user ?: "")},")
+            csvBuilder.append("${escapeCsv(record.action_timestamp ?: "")},")
+            csvBuilder.append("${escapeCsv(record.action ?: "")}\n")
         }
 
         return try {
@@ -252,7 +254,7 @@ class BatchEntryListActivity : AppCompatActivity() {
     }
 
     private fun escapeCsv(field: String): String {
-        return if (field.contains(",") || field.contains("\"") || field.contains("\n")) {
+        return if (field.contains(",") || field.contains("\"")) {
             "\"" + field.replace("\"", "\"\"") + "\""
         } else {
             field
@@ -264,22 +266,45 @@ class BatchEntryListActivity : AppCompatActivity() {
             .setTitle("Confirm Deletion")
             .setMessage("Are you sure you want to delete this entire batch and all its entries? This action cannot be undone.")
             .setIcon(R.drawable.ic_delete_icon)
-            .setPositiveButton("Delete") { _, _ -> deleteCurrentBatch(showToast = true) }
+            .setPositiveButton("Delete") { _, _ -> deleteCurrentBatch(showToast = true, action = "Batch Deleted") }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
-    // MODIFIED: Added showToast parameter
-    private fun deleteCurrentBatch(showToast: Boolean) {
+    private fun deleteCurrentBatch(showToast: Boolean, action: String) {
         val batchIdToDelete = currentBatch?.batch_id
         if (batchIdToDelete == null) {
             Toast.makeText(this, "Error: Could not identify batch to delete.", Toast.LENGTH_SHORT).show()
             return
         }
-        val fileHandler = FileHandler(this, "go_data.json")
-        val allEntries = fileHandler.loadStockEntries()
+
+        // 1. Get all entries from go_data.json
+        val goDataFileHandler = FileHandler(this, "go_data.json")
+        val allEntries = goDataFileHandler.loadStockEntries()
+
+        // 2. Separate the entries to be deleted from the ones to keep
+        val entriesToDelete = allEntries.filter { it.batch_id == batchIdToDelete }
         val remainingEntries = allEntries.filter { it.batch_id != batchIdToDelete }
-        fileHandler.saveStockEntries(remainingEntries)
+
+        // 3. Enrich the deleted entries with action details
+        val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
+        val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+        val enrichedDeletedEntries = entriesToDelete.map {
+            it.copy(
+                action_user = actionUser,
+                action_timestamp = actionTimestamp,
+                action = action
+            )
+        }
+
+        // 4. Append the enriched deleted entries to go_deleted.json
+        if (enrichedDeletedEntries.isNotEmpty()) {
+            val deletedFileHandler = FileHandler(this, "go_deleted.json")
+            deletedFileHandler.addMultipleStockEntries(enrichedDeletedEntries)
+        }
+
+        // 5. Overwrite go_data.json with only the remaining entries
+        goDataFileHandler.saveStockEntries(remainingEntries)
 
         if (showToast) {
             Toast.makeText(this, "Batch '$batchIdToDelete' deleted.", Toast.LENGTH_SHORT).show()
