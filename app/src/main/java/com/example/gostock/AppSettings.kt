@@ -1,11 +1,10 @@
-package com.example.gostock // IMPORTANT: Replace with your actual package name
+package com.example.gostock
 
 import android.content.Context
 import android.content.SharedPreferences
-
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import java.util.Locale // ADD THIS IMPORT for uppercase conversion
+import java.util.Locale
 
 object AppSettings {
 
@@ -16,17 +15,18 @@ object AppSettings {
     private const val KEY_ACCEPTED_LOCATION_FORMATS = "accepted_location_formats"
     private const val KEY_ACCEPTED_SKU_FORMATS = "accepted_sku_formats"
 
-
     // Default values
-    const val DEFAULT_MAX_BATCH_SIZE = 0 // count
-    const val DEFAULT_MAX_BATCH_TIME = 0 // hours
+    const val DEFAULT_MAX_BATCH_SIZE = 100 // count
+    const val DEFAULT_MAX_BATCH_TIME = 2 // hours
     const val DEFAULT_ENABLE_ZEBRA_DEVICE = false
 
-    private val DEFAULT_ACCEPTED_FORMATS = emptySet<String>()
+    // --- NEW: Specific default formats ---
+    private val DEFAULT_LOCATION_FORMATS = setOf("LABEL-TYPE-DATAMATRIX", "DATA_MATRIX")
+    private val DEFAULT_SKU_FORMATS = setOf("LABEL-TYPE-EAN13", "EAN_13")
+
     private lateinit var sharedPreferences: SharedPreferences
     private val gson = Gson()
 
-    // Initialize this once, typically in your Application class (GoStockApp)
     fun initialize(context: Context) {
         sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
@@ -47,9 +47,11 @@ object AppSettings {
         get() {
             val json = sharedPreferences.getString(KEY_ACCEPTED_LOCATION_FORMATS, null)
             return if (json != null) {
-                gson.fromJson(json, object : TypeToken<Set<String>>() {}.type) ?: DEFAULT_ACCEPTED_FORMATS
+                // If a value is saved in preferences, use it.
+                gson.fromJson(json, object : TypeToken<Set<String>>() {}.type) ?: DEFAULT_LOCATION_FORMATS
             } else {
-                DEFAULT_ACCEPTED_FORMATS
+                // --- CHANGE: Use the new specific default ---
+                DEFAULT_LOCATION_FORMATS
             }
         }
         set(value) {
@@ -61,9 +63,11 @@ object AppSettings {
         get() {
             val json = sharedPreferences.getString(KEY_ACCEPTED_SKU_FORMATS, null)
             return if (json != null) {
-                gson.fromJson(json, object : TypeToken<Set<String>>() {}.type) ?: DEFAULT_ACCEPTED_FORMATS
+                // If a value is saved in preferences, use it.
+                gson.fromJson(json, object : TypeToken<Set<String>>() {}.type) ?: DEFAULT_SKU_FORMATS
             } else {
-                DEFAULT_ACCEPTED_FORMATS
+                // --- CHANGE: Use the new specific default ---
+                DEFAULT_SKU_FORMATS
             }
         }
         set(value) {
@@ -71,21 +75,13 @@ object AppSettings {
             sharedPreferences.edit().putString(KEY_ACCEPTED_SKU_FORMATS, json).apply()
         }
 
-    /**
-     * Checks if a scanned barcode format is among the accepted formats.
-     * If acceptedFormats is empty, all formats are accepted.
-     * @param scannedFormat The format string returned by the scanner (e.g., "CODE_128", "QR_CODE").
-     * @param acceptedFormats The Set of accepted format strings from settings.
-     * @return True if the scannedFormat is accepted, false otherwise.
-     */
     fun isFormatAccepted(scannedFormat: String?, acceptedFormats: Set<String>): Boolean {
         if (scannedFormat.isNullOrEmpty()) {
-            return false // Cannot accept empty format
+            return false
         }
         if (acceptedFormats.isEmpty()) {
-            return true // If no formats are configured, implicitly accept all
+            return true
         }
-        // Check if the uppercase scanned format is in the set of accepted formats
-        return acceptedFormats.contains(scannedFormat.uppercase(Locale.ROOT))
+        return acceptedFormats.any { it.equals(scannedFormat, ignoreCase = true) }
     }
 }

@@ -89,6 +89,7 @@
                         android:layout_height="48dp"
                         android:src="@drawable/ic_bluetooth_icon"
                         android:contentDescription="Bluetooth Icon"
+                        app:tint="@color/primary_text_dark"
                         android:layout_marginEnd="16dp"
                         />
 
@@ -133,6 +134,7 @@
                         android:layout_height="48dp"
                         android:src="@drawable/ic_email_icon"
                         android:contentDescription="Email Icon"
+                        app:tint="@color/primary_text_dark"
                         android:layout_marginEnd="16dp"
                         />
 

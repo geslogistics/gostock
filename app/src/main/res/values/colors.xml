@@ -31,4 +31,6 @@
 
     <color name="card_border_color">#909090</color>
 
+    <color name="switch_track_on">#339037</color> <!-- A nice green color -->
+
 </resources>

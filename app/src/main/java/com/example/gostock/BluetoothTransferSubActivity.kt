@@ -433,7 +433,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         tvTransferStatus.text = "$status"
         progressBar.visibility = View.VISIBLE
         tvProgressPercent.visibility = View.VISIBLE
-        listOf(btnSendData, btnScanDevices, btnMakeDiscoverable, lvPairedDevices, lvDiscoveredDevices, btnToolbarBack).forEach { it.isEnabled = false }
+        listOf(btnSendData, btnScanDevices, btnMakeDiscoverable, lvPairedDevices, lvDiscoveredDevices).forEach { it.isEnabled = false }
         updateProgress(0)
     }
 
@@ -444,7 +444,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         btnSendData.isEnabled = false
         btnScanDevices.isEnabled = true
         btnMakeDiscoverable.isEnabled = true
-        listOf(lvPairedDevices, lvDiscoveredDevices, btnToolbarBack).forEach { it.isEnabled = true }
+        listOf(lvPairedDevices, lvDiscoveredDevices).forEach { it.isEnabled = true }
         setupRoleBasedUI() // Re-apply role UI
     }
 

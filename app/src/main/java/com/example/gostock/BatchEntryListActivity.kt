@@ -138,9 +138,9 @@ class BatchEntryListActivity : AppCompatActivity() {
 
         batch.transfer_date?.let {
             val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-            tvHeaderTransferDate.text = "Date: ${sdf.format(Date(it))}"
+            tvHeaderTransferDate.text = "${sdf.format(Date(it))}"
         } ?: run {
-            tvHeaderTransferDate.text = "Date: N/A"
+            tvHeaderTransferDate.text = "N/A"
         }
     }
 

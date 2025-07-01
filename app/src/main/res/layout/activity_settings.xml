@@ -208,8 +208,12 @@
                         android:layout_marginTop="15dp"
                         android:minHeight="20dp"
                         android:thumbTextPadding="12dp"
-                        android:trackTint="@color/purple_500"
-                        android:thumbTint="@color/purple_200"
+
+                        android:thumbTint="@color/button_background_light"
+                        android:trackTint="@color/switch_track_selector"
+                        android:trackTintMode="add"
+                        tools:ignore="UseSwitchCompatOrMaterial3"
+                        android:checked="true"
                         />
 
                 </LinearLayout>
@@ -254,7 +258,7 @@
                         android:id="@+id/et_accepted_location_formats"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="e.g., EAN13,Code 128"
+                        android:hint="e.g., LABEL-TYPE-DATAMATRIX,DATA_MATRIX"
                         android:inputType="text"
                         android:minHeight="20dp"
                         />
@@ -301,7 +305,7 @@
                         android:id="@+id/et_accepted_sku_formats"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="e.g., EAN13,Code 128"
+                        android:hint="e.g., LABEL-TYPE-CODE128,CODE_128"
                         android:inputType="text"
                         android:minHeight="20dp"
                         />

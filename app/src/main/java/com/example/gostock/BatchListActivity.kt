@@ -1,6 +1,8 @@
 package com.example.gostock
 
+import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -8,10 +10,17 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -25,7 +34,53 @@ class BatchListActivity : AppCompatActivity() {
     private lateinit var tvNoBatches: TextView
     private lateinit var fileHandler: FileHandler
     private lateinit var batchAdapter: BatchAdapter
+
+    private val TAG = "BatchListActivity"
+
     private var batches: MutableList<Batch> = mutableListOf()
+
+    // --- ActivityResultLaunchers for file operations ---
+
+    private val exportAllLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                writeAllBatchesToCsv(uri, "All batches exported successfully!")
+            }
+        } else {
+            Toast.makeText(this, "Export cancelled.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private val exportAndClearAllLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                val success = writeAllBatchesToCsv(uri, "All batches exported. Clearing data...")
+                if (success) {
+                    deleteAllBatches(showToast = true)
+                }
+            }
+        } else {
+            Toast.makeText(this, "Export & Clear cancelled.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private val importLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                importBatchesFromCsv(uri)
+            }
+        } else {
+            Toast.makeText(this, "Import cancelled.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // --- Activity Lifecycle ---
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,16 +102,9 @@ class BatchListActivity : AppCompatActivity() {
         loadAndDisplayBatches()
     }
 
-    /**
-     * This is the function that has been updated.
-     * The click listener now opens the new activity and passes the full Batch object.
-     */
     private fun setupRecyclerView() {
         batchAdapter = BatchAdapter(batches) { clickedBatch ->
-            // This is the new logic.
-            // When a batch is clicked, open the new BatchEntryListActivity.
             val intent = Intent(this, BatchEntryListActivity::class.java).apply {
-                // The entire Batch object is Parcelable, so we can pass it directly.
                 putExtra(BatchEntryListActivity.EXTRA_BATCH_OBJECT, clickedBatch)
             }
             startActivity(intent)
@@ -65,29 +113,47 @@ class BatchListActivity : AppCompatActivity() {
         recyclerView.adapter = batchAdapter
     }
 
-    private fun parseTimestamp(timestampStr: String): Long? {
-        timestampStr.toLongOrNull()?.let { return it }
-        val possibleFormats = listOf(
-            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US),
-            SimpleDateFormat("MMM dd, yyyy, h:mm:ss a", Locale.US)
-        )
-        for (format in possibleFormats) {
-            try {
-                format.parse(timestampStr)?.let { return it.time }
-            } catch (e: Exception) {
-                // Ignore and try the next format
+    private fun setupClickListeners() {
+        btnToolbarBack.setOnClickListener { finish() }
+        btnToolbarMore.setOnClickListener { view -> showMoreMenu(view) }
+    }
+
+    private fun showMoreMenu(view: View) {
+        val popup = PopupMenu(this, view, Gravity.END)
+        popup.menuInflater.inflate(R.menu.batch_list_more_menu, popup.menu)
+        popup.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_export_all_batch -> {
+                    initiateAllBatchExport()
+                    true
+                }
+                R.id.action_export_all_clear_batch -> {
+                    initiateAllBatchExportAndClear()
+                    true
+                }
+                R.id.action_import_batch -> {
+                    initiateBatchImport()
+                    true
+                }
+                R.id.action_delete_all_batch -> {
+                    showDeleteAllConfirmationDialog()
+                    true
+                }
+                else -> false
             }
         }
-        Log.e("BatchListActivity", "Could not parse timestamp string: '$timestampStr'")
-        return null
+        popup.show()
     }
+
+    // --- Data Loading and Processing ---
 
     private fun loadAndDisplayBatches() {
         val allEntries = fileHandler.loadStockEntries()
-
         if (allEntries.isEmpty()) {
             recyclerView.visibility = View.GONE
             tvNoBatches.visibility = View.VISIBLE
+            batches.clear()
+            batchAdapter.updateData(batches)
             return
         }
 
@@ -99,31 +165,19 @@ class BatchListActivity : AppCompatActivity() {
                 val timestampsAsLong = entriesInBatch.mapNotNull { parseTimestamp(it.timestamp) }
                 val minTimestamp = timestampsAsLong.minOrNull()
                 val maxTimestamp = timestampsAsLong.maxOrNull()
-
-                val durationMillis = if (minTimestamp != null && maxTimestamp != null) {
-                    maxTimestamp - minTimestamp
-                } else {
-                    0L
-                }
-
+                val durationMillis = if (minTimestamp != null && maxTimestamp != null) maxTimestamp - minTimestamp else 0L
                 val durationHours = durationMillis / (1000.0f * 60 * 60)
                 val uniqueLocations = entriesInBatch.map { it.locationBarcode }.distinct().count()
                 val uniqueSkus = entriesInBatch.map { it.skuBarcode }.distinct().count()
                 val totalQuantity = entriesInBatch.sumOf { it.quantity }
 
                 Batch(
-                    batch_id = batchId,
-                    batch_user = firstEntry.batch_user,
-                    transfer_date = firstEntry.transfer_date,
-                    receiver_user = firstEntry.receiver_user,
-                    item_count = entriesInBatch.size,
-                    batch_timer = durationHours,
-                    locations_counted = uniqueLocations,
-                    sku_counted = uniqueSkus,
-                    quantity_counted = totalQuantity,
-                    entries = entriesInBatch,
-                    first_entry_date = minTimestamp,
-                    last_entry_date = maxTimestamp
+                    batch_id = batchId, batch_user = firstEntry.batch_user,
+                    transfer_date = firstEntry.transfer_date, receiver_user = firstEntry.receiver_user,
+                    item_count = entriesInBatch.size, batch_timer = durationHours,
+                    locations_counted = uniqueLocations, sku_counted = uniqueSkus,
+                    quantity_counted = totalQuantity, entries = entriesInBatch,
+                    first_entry_date = minTimestamp, last_entry_date = maxTimestamp
                 )
             }
             .sortedByDescending { it.transfer_date }
@@ -141,37 +195,156 @@ class BatchListActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupClickListeners() {
-        btnToolbarBack.setOnClickListener {
-            finish()
+    // --- Export, Import, and Delete Logic ---
+
+    private fun initiateAllBatchExport() {
+        if (batches.isEmpty()) {
+            Toast.makeText(this, "No batches to export.", Toast.LENGTH_SHORT).show()
+            return
         }
-        btnToolbarMore.setOnClickListener { view -> showMoreMenu(view) }
+        val csvFileName = "gostock_all_batches_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.csv"
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/csv"
+            putExtra(Intent.EXTRA_TITLE, csvFileName)
+        }
+        exportAllLauncher.launch(intent)
     }
 
-    private fun showMoreMenu(view: View) {
-        val popup = PopupMenu(this, view, Gravity.END)
-        popup.menuInflater.inflate(R.menu.batch_list_more_menu, popup.menu)
-        popup.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_export_all_batch -> {
-                    initiateAllBatchExport()
-                    true
-                }
-                R.id.action_export_all_clear_batch -> { // NEW
-                    initiateAllBatchExportAndClear()
-                    true
-                }
-                R.id.action_import_batch -> { // NEW
-
-                    true
-                }
-                R.id.action_delete_all_batch -> {
-                    showDeleteAllConfirmationDialog()
-                    true
-                }
-                else -> false
-            }
+    private fun initiateAllBatchExportAndClear() {
+        if (batches.isEmpty()) {
+            Toast.makeText(this, "No batches to export and clear.", Toast.LENGTH_SHORT).show()
+            return
         }
-        popup.show()
+        val csvFileName = "gostock_all_batches_cleared_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.csv"
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/csv"
+            putExtra(Intent.EXTRA_TITLE, csvFileName)
+        }
+        exportAndClearAllLauncher.launch(intent)
+    }
+
+    private fun initiateBatchImport() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }
+        importLauncher.launch(intent)
+    }
+
+    private fun writeAllBatchesToCsv(uri: Uri, successMessage: String): Boolean {
+        val recordsToExport = fileHandler.loadStockEntries()
+        val csvBuilder = StringBuilder()
+        csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver\n")
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        for (record in recordsToExport) {
+            val formattedTransferDate = record.transfer_date?.let { sdf.format(Date(it)) } ?: ""
+            csvBuilder.append("${escapeCsv(record.id)},")
+            csvBuilder.append("${escapeCsv(record.timestamp)},")
+            csvBuilder.append("${escapeCsv(record.username)},")
+            csvBuilder.append("${escapeCsv(record.locationBarcode)},")
+            csvBuilder.append("${escapeCsv(record.skuBarcode)},")
+            csvBuilder.append("${record.quantity},")
+            csvBuilder.append("${escapeCsv(record.batch_id ?: "")},")
+            csvBuilder.append("${escapeCsv(record.batch_user ?: "")},")
+            csvBuilder.append("${escapeCsv(formattedTransferDate)},")
+            csvBuilder.append("${escapeCsv(record.receiver_user ?: "")}\n")
+        }
+        return try {
+            contentResolver.openOutputStream(uri)?.use { it.write(csvBuilder.toString().toByteArray()) }
+            Toast.makeText(this, successMessage, Toast.LENGTH_LONG).show()
+            true
+        } catch (e: IOException) {
+            Toast.makeText(this, "Failed to write to file.", Toast.LENGTH_LONG).show()
+            false
+        }
+    }
+
+    private fun importBatchesFromCsv(uri: Uri) {
+        val importedEntries = mutableListOf<StockEntry>()
+        try {
+            contentResolver.openInputStream(uri)?.use { inputStream ->
+                BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                    reader.readLine() // Skip header
+                    var line: String?
+                    while (reader.readLine().also { line = it } != null) {
+                        val columns = parseCsvLine(line!!)
+                        if (columns.size >= 10) { // Check for all columns
+                            try {
+                                val entry = StockEntry(
+                                    id = columns[0], timestamp = columns[1], username = columns[2],
+                                    locationBarcode = columns[3], skuBarcode = columns[4],
+                                    quantity = columns[5].toIntOrNull() ?: 0,
+                                    batch_id = columns[6].takeIf { it.isNotEmpty() },
+                                    batch_user = columns[7].takeIf { it.isNotEmpty() },
+                                    transfer_date = columns[8].toLongOrNull(),
+                                    receiver_user = columns[9].takeIf { it.isNotEmpty() }
+                                )
+                                importedEntries.add(entry)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Skipping row due to parsing error: ${e.message}")
+                            }
+                        }
+                    }
+                }
+            }
+            if (importedEntries.isNotEmpty()) {
+                fileHandler.addMultipleStockEntries(importedEntries)
+                Toast.makeText(this, "Successfully imported ${importedEntries.size} records!", Toast.LENGTH_LONG).show()
+                loadAndDisplayBatches() // Refresh the list
+            } else {
+                Toast.makeText(this, "No valid records found to import.", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error reading or processing CSV file.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun showDeleteAllConfirmationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Delete All Batches")
+            .setMessage("Are you sure you want to delete ALL batch records? This action cannot be undone.")
+            .setIcon(R.drawable.ic_delete_icon)
+            .setPositiveButton("Delete All") { _, _ -> deleteAllBatches(showToast = true) }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteAllBatches(showToast: Boolean) {
+        fileHandler.clearData()
+        if (showToast) {
+            Toast.makeText(this, "All batch data cleared.", Toast.LENGTH_SHORT).show()
+        }
+        loadAndDisplayBatches() // Refresh the list to show it's empty
+    }
+
+    // --- Helper Functions ---
+    private fun escapeCsv(field: String): String = if (field.contains(",") || field.contains("\"") || field.contains("\n")) "\"${field.replace("\"", "\"\"")}\"" else field
+    private fun parseCsvLine(line: String): List<String> {
+        val result = mutableListOf<String>()
+        var currentPos = 0
+        var inQuotes = false
+        var fieldStart = 0
+        while (currentPos < line.length) {
+            when (line[currentPos]) {
+                '"' -> inQuotes = !inQuotes
+                ',' -> if (!inQuotes) {
+                    result.add(line.substring(fieldStart, currentPos).replace("\"\"", "\"").removeSurrounding("\""))
+                    fieldStart = currentPos + 1
+                }
+            }
+            currentPos++
+        }
+        result.add(line.substring(fieldStart).replace("\"\"", "\"").removeSurrounding("\""))
+        return result
+    }
+    private fun parseTimestamp(timestampStr: String): Long? {
+        timestampStr.toLongOrNull()?.let { return it }
+        val possibleFormats = listOf(SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US), SimpleDateFormat("MMM dd, yyyy, h:mm:ss a", Locale.US))
+        for (format in possibleFormats) {
+            try { return format.parse(timestampStr)?.time } catch (e: Exception) { /* Ignore */ }
+        }
+        return null
     }
 }
