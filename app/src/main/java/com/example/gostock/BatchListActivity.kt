@@ -141,6 +141,10 @@ class BatchListActivity : AppCompatActivity() {
         popup.menuInflater.inflate(R.menu.batch_list_more_menu, popup.menu)
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
+                R.id.action_transfer_all_batch -> { // NEW
+                    startActivity(Intent(this, TransferAllBatchActivity::class.java))
+                    true
+                }
                 R.id.action_export_all_batch -> {
                     initiateAllBatchExport(isClearing = false)
                     true

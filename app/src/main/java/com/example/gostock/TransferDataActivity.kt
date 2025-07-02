@@ -1,4 +1,4 @@
-package com.example.gostock // IMPORTANT: Replace with your actual package name
+package com.example.gostock
 
 import android.content.Intent
 import android.os.Bundle
