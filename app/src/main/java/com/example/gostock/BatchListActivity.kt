@@ -255,7 +255,7 @@ class BatchListActivity : AppCompatActivity() {
             csvBuilder.append("${escapeCsv(record.batch_id ?: "")},")
             csvBuilder.append("${escapeCsv(record.batch_user ?: "")},")
             csvBuilder.append("${escapeCsv(formattedTransferDate)},")
-            csvBuilder.append("${escapeCsv(record.receiver_user ?: "")},")
+            csvBuilder.append("${escapeCsv(record.receiver_user ?: "")}\n")
         }
         return try {
             contentResolver.openOutputStream(uri)?.use { it.write(csvBuilder.toString().toByteArray()) }
@@ -302,7 +302,7 @@ class BatchListActivity : AppCompatActivity() {
                                 quantity = columns[5].toInt(),
                                 batch_id = columns[6],
                                 batch_user = columns[7],
-                                transfer_date = columns[8].toLong(),
+                                transfer_date = parseTimestamp(columns[8]),
                                 receiver_user = columns[9]
                             )
                             importedEntries.add(entry)

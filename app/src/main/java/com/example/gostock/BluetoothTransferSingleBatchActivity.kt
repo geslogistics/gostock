@@ -67,7 +67,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
     // --- Constants ---
     // FIX: Removed the 'private' keyword to make the companion object's contents accessible
     companion object {
-        private val MY_UUID: UUID = UUID.fromString("8cc7117b-eca7-4c31-820f-26ed27198bb2")
+        private val MY_UUID: UUID = UUID.fromString("8cc7117b-eca7-4c31-820f-26ed27198bb1")
         private const val APP_NAME = "GoStockTransferSingleBatch"
         private const val TAG = "BluetoothTransferSingleBatch"
         const val EXTRA_BATCH_TO_TRANSFER = "extra_batch_to_transfer"
