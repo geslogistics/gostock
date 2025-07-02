@@ -3,7 +3,7 @@
     <group android:id="@+id/group_transfer">
         <item
             android:id="@+id/action_transfer_all_batch"
-            android:title="Transfer All" />
+            android:title="Transfer/Receive All" />
     </group>
     <group android:id="@+id/group_export">
         <item

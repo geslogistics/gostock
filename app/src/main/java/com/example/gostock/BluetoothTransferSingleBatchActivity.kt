@@ -27,19 +27,20 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.*
-import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.thread
 import kotlin.math.min
 
 @SuppressLint("MissingPermission")
-class BluetoothTransferSubActivity : AppCompatActivity() {
+class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
+
+    // --- Data ---
+    private var batchToTransfer: Batch? = null
 
     // --- UI elements declarations ---
     private lateinit var btnToolbarBack: ImageButton
@@ -62,14 +63,14 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
     private val discoveredDevicesList = mutableListOf<BluetoothDevice>()
     private var connectedSocket: BluetoothSocket? = null
     private var serverThread: Thread? = null
-    private var connectedReceiverUsername: String? = null // NEW: To store the receiver's name
 
     // --- Constants ---
-    private companion object {
-        private val MY_UUID: UUID = UUID.fromString("8cc7117b-eca7-4c31-820f-26ed27198bb0")
-        private const val APP_NAME = "GoStockTransferCurrentBatch"
-        private const val TAG = "BluetoothTransfer"
-        const val STOCK_DATA_FILENAME = "stock_data.json"
+    // FIX: Removed the 'private' keyword to make the companion object's contents accessible
+    companion object {
+        private val MY_UUID: UUID = UUID.fromString("8cc7117b-eca7-4c31-820f-26ed27198bb2")
+        private const val APP_NAME = "GoStockTransferSingleBatch"
+        private const val TAG = "BluetoothTransferSingleBatch"
+        const val EXTRA_BATCH_TO_TRANSFER = "extra_batch_to_transfer"
         const val GO_DATA_FILENAME = "go_data.json"
     }
 
@@ -97,10 +98,25 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) { result -> if (result.resultCode > 0) startServer() }
 
+
     // --- Activity Lifecycle ---
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_bluetooth_transfer_sub)
+        setContentView(R.layout.activity_bluetooth_transfer_single_batch)
+
+        batchToTransfer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(EXTRA_BATCH_TO_TRANSFER, Batch::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(EXTRA_BATCH_TO_TRANSFER)
+        }
+
+        if (batchToTransfer == null) {
+            Toast.makeText(this, "Error: No batch selected for transfer.", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+
         initUI()
         initBluetooth()
         setupClickListeners()
@@ -191,7 +207,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         }
     }
 
-    // --- Core Bluetooth Logic with Handshake ---
+    // --- Core Bluetooth Logic ---
 
     private fun startServer() {
         updateUiForListening()
@@ -229,67 +245,27 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
 
     private fun manageConnectedSocket(socket: BluetoothSocket, isServer: Boolean) {
         connectedSocket = socket
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                if (isServer) {
-                    // SERVER (RECEIVER) LOGIC: Send username, then wait for data
-                    val receiverUsername = GoStockApp.loggedInUser?.username ?: "Unknown"
-                    DataOutputStream(socket.outputStream).writeUTF(receiverUsername)
-                    Log.d(TAG, "Server: Sent my username: $receiverUsername")
-                    withContext(Dispatchers.Main) {
-                        updateUiForConnected(socket.remoteDevice.name)
-                        receiveData(socket)
-                    }
-                } else {
-                    // CLIENT (SENDER) LOGIC: Receive username, then wait for user to click send
-                    val receiverUsername = DataInputStream(socket.inputStream).readUTF()
-                    connectedReceiverUsername = receiverUsername // Store for later
-                    Log.d(TAG, "Client: Received receiver's username: $receiverUsername")
-                    withContext(Dispatchers.Main) {
-                        updateUiForConnected(socket.remoteDevice.name)
-                    }
-                }
-            } catch (e: IOException) {
-                Log.e(TAG, "Handshake failed", e)
-                withContext(Dispatchers.Main) { updateUiForReadyState("❗ Handshake failed") }
+        runOnUiThread {
+            updateUiForConnected(socket.remoteDevice.name)
+            if (isServer) {
+                receiveData(socket)
             }
         }
     }
 
-    // --- Data Transfer Logic ---
+    // --- Data Transfer Logic for a SINGLE BATCH ---
 
     private fun sendData(socket: BluetoothSocket) {
         lifecycleScope.launch(Dispatchers.IO) {
-            val stockDataFileHandler = FileHandler(this@BluetoothTransferSubActivity, STOCK_DATA_FILENAME)
-            val originalEntries = stockDataFileHandler.loadStockEntries()
-
-            if (originalEntries.isEmpty()) {
-                withContext(Dispatchers.Main) { Toast.makeText(this@BluetoothTransferSubActivity, "No data to send.", Toast.LENGTH_SHORT).show() }
+            val entriesToSend = batchToTransfer?.entries
+            if (entriesToSend.isNullOrEmpty()) {
+                withContext(Dispatchers.Main) { Toast.makeText(this@BluetoothTransferSingleBatchActivity, "Selected batch is empty.", Toast.LENGTH_SHORT).show() }
                 return@launch
             }
 
-            withContext(Dispatchers.Main) { updateUiForTransfer("Preparing data...") }
+            withContext(Dispatchers.Main) { updateUiForTransfer("Sending batch...") }
 
-            // 1. Enrich each record with all metadata, including the receiver's username
-            val senderUser = GoStockApp.loggedInUser
-            val transferTimestamp = System.currentTimeMillis()
-            val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
-            val batchId = "${senderUser?.username}_${dateFormat.format(Date(transferTimestamp))}"
-
-            val entriesToSend: List<StockEntry> = originalEntries.map { entry ->
-                entry.copy(
-                    batch_id = batchId,
-                    batch_user = senderUser?.username,
-                    transfer_date = transferTimestamp,
-                    receiver_user = connectedReceiverUsername // Use the name received during handshake
-                )
-            }
-
-            // 2. Archive the fully enriched data to the sender's own go_data.json
-            archiveSentDataOnSender(entriesToSend)
-
-            // 3. Write the enriched data to a temporary file for streaming
-            val tempFile = File(cacheDir, "temp_send_data.json")
+            val tempFile = File(cacheDir, "temp_single_batch.json")
             try {
                 FileWriter(tempFile).use { writer -> Gson().toJson(entriesToSend, writer) }
             } catch (e: Exception) {
@@ -297,9 +273,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
                 return@launch
             }
 
-            // 4. Stream the temporary file
             var transferSucceeded = false
-            withContext(Dispatchers.Main) { updateUiForTransfer("Sending...") }
             try {
                 DataOutputStream(socket.outputStream).use { dataOut ->
                     FileInputStream(tempFile).use { fileIn ->
@@ -325,33 +299,17 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
                 tempFile.delete()
             }
 
-            // 5. If transfer succeeded, clear the original stock_data.json and navigate home
             if (transferSucceeded) {
-                stockDataFileHandler.clearData()
+                // No data is cleared. Just navigate home.
                 navigateToHome()
             }
         }
     }
 
-    private fun archiveSentDataOnSender(entriesToArchive: List<StockEntry>) {
-        val goDataFile = File(filesDir, GO_DATA_FILENAME)
-        val gson = GsonBuilder().setPrettyPrinting().create()
-        val listType = object : TypeToken<MutableList<StockEntry>>() {}.type
-        val allGoDataEntries: MutableList<StockEntry> = if (goDataFile.exists()) {
-            try {
-                FileReader(goDataFile).use { reader -> gson.fromJson(reader, listType) ?: mutableListOf() }
-            } catch (e: Exception) { mutableListOf() }
-        } else { mutableListOf() }
-        allGoDataEntries.addAll(entriesToArchive)
-        try {
-            FileWriter(goDataFile).use { writer -> gson.toJson(allGoDataEntries, writer) }
-        } catch (e: IOException) { Log.e(TAG, "Failed to write archive to go_data.json", e) }
-    }
-
     private fun receiveData(socket: BluetoothSocket) {
         lifecycleScope.launch(Dispatchers.IO) {
-            val tempFile = File(cacheDir, "received_transfer.json")
-            withContext(Dispatchers.Main) { updateUiForTransfer("\uD83D\uDD35 Receiving...") }
+            val tempFile = File(cacheDir, "received_single_batch.json")
+            withContext(Dispatchers.Main) { updateUiForTransfer("\uD83D\uDD35 Receiving batch...") }
             try {
                 DataInputStream(socket.inputStream).use { dataIn ->
                     FileOutputStream(tempFile).use { fileOut ->
@@ -387,7 +345,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
                 Gson().fromJson(reader, listType) ?: mutableListOf()
             }
             if (receivedEntries.isNotEmpty()) {
-                // The receiver_user is now already set by the sender, so we just save.
+                // No enrichment needed. Just append the data.
                 val goDataFileHandler = FileHandler(this, GO_DATA_FILENAME)
                 goDataFileHandler.addMultipleStockEntries(receivedEntries)
                 navigateToHome()
@@ -399,7 +357,7 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         }
     }
 
-    // --- All other UI and helper functions remain here ---
+    // --- All other UI and helper functions ---
     private fun showSnackbar(message: String, duration: Int = Snackbar.LENGTH_LONG) {
         val snackbar = Snackbar.make(findViewById(android.R.id.content), message, duration)
         val snackbarTextView = snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)

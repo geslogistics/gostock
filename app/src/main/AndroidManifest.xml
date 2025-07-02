@@ -43,6 +43,12 @@
         android:theme="@style/Theme.GoStock"
         tools:targetApi="31">
         <activity
+            android:name=".TransferSingleBatchActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BluetoothTransferSingleBatchActivity"
+            android:exported="false" />
+        <activity
             android:name=".BluetoothTransferAllBatchActivity"
             android:exported="false" />
         <activity

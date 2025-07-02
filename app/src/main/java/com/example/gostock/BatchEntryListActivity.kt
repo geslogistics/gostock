@@ -169,6 +169,15 @@ class BatchEntryListActivity : AppCompatActivity() {
         popup.menuInflater.inflate(R.menu.batch_more_menu, popup.menu)
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
+
+                R.id.action_transfer_batch -> {
+                    val intent = Intent(this, TransferSingleBatchActivity::class.java).apply {
+                        putExtra(EXTRA_BATCH_OBJECT, currentBatch)
+                    }
+                    startActivity(intent)
+                    true
+                }
+
                 R.id.action_export_batch -> {
                     initiateBatchExport()
                     true
