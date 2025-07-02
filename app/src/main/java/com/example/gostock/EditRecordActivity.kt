@@ -1,5 +1,6 @@
 package com.example.gostock
 
+import android.app.Activity
 import android.os.Bundle
 import android.widget.EditText
 import android.widget.ImageButton
@@ -18,8 +19,9 @@ class EditRecordActivity : AppCompatActivity() {
     private lateinit var btnToolbarBack: ImageButton
     private lateinit var btnToolbarSave: ImageButton
 
-    // --- UPDATED: Use the new generic JsonFileHandler ---
-    private lateinit var stockFileHandler: JsonFileHandler<StockEntry>
+    // --- UPDATED: Use the new generic JsonFileHandlers ---
+    private lateinit var stockEntryFileHandler: JsonFileHandler<StockEntry>
+    private lateinit var stockEntryArchivedFileHandler: JsonFileHandler<StockEntryArchived>
 
     private var currentEntry: StockEntry? = null
     private lateinit var tvTimestamp: TextView
@@ -33,9 +35,12 @@ class EditRecordActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_record)
 
-        // --- UPDATED: Initialize the generic handler with the correct type ---
+        // --- UPDATED: Initialize the generic handlers with the correct types ---
         val stockListType = object : TypeToken<MutableList<StockEntry>>() {}
-        stockFileHandler = JsonFileHandler(this, "stock_data.json", stockListType)
+        stockEntryFileHandler = JsonFileHandler(this, "stock_data.json", stockListType)
+
+        val stockArchivedListType = object : TypeToken<MutableList<StockEntryArchived>>() {}
+        stockEntryArchivedFileHandler = JsonFileHandler(this, "stock_deleted.json", stockArchivedListType)
 
         initViews()
 
@@ -64,14 +69,13 @@ class EditRecordActivity : AppCompatActivity() {
     }
 
     private fun populateFields(entry: StockEntry) {
-        // --- FIX: Format the Long timestamp into a readable date string ---
+        // Format the Long timestamp into a readable date string for display
         try {
             val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
             tvTimestamp.text = sdf.format(Date(entry.timestamp))
         } catch (e: Exception) {
             tvTimestamp.text = "Invalid Date"
         }
-        // --- END OF FIX ---
 
         tvUser.text = entry.username
         tvLocationBarcode.text = entry.locationBarcode
@@ -101,8 +105,7 @@ class EditRecordActivity : AppCompatActivity() {
         }
         currentEntry?.let { original ->
             val updatedEntry = original.copy(quantity = newQuantity)
-            // --- UPDATED: Use the new handler's method name ---
-            stockFileHandler.updateRecord(updatedEntry)
+            stockEntryFileHandler.updateRecord(updatedEntry)
             setResult(RESULT_OK)
             finish()
         }
@@ -118,15 +121,24 @@ class EditRecordActivity : AppCompatActivity() {
                     val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
                     val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
 
-                    val deletedEntry = entryToDelete
+                    // --- FIX: Convert to StockEntryArchived and enrich ---
+                    val archivedEntry = StockEntryArchived(
+                        id = entryToDelete.id,
+                        timestamp = entryToDelete.timestamp,
+                        username = entryToDelete.username,
+                        locationBarcode = entryToDelete.locationBarcode,
+                        skuBarcode = entryToDelete.skuBarcode,
+                        quantity = entryToDelete.quantity,
+                        action_user = actionUser,
+                        action_timestamp = System.currentTimeMillis(),
+                        action = "Entry Deleted"
+                    )
 
-                    // --- UPDATED: Use the generic handler for the deleted file ---
-                    val stockListType = object : TypeToken<MutableList<StockEntry>>() {}
-                    val deletedFileHandler = JsonFileHandler(this, "stock_deleted.json", stockListType)
-                    deletedFileHandler.addRecord(deletedEntry)
+                    // Save the archived entry to the deleted file
+                    stockEntryArchivedFileHandler.addRecord(archivedEntry)
 
-                    // --- UPDATED: Use the new handler's method name ---
-                    stockFileHandler.deleteRecord(idToDelete)
+                    // Delete the original entry from stock_data.json
+                    stockEntryFileHandler.deleteRecord(idToDelete)
 
                     setResult(RESULT_OK)
                     Toast.makeText(this, "Record deleted successfully!", Toast.LENGTH_SHORT).show()

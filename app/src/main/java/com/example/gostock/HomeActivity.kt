@@ -140,50 +140,51 @@ class HomeActivity : AppCompatActivity() {
                     Toast.makeText(this, "Failed to export records.", Toast.LENGTH_LONG).show()
                 }
             }
-        } else {
-            Toast.makeText(this, "Export cancelled.", Toast.LENGTH_SHORT).show()
         }
     }
 
-//    private val exportAndClearLauncher = registerForActivityResult(
-//        ActivityResultContracts.StartActivityForResult()
-//    ) { result ->
-//        if (result.resultCode == RESULT_OK) {
-//            result.data?.data?.let { uri ->
-//                val recordsToExport = stockEntryFileHandler.loadRecords()
-//
-//                val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
-//                val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-//
-//
-//                val enrichedRecords = recordsToExport.map {
-//                    it.copy(
-//                        action_user = actionUser,
-//                        action_timestamp = actionTimestamp,
-//                        action = "Entry Exported and Cleared"
-//                    )
-//                }
-//
-//                val success = writeCsvToUri(uri, enrichedRecords)
-//
-//                if (success) {
-//                    val stockArchivedListType = object : TypeToken<MutableList<StockEntryArchived>>() {}
-//                    stockEntryArchivedFileHandler = JsonFileHandler(this, "stock_deleted.json", stockArchivedListType)
-//
-//                    stockEntryArchivedFileHandler.addMultipleRecords(enrichedRecords)
-//
-//                    stockEntryFileHandler.clearData()
-//
-//                    Toast.makeText(this, "Records exported and cleared!", Toast.LENGTH_LONG).show()
-//                    updateDashboard()
-//                } else {
-//                    Toast.makeText(this, "Failed to export records. Data was not cleared.", Toast.LENGTH_LONG).show()
-//                }
-//            }
-//        } else {
-//            Toast.makeText(this, "Export & Clear cancelled.", Toast.LENGTH_SHORT).show()
-//        }
-//    }
+    private val exportAndClearLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result.data?.data?.let { uri ->
+                val recordsToExport = stockEntryFileHandler.loadRecords()
+
+                // Export original, unenriched data first
+                val success = writeCsvToUri(uri, recordsToExport)
+
+                if (success) {
+                    val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
+                    val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+
+                    // Now, convert the exported records to the Archived type and enrich them
+                    val archivedRecords = recordsToExport.map {
+                        StockEntryArchived(
+                            id = it.id,
+                            timestamp = it.timestamp,
+                            username = it.username,
+                            locationBarcode = it.locationBarcode,
+                            skuBarcode = it.skuBarcode,
+                            quantity = it.quantity,
+                            action_user = actionUser,
+                            action_timestamp = System.currentTimeMillis(),
+                            action = "Entry Exported and Cleared"
+                        )
+                    }
+
+                    // Save the archived records to the deleted file
+                    stockEntryArchivedFileHandler.addMultipleRecords(archivedRecords)
+                    // Clear the original data
+                    stockEntryFileHandler.clearData()
+
+                    Toast.makeText(this, "Records exported and cleared!", Toast.LENGTH_LONG).show()
+                    updateDashboard()
+                } else {
+                    Toast.makeText(this, "Failed to export records. Data was not cleared.", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
 
     private val importDocumentLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -248,8 +249,7 @@ class HomeActivity : AppCompatActivity() {
         if (exportType == ExportType.EXPORT_ONLY) {
             createDocumentLauncher.launch(intent)
         } else {
-//            exportAndClearLauncher.launch(intent)
-            finish()
+            exportAndClearLauncher.launch(intent)
         }
     }
 
@@ -259,16 +259,13 @@ class HomeActivity : AppCompatActivity() {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
         for (record in records) {
-            // --- FIX: Format the Long timestamp correctly ---
             val formattedTimestamp = sdf.format(Date(record.timestamp))
-
             csvBuilder.append("${escapeCsv(record.id)},")
             csvBuilder.append("${escapeCsv(formattedTimestamp)},")
             csvBuilder.append("${escapeCsv(record.username)},")
             csvBuilder.append("${escapeCsv(record.locationBarcode)},")
             csvBuilder.append("${escapeCsv(record.skuBarcode)},")
             csvBuilder.append("${record.quantity}\n")
-
         }
 
         return try {
@@ -291,7 +288,6 @@ class HomeActivity : AppCompatActivity() {
                         val columns = parseCsvLine(line!!)
                         if (columns.size >= 6) {
                             try {
-                                // --- FIX: Parse the timestamp string from CSV into a Long ---
                                 val entry = StockEntry(
                                     timestamp = parseTimestamp(columns[1]),
                                     username = columns[2],
@@ -345,7 +341,6 @@ class HomeActivity : AppCompatActivity() {
                 pbBatchSize.progress = 0
             }
 
-            // --- FIX: Directly get the minimum timestamp since it's a Long ---
             val oldestEntryTimestamp = allEntries.minOfOrNull { it.timestamp }
 
             if (oldestEntryTimestamp != null) {
