@@ -340,14 +340,16 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
 
     private fun processReceivedFile(receivedFile: File) {
         try {
-            val listType = object : TypeToken<MutableList<StockEntry>>() {}.type
-            val receivedEntries: MutableList<StockEntry> = FileReader(receivedFile).use { reader ->
+            val listType = object : TypeToken<MutableList<BatchEntry>>() {}.type
+            val receivedEntries: MutableList<BatchEntry> = FileReader(receivedFile).use { reader ->
                 Gson().fromJson(reader, listType) ?: mutableListOf()
             }
             if (receivedEntries.isNotEmpty()) {
                 // No enrichment needed. Just append the data.
-                val goDataFileHandler = FileHandler(this, GO_DATA_FILENAME)
-                goDataFileHandler.addMultipleStockEntries(receivedEntries)
+                val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
+                val goDataFileHandler = JsonFileHandler(this, "go_data.json", stockListType)
+
+                goDataFileHandler.addMultipleRecords(receivedEntries)
                 navigateToHome()
             } else {
                 runOnUiThread { Toast.makeText(this, "Received file contained no records.", Toast.LENGTH_SHORT).show() }

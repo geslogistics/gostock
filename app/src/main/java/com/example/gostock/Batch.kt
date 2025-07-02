@@ -10,15 +10,15 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class Batch(
     val batch_id: String,
-    val batch_user: String?,
-    val transfer_date: Long?,
-    val receiver_user: String?,
+    val batch_user: String,
+    val transfer_date: Long,
+    val receiver_user: String,
     val item_count: Int,
     val batch_timer: Float,
     val locations_counted: Int,
     val sku_counted: Int,
     val quantity_counted: Int,
-    val entries: List<StockEntry>, // The actual records in this batch
-    val first_entry_date: Long?,
-    val last_entry_date: Long?
+    val entries: List<BatchEntry>, // The actual records in this batch
+    val first_entry_date: Long,
+    val last_entry_date: Long
 ) : Parcelable

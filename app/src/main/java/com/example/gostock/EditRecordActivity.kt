@@ -8,6 +8,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.gson.reflect.TypeToken
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -16,7 +17,10 @@ class EditRecordActivity : AppCompatActivity() {
 
     private lateinit var btnToolbarBack: ImageButton
     private lateinit var btnToolbarSave: ImageButton
-    private lateinit var fileHandler: FileHandler
+
+    // --- UPDATED: Use the new generic JsonFileHandler ---
+    private lateinit var stockFileHandler: JsonFileHandler<StockEntry>
+
     private var currentEntry: StockEntry? = null
     private lateinit var tvTimestamp: TextView
     private lateinit var tvUser: TextView
@@ -29,18 +33,11 @@ class EditRecordActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_record)
 
-        // This handler points to the main stock_data.json file
-        fileHandler = FileHandler(this, "stock_data.json")
+        // --- UPDATED: Initialize the generic handler with the correct type ---
+        val stockListType = object : TypeToken<MutableList<StockEntry>>() {}
+        stockFileHandler = JsonFileHandler(this, "stock_data.json", stockListType)
 
-        // Initialize UI elements
-        btnToolbarBack = findViewById(R.id.btn_toolbar_back)
-        btnToolbarSave = findViewById(R.id.btn_toolbar_save)
-        tvTimestamp = findViewById(R.id.tv_edit_timestamp)
-        tvUser = findViewById(R.id.tv_edit_user)
-        tvLocationBarcode = findViewById(R.id.tv_edit_location_barcode)
-        tvSkuBarcode = findViewById(R.id.tv_edit_sku_barcode)
-        etQuantity = findViewById(R.id.et_edit_quantity)
-        btnDeleteRecord = findViewById(R.id.btn_delete_record)
+        initViews()
 
         currentEntry = intent.getParcelableExtra(RecordListActivity.EXTRA_STOCK_ENTRY)
 
@@ -55,8 +52,27 @@ class EditRecordActivity : AppCompatActivity() {
         updateSaveButtonState()
     }
 
+    private fun initViews() {
+        btnToolbarBack = findViewById(R.id.btn_toolbar_back)
+        btnToolbarSave = findViewById(R.id.btn_toolbar_save)
+        tvTimestamp = findViewById(R.id.tv_edit_timestamp)
+        tvUser = findViewById(R.id.tv_edit_user)
+        tvLocationBarcode = findViewById(R.id.tv_edit_location_barcode)
+        tvSkuBarcode = findViewById(R.id.tv_edit_sku_barcode)
+        etQuantity = findViewById(R.id.et_edit_quantity)
+        btnDeleteRecord = findViewById(R.id.btn_delete_record)
+    }
+
     private fun populateFields(entry: StockEntry) {
-        tvTimestamp.text = entry.timestamp
+        // --- FIX: Format the Long timestamp into a readable date string ---
+        try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            tvTimestamp.text = sdf.format(Date(entry.timestamp))
+        } catch (e: Exception) {
+            tvTimestamp.text = "Invalid Date"
+        }
+        // --- END OF FIX ---
+
         tvUser.text = entry.username
         tvLocationBarcode.text = entry.locationBarcode
         tvSkuBarcode.text = entry.skuBarcode
@@ -85,7 +101,8 @@ class EditRecordActivity : AppCompatActivity() {
         }
         currentEntry?.let { original ->
             val updatedEntry = original.copy(quantity = newQuantity)
-            fileHandler.updateStockEntry(updatedEntry)
+            // --- UPDATED: Use the new handler's method name ---
+            stockFileHandler.updateRecord(updatedEntry)
             setResult(RESULT_OK)
             finish()
         }
@@ -96,37 +113,25 @@ class EditRecordActivity : AppCompatActivity() {
             .setTitle("Delete Record")
             .setMessage("Are you sure you want to permanently delete this record? This action cannot be undone.")
             .setPositiveButton("Yes") { _, _ ->
-                // --- NEW LOGIC STARTS HERE ---
                 currentEntry?.id?.let { idToDelete ->
-                    // 1. Get the entry to be deleted
                     val entryToDelete = currentEntry!!
-
-                    // 2. Get the user performing the action
                     val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
-
-                    // 3. Get the current timestamp for the action
                     val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
 
-                    // 4. Create an enriched copy with the new deletion fields
-                    val deletedEntry = entryToDelete.copy(
-                        action_user = actionUser,
-                        action_timestamp = actionTimestamp,
-                        action = "Entry Deleted"
-                    )
+                    val deletedEntry = entryToDelete
 
-                    // 5. Save the enriched entry to stock_deleted.json
-                    val deletedFileHandler = FileHandler(this, "stock_deleted.json")
-                    deletedFileHandler.addStockEntry(deletedEntry)
+                    // --- UPDATED: Use the generic handler for the deleted file ---
+                    val stockListType = object : TypeToken<MutableList<StockEntry>>() {}
+                    val deletedFileHandler = JsonFileHandler(this, "stock_deleted.json", stockListType)
+                    deletedFileHandler.addRecord(deletedEntry)
 
-                    // 6. Delete the original entry from stock_data.json
-                    fileHandler.deleteStockEntry(idToDelete)
+                    // --- UPDATED: Use the new handler's method name ---
+                    stockFileHandler.deleteRecord(idToDelete)
 
-                    // 7. Finish up
                     setResult(RESULT_OK)
                     Toast.makeText(this, "Record deleted successfully!", Toast.LENGTH_SHORT).show()
                     finish()
                 }
-                // --- NEW LOGIC ENDS HERE ---
             }
             .setNegativeButton("No", null)
             .show()

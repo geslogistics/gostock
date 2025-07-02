@@ -22,7 +22,6 @@ import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
@@ -66,8 +65,8 @@ class BluetoothTransferAllBatchActivity : AppCompatActivity() {
     // --- Constants ---
     private companion object {
         private val MY_UUID: UUID = UUID.fromString("8cc7117b-eca7-4c31-820f-26ed27198bb1")
-        private const val APP_NAME = "GoStockTransferAllBatch" // Unique name for this service
-        private const val TAG = "BluetoothTransferAllBatch"
+        private const val APP_NAME = "GoStockBatchTransfer"
+        private const val TAG = "BluetoothBatchTransfer"
         const val GO_DATA_FILENAME = "go_data.json"
     }
 
@@ -239,8 +238,10 @@ class BluetoothTransferAllBatchActivity : AppCompatActivity() {
 
     private fun sendData(socket: BluetoothSocket) {
         lifecycleScope.launch(Dispatchers.IO) {
-            val goDataFileHandler = FileHandler(this@BluetoothTransferAllBatchActivity, GO_DATA_FILENAME)
-            val recordsToSend = goDataFileHandler.loadStockEntries()
+            // --- UPDATED: Use JsonFileHandler ---
+            val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
+            val goDataFileHandler = JsonFileHandler(this@BluetoothTransferAllBatchActivity, GO_DATA_FILENAME, stockListType)
+            val recordsToSend = goDataFileHandler.loadRecords()
 
             if (recordsToSend.isEmpty()) {
                 withContext(Dispatchers.Main) { Toast.makeText(this@BluetoothTransferAllBatchActivity, "No batch data to send.", Toast.LENGTH_SHORT).show() }
@@ -276,22 +277,14 @@ class BluetoothTransferAllBatchActivity : AppCompatActivity() {
             }
 
             if (transferSucceeded) {
-                // Enrich the records that were just sent
                 val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
                 val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-                val enrichedRecords = recordsToSend.map {
-                    it.copy(
-                        action_user = actionUser,
-                        action_timestamp = actionTimestamp,
-                        action = "Batch Transferred"
-                    )
-                }
+                val enrichedRecords = recordsToSend
 
-                // Move the enriched records to the deleted file
-                val deletedFileHandler = FileHandler(this@BluetoothTransferAllBatchActivity, "go_deleted.json")
-                deletedFileHandler.addMultipleStockEntries(enrichedRecords)
+                // --- UPDATED: Use JsonFileHandler for deleted file ---
+                val deletedFileHandler = JsonFileHandler(this@BluetoothTransferAllBatchActivity, "go_deleted.json", stockListType)
+                deletedFileHandler.addMultipleRecords(enrichedRecords)
 
-                // Clear the original go_data.json
                 goDataFileHandler.clearData()
                 Log.d(TAG, "Sender: Archived and cleared go_data.json")
 
@@ -334,13 +327,16 @@ class BluetoothTransferAllBatchActivity : AppCompatActivity() {
 
     private fun processReceivedFile(receivedFile: File) {
         try {
-            val listType = object : TypeToken<MutableList<StockEntry>>() {}.type
-            val receivedEntries: MutableList<StockEntry> = FileReader(receivedFile).use { reader ->
+            val listType = object : TypeToken<MutableList<BatchEntry>>() {}.type
+            val receivedEntries: MutableList<BatchEntry> = FileReader(receivedFile).use { reader ->
                 Gson().fromJson(reader, listType) ?: mutableListOf()
             }
             if (receivedEntries.isNotEmpty()) {
-                val goDataFileHandler = FileHandler(this, GO_DATA_FILENAME)
-                goDataFileHandler.addMultipleStockEntries(receivedEntries)
+                // --- UPDATED: Use JsonFileHandler to save received data ---
+                val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
+                val goDataFileHandler = JsonFileHandler(this, "go_data.json", stockListType)
+                
+                goDataFileHandler.addMultipleRecords(receivedEntries)
                 navigateToHome()
             } else {
                 runOnUiThread { Toast.makeText(this, "Received file contained no records.", Toast.LENGTH_SHORT).show() }

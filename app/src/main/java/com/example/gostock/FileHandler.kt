@@ -10,7 +10,7 @@ import java.io.FileWriter
 import java.io.IOException
 
 // MODIFIED: FILENAME is now a constructor parameter
-class FileHandler(private val context: Context, private val filename: String) {
+class FileHandlerXX(private val context: Context, private val filename: String) {
 
     private val TAG = "FileHandler"
 

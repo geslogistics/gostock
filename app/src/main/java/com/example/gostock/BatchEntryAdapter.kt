@@ -7,19 +7,16 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
-class EntryAdapter(
-    initialEntries: List<StockEntry>, // Take initial entries as a regular parameter
-    private val onItemClick: (StockEntry) -> Unit
-) : RecyclerView.Adapter<EntryAdapter.EntryViewHolder>() {
+class BatchEntryAdapter(
+    initialEntries: List<BatchEntry>, // Take initial entries as a regular parameter
+    private val onItemClick: (BatchEntry) -> Unit
+) : RecyclerView.Adapter<BatchEntryAdapter.EntryViewHolder>() {
 
     // private val TAG = "EntryAdapter" // Tag for logging, removed for cleaner output
 
     // CHANGE: Declare 'entries' as a mutable 'var' property inside the class.
-    private var entries: MutableList<StockEntry> = initialEntries.toMutableList() // Initialize it here
+    private var entries: MutableList<BatchEntry> = initialEntries.toMutableList() // Initialize it here
 
     // ViewHolder class to hold references to the views in each list item
     class EntryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -46,10 +43,8 @@ class EntryAdapter(
         }
         val entry = entries[position]
         // Log.d(TAG, "onBindViewHolder: Binding item at position $position, ID: ${entry.id}, SKU: ${entry.skuBarcode}") // Debug log removed
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        val formattedTimestamp = entry.timestamp?.let { sdf.format(Date(it)) } ?: ""
 
-        holder.timestamp.text = formattedTimestamp
+        holder.timestamp.text = "${entry.timestamp}"
         holder.username.text = "${entry.username}"
         holder.location.text = "${entry.locationBarcode}"
         holder.sku.text = "${entry.skuBarcode}"
@@ -70,7 +65,7 @@ class EntryAdapter(
     }
 
     // Method to update the data in the adapter and refresh the RecyclerView
-    fun updateData(newEntries: List<StockEntry>) {
+    fun updateData(newEntries: List<BatchEntry>) {
         // Log.d(TAG, "updateData: Received ${newEntries.size} new entries.") // Debug log removed
         entries = newEntries.toMutableList() // Replace the entire list
         // Log.d(TAG, "updateData: Entries size after replacement: ${entries.size}") // Debug log removed

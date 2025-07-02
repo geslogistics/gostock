@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
@@ -15,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.edit
+import com.google.gson.reflect.TypeToken
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStream
@@ -57,7 +59,9 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var btnSettings: LinearLayout
     private lateinit var tvLoggedInUser: TextView
 
-    private lateinit var fileHandler: FileHandler
+    // --- UPDATED: Use the new generic JsonFileHandler ---
+    private lateinit var stockEntryFileHandler: JsonFileHandler<StockEntry>
+    private lateinit var stockEntryArchivedFileHandler: JsonFileHandler<StockEntryArchived>
 
     private enum class ExportType {
         EXPORT_ONLY, EXPORT_AND_CLEAR
@@ -67,10 +71,13 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        // Initialize all views
         initViews()
 
-        fileHandler = FileHandler(this, "stock_data.json")
+        val stockListType = object : TypeToken<MutableList<StockEntry>>() {}
+        stockEntryFileHandler = JsonFileHandler(this, "stock_data.json", stockListType)
+
+        val stockArchivedListType = object : TypeToken<MutableList<StockEntryArchived>>() {}
+        stockEntryArchivedFileHandler = JsonFileHandler(this, "stock_deleted.json", stockArchivedListType)
 
         val loggedInUser = GoStockApp.loggedInUser
         if (loggedInUser == null) {
@@ -126,7 +133,7 @@ class HomeActivity : AppCompatActivity() {
     ) { result ->
         if (result.resultCode == RESULT_OK) {
             result.data?.data?.let { uri ->
-                val recordsToExport = fileHandler.loadStockEntries()
+                val recordsToExport = stockEntryFileHandler.loadRecords()
                 if (writeCsvToUri(uri, recordsToExport)) {
                     Toast.makeText(this, "Records exported successfully!", Toast.LENGTH_LONG).show()
                 } else {
@@ -138,44 +145,45 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private val exportAndClearLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result.data?.data?.let { uri ->
-                val recordsToExport = fileHandler.loadStockEntries()
-
-                // 1. Enrich the records with action details
-                val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
-                val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-                val enrichedRecords = recordsToExport.map {
-                    it.copy(
-                        action_user = actionUser,
-                        action_timestamp = actionTimestamp,
-                        action = "Entry Exported and Cleared"
-                    )
-                }
-
-                // 2. Export the enriched data to the chosen CSV file
-                val success = writeCsvToUri(uri, enrichedRecords)
-
-                // 3. If export was successful, move the enriched data and clear the original file
-                if (success) {
-                    val deletedFileHandler = FileHandler(this, "stock_deleted.json")
-                    deletedFileHandler.addMultipleStockEntries(enrichedRecords)
-
-                    fileHandler.clearData() // Use the safer clearData method
-
-                    Toast.makeText(this, "Records exported and cleared!", Toast.LENGTH_LONG).show()
-                    updateDashboard() // Refresh the UI
-                } else {
-                    Toast.makeText(this, "Failed to export records. Data was not cleared.", Toast.LENGTH_LONG).show()
-                }
-            }
-        } else {
-            Toast.makeText(this, "Export & Clear cancelled.", Toast.LENGTH_SHORT).show()
-        }
-    }
+//    private val exportAndClearLauncher = registerForActivityResult(
+//        ActivityResultContracts.StartActivityForResult()
+//    ) { result ->
+//        if (result.resultCode == RESULT_OK) {
+//            result.data?.data?.let { uri ->
+//                val recordsToExport = stockEntryFileHandler.loadRecords()
+//
+//                val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
+//                val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+//
+//
+//                val enrichedRecords = recordsToExport.map {
+//                    it.copy(
+//                        action_user = actionUser,
+//                        action_timestamp = actionTimestamp,
+//                        action = "Entry Exported and Cleared"
+//                    )
+//                }
+//
+//                val success = writeCsvToUri(uri, enrichedRecords)
+//
+//                if (success) {
+//                    val stockArchivedListType = object : TypeToken<MutableList<StockEntryArchived>>() {}
+//                    stockEntryArchivedFileHandler = JsonFileHandler(this, "stock_deleted.json", stockArchivedListType)
+//
+//                    stockEntryArchivedFileHandler.addMultipleRecords(enrichedRecords)
+//
+//                    stockEntryFileHandler.clearData()
+//
+//                    Toast.makeText(this, "Records exported and cleared!", Toast.LENGTH_LONG).show()
+//                    updateDashboard()
+//                } else {
+//                    Toast.makeText(this, "Failed to export records. Data was not cleared.", Toast.LENGTH_LONG).show()
+//                }
+//            }
+//        } else {
+//            Toast.makeText(this, "Export & Clear cancelled.", Toast.LENGTH_SHORT).show()
+//        }
+//    }
 
     private val importDocumentLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -224,7 +232,7 @@ class HomeActivity : AppCompatActivity() {
     // --- Core Logic Functions ---
 
     private fun initiateSafExport(exportType: ExportType) {
-        if (fileHandler.loadStockEntries().isEmpty()) {
+        if (stockEntryFileHandler.loadRecords().isEmpty()) {
             Toast.makeText(this, "No records to export!", Toast.LENGTH_SHORT).show()
             return
         }
@@ -240,34 +248,27 @@ class HomeActivity : AppCompatActivity() {
         if (exportType == ExportType.EXPORT_ONLY) {
             createDocumentLauncher.launch(intent)
         } else {
-            exportAndClearLauncher.launch(intent)
+//            exportAndClearLauncher.launch(intent)
+            finish()
         }
     }
 
     private fun writeCsvToUri(uri: Uri, records: List<StockEntry>): Boolean {
         val csvBuilder = StringBuilder()
-        // Add the new audit columns to the header
-        csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver,ActionUser,ActionTimestamp,Action\n")
+        csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity\n")
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
         for (record in records) {
-            val formattedTransferDate = record.transfer_date?.let { sdf.format(Date(it)) } ?: ""
-
+            // --- FIX: Format the Long timestamp correctly ---
+            val formattedTimestamp = sdf.format(Date(record.timestamp))
 
             csvBuilder.append("${escapeCsv(record.id)},")
-            csvBuilder.append("${escapeCsv(record.timestamp)},")
+            csvBuilder.append("${escapeCsv(formattedTimestamp)},")
             csvBuilder.append("${escapeCsv(record.username)},")
             csvBuilder.append("${escapeCsv(record.locationBarcode)},")
             csvBuilder.append("${escapeCsv(record.skuBarcode)},")
-            csvBuilder.append("${record.quantity},")
-            csvBuilder.append("${escapeCsv(record.batch_id ?: "")},")
-            csvBuilder.append("${escapeCsv(record.batch_user ?: "")},")
-            csvBuilder.append("${escapeCsv(formattedTransferDate)},")
-            csvBuilder.append("${escapeCsv(record.receiver_user ?: "")},")
-            // Add the new action fields to each row
-            csvBuilder.append("${escapeCsv(record.action_user ?: "")},")
-            csvBuilder.append("${escapeCsv(record.action_timestamp ?: "")},")
-            csvBuilder.append("${escapeCsv(record.action ?: "")}\n")
+            csvBuilder.append("${record.quantity}\n")
+
         }
 
         return try {
@@ -280,7 +281,6 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun importRecordsFromCsv(uri: Uri) {
-        // This function remains unchanged as it correctly imports to stock_data.json
         val importedEntries = mutableListOf<StockEntry>()
         try {
             contentResolver.openInputStream(uri)?.use { inputStream ->
@@ -289,11 +289,14 @@ class HomeActivity : AppCompatActivity() {
                     var line: String?
                     while (reader.readLine().also { line = it } != null) {
                         val columns = parseCsvLine(line!!)
-                        if (columns.size >= 6) { // Check for at least the original columns
+                        if (columns.size >= 6) {
                             try {
+                                // --- FIX: Parse the timestamp string from CSV into a Long ---
                                 val entry = StockEntry(
-                                    timestamp = columns[1], username = columns[2],
-                                    locationBarcode = columns[3], skuBarcode = columns[4],
+                                    timestamp = parseTimestamp(columns[1]),
+                                    username = columns[2],
+                                    locationBarcode = columns[3],
+                                    skuBarcode = columns[4],
                                     quantity = columns[5].toInt()
                                 )
                                 importedEntries.add(entry)
@@ -303,9 +306,9 @@ class HomeActivity : AppCompatActivity() {
                 }
             }
             if (importedEntries.isNotEmpty()) {
-                fileHandler.addMultipleStockEntries(importedEntries)
+                stockEntryFileHandler.addMultipleRecords(importedEntries)
                 Toast.makeText(this, "Successfully imported ${importedEntries.size} records!", Toast.LENGTH_LONG).show()
-                updateDashboard() // Refresh UI
+                updateDashboard()
             } else {
                 Toast.makeText(this, "No valid records found to import.", Toast.LENGTH_LONG).show()
             }
@@ -314,63 +317,8 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // ... (Your other helper functions like parseCsvLine, escapeCsv, user menu, etc., remain here) ...
-    private fun escapeCsv(field: String): String = if (field.contains(",") || field.contains("\"") || field.contains("\n")) "\"${field.replace("\"", "\"\"")}\"" else field
-    private fun parseCsvLine(line: String): List<String> {
-        val result = mutableListOf<String>()
-        var inQuote = false
-        val sb = StringBuilder()
-        var i = 0
-        while (i < line.length) {
-            val char = line[i]
-            if (char == '"') {
-                if (i + 1 < line.length && line[i + 1] == '"') {
-                    sb.append('"')
-                    i++
-                } else {
-                    inQuote = !inQuote
-                }
-            } else if (char == ',' && !inQuote) {
-                result.add(sb.toString())
-                sb.clear()
-            } else {
-                sb.append(char)
-            }
-            i++
-        }
-        result.add(sb.toString())
-        return result.map { it.removeSurrounding("\"") }
-    }
-    private fun showUserMenu(view: View) {
-        val popup = PopupMenu(this, view, Gravity.END)
-        popup.menuInflater.inflate(R.menu.user_menu, popup.menu)
-        val themeToggleMenuItem = popup.menu.findItem(R.id.action_toggle_theme)
-        themeToggleMenuItem.title = if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) "Switch to Light Mode" else "Switch to Dark Mode"
-        popup.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_change_password -> { startActivity(Intent(this, ChangePasswordActivity::class.java)); true }
-                R.id.action_toggle_theme -> { toggleTheme(); true }
-                R.id.action_logout -> { performLogout(); true }
-                else -> false
-            }
-        }
-        popup.show()
-    }
-    private fun performLogout() {
-        (application as GoStockApp).clearLoginSession()
-        val intent = Intent(this, LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
-    }
-    private fun toggleTheme() {
-        val currentNightMode = AppCompatDelegate.getDefaultNightMode()
-        val newNightMode = if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES) AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
-        AppCompatDelegate.setDefaultNightMode(newNightMode)
-        getSharedPreferences(GoStockApp.PREFS_FILE_NAME, Context.MODE_PRIVATE).edit { putInt(GoStockApp.KEY_THEME_MODE, newNightMode) }
-    }
     private fun updateDashboard() {
-        val allEntries = fileHandler.loadStockEntries()
+        val allEntries = stockEntryFileHandler.loadRecords()
         if (allEntries.isEmpty()) {
             tvWelcomeSmallMessage.visibility = View.GONE
             llDashboard.visibility = View.GONE
@@ -397,9 +345,8 @@ class HomeActivity : AppCompatActivity() {
                 pbBatchSize.progress = 0
             }
 
-            val oldestEntryTimestamp = allEntries.mapNotNull {
-                try { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(it.timestamp)?.time } catch (e: Exception) { null }
-            }.minOrNull()
+            // --- FIX: Directly get the minimum timestamp since it's a Long ---
+            val oldestEntryTimestamp = allEntries.minOfOrNull { it.timestamp }
 
             if (oldestEntryTimestamp != null) {
                 val elapsedTimeHours = TimeUnit.MILLISECONDS.toHours(System.currentTimeMillis() - oldestEntryTimestamp)
@@ -427,5 +374,70 @@ class HomeActivity : AppCompatActivity() {
         GoStockApp.loggedInUser?.let {
             tvWelcomeMessage.text = "👋🏾 Hello ${it.username}!"
         }
+    }
+
+    // --- Helper Functions ---
+    private fun parseTimestamp(dateString: String): Long {
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        return try {
+            val date = sdf.parse(dateString)
+            date?.time ?: 0L
+        } catch (e: Exception) {
+            e.printStackTrace()
+            0L
+        }
+    }
+
+    private fun escapeCsv(field: String): String = if (field.contains(",") || field.contains("\"") || field.contains("\n")) "\"${field.replace("\"", "\"\"")}\"" else field
+
+    private fun parseCsvLine(line: String): List<String> {
+        val result = mutableListOf<String>()
+        var currentPos = 0
+        var inQuotes = false
+        var fieldStart = 0
+        while (currentPos < line.length) {
+            when (line[currentPos]) {
+                '"' -> inQuotes = !inQuotes
+                ',' -> if (!inQuotes) {
+                    result.add(line.substring(fieldStart, currentPos).replace("\"\"", "\"").removeSurrounding("\""))
+                    fieldStart = currentPos + 1
+                }
+            }
+            currentPos++
+        }
+        result.add(line.substring(fieldStart).replace("\"\"", "\"").removeSurrounding("\""))
+        return result
+    }
+
+    private fun showUserMenu(view: View) {
+        val popup = PopupMenu(this, view, Gravity.END)
+        popup.menuInflater.inflate(R.menu.user_menu, popup.menu)
+        val themeToggleMenuItem = popup.menu.findItem(R.id.action_toggle_theme)
+        themeToggleMenuItem.title = if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) "Switch to Light Mode" else "Switch to Dark Mode"
+        popup.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_change_password -> { startActivity(Intent(this, ChangePasswordActivity::class.java)); true }
+                R.id.action_toggle_theme -> { toggleTheme(); true }
+                R.id.action_logout -> { performLogout(); true }
+                else -> false
+            }
+        }
+        popup.show()
+    }
+
+    private fun performLogout() {
+        (application as GoStockApp).clearLoginSession()
+        val intent = Intent(this, LoginActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
+        finish()
+    }
+
+    private fun toggleTheme() {
+        val currentNightMode = AppCompatDelegate.getDefaultNightMode()
+        val newNightMode = if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES) AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
+        AppCompatDelegate.setDefaultNightMode(newNightMode)
+        getSharedPreferences(GoStockApp.PREFS_FILE_NAME, Context.MODE_PRIVATE).edit { putInt(GoStockApp.KEY_THEME_MODE, newNightMode) }
     }
 }

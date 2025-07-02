@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.gson.reflect.TypeToken
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStream
@@ -32,7 +33,10 @@ class BatchListActivity : AppCompatActivity() {
     private lateinit var btnToolbarMore: ImageButton
     private lateinit var recyclerView: RecyclerView
     private lateinit var tvNoBatches: TextView
-    private lateinit var fileHandler: FileHandler // For go_data.json
+
+    // --- UPDATED: Use the new generic JsonFileHandler ---
+    private lateinit var goDataFileHandler: JsonFileHandler<BatchEntry>
+
     private lateinit var batchAdapter: BatchAdapter
     private var batches: MutableList<Batch> = mutableListOf()
     private val TAG = "BatchListActivity"
@@ -44,7 +48,7 @@ class BatchListActivity : AppCompatActivity() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                val recordsToExport = fileHandler.loadStockEntries()
+                val recordsToExport = goDataFileHandler.loadRecords()
                 writeAllBatchesToCsv(uri, recordsToExport, "All batches exported successfully!")
             }
         } else {
@@ -57,30 +61,24 @@ class BatchListActivity : AppCompatActivity() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                val recordsToExport = fileHandler.loadStockEntries()
+                val recordsToExport = goDataFileHandler.loadRecords()
 
-                // 1. Export the ORIGINAL, unenriched data to the CSV file.
+                // Export the original data first
                 val success = writeAllBatchesToCsv(uri, recordsToExport, "All batches exported. Clearing data...")
 
-                // 2. If export was successful, THEN enrich the data and move it.
                 if (success) {
+                    // If export was successful, enrich and move the data
                     val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
                     val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-                    val enrichedRecords = recordsToExport.map {
-                        it.copy(
-                            action_user = actionUser,
-                            action_timestamp = actionTimestamp,
-                            action = "Batch Exported and Cleared"
-                        )
-                    }
+                    val enrichedRecords = recordsToExport
+                    
 
-                    // Move the now-enriched data to the deleted log
-                    val deletedFileHandler = FileHandler(this, "go_deleted.json")
-                    deletedFileHandler.addMultipleStockEntries(enrichedRecords)
+                    val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
+                    val deletedFileHandler = JsonFileHandler(this, "go_deleted.json", stockListType)
+                    deletedFileHandler.addMultipleRecords(enrichedRecords)
 
-                    // Clear the source file
-                    fileHandler.clearData()
-                    loadAndDisplayBatches() // Refresh the UI
+                    goDataFileHandler.clearData()
+                    loadAndDisplayBatches()
                 }
             }
         } else {
@@ -104,12 +102,11 @@ class BatchListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_batch_list)
 
-        btnToolbarBack = findViewById(R.id.btn_toolbar_back)
-        btnToolbarMore = findViewById(R.id.btn_toolbar_more)
-        recyclerView = findViewById(R.id.recyclerView_batches)
-        tvNoBatches = findViewById(R.id.tv_no_batches)
+        initViews()
 
-        fileHandler = FileHandler(this, "go_data.json")
+        // --- UPDATED: Initialize the generic handler with the correct type ---
+        val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
+        goDataFileHandler = JsonFileHandler(this, "go_data.json", stockListType)
 
         setupRecyclerView()
         setupClickListeners()
@@ -118,6 +115,13 @@ class BatchListActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         loadAndDisplayBatches()
+    }
+
+    private fun initViews() {
+        btnToolbarBack = findViewById(R.id.btn_toolbar_back)
+        btnToolbarMore = findViewById(R.id.btn_toolbar_more)
+        recyclerView = findViewById(R.id.recyclerView_batches)
+        tvNoBatches = findViewById(R.id.tv_no_batches)
     }
 
     private fun setupRecyclerView() {
@@ -141,7 +145,7 @@ class BatchListActivity : AppCompatActivity() {
         popup.menuInflater.inflate(R.menu.batch_list_more_menu, popup.menu)
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.action_transfer_all_batch -> { // NEW
+                R.id.action_transfer_all_batch -> {
                     startActivity(Intent(this, TransferAllBatchActivity::class.java))
                     true
                 }
@@ -170,7 +174,7 @@ class BatchListActivity : AppCompatActivity() {
     // --- Data Loading and Processing ---
 
     private fun loadAndDisplayBatches() {
-        val allEntries = fileHandler.loadStockEntries()
+        val allEntries = goDataFileHandler.loadRecords()
         if (allEntries.isEmpty()) {
             recyclerView.visibility = View.GONE
             tvNoBatches.visibility = View.VISIBLE
@@ -184,9 +188,12 @@ class BatchListActivity : AppCompatActivity() {
             .groupBy { it.batch_id!! }
             .map { (batchId, entriesInBatch) ->
                 val firstEntry = entriesInBatch.first()
-                val timestampsAsLong = entriesInBatch.mapNotNull { parseTimestamp(it.timestamp) }
-                val minTimestamp = timestampsAsLong.minOrNull()
-                val maxTimestamp = timestampsAsLong.maxOrNull()
+
+                // --- FIX: Use the parseTimestamp helper function to get correct min/max ---
+                val timestampsAsLong = entriesInBatch.mapNotNull { it.timestamp }
+                val minTimestamp = timestampsAsLong.min()
+                val maxTimestamp = timestampsAsLong.max()
+
                 val durationMillis = if (minTimestamp != null && maxTimestamp != null) maxTimestamp - minTimestamp else 0L
                 val durationHours = durationMillis / (1000.0f * 60 * 60)
                 val uniqueLocations = entriesInBatch.map { it.locationBarcode }.distinct().count()
@@ -240,14 +247,15 @@ class BatchListActivity : AppCompatActivity() {
         }
     }
 
-    private fun writeAllBatchesToCsv(uri: Uri, records: List<StockEntry>, successMessage: String): Boolean {
+    private fun writeAllBatchesToCsv(uri: Uri, records: List<BatchEntry>, successMessage: String): Boolean {
         val csvBuilder = StringBuilder()
-        csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver\n")
+        csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver,ActionUser,ActionTimestamp,Action\n")
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         for (record in records) {
             val formattedTransferDate = record.transfer_date?.let { sdf.format(Date(it)) } ?: ""
+            val formattedTimestamp = record.timestamp?.let { sdf.format(Date(it)) } ?: ""
             csvBuilder.append("${escapeCsv(record.id)},")
-            csvBuilder.append("${escapeCsv(record.timestamp)},")
+            csvBuilder.append("${escapeCsv(formattedTimestamp)},")
             csvBuilder.append("${escapeCsv(record.username)},")
             csvBuilder.append("${escapeCsv(record.locationBarcode)},")
             csvBuilder.append("${escapeCsv(record.skuBarcode)},")
@@ -276,7 +284,7 @@ class BatchListActivity : AppCompatActivity() {
     }
 
     private fun importBatchesFromCsv(uri: Uri) {
-        val importedEntries = mutableListOf<StockEntry>()
+        val importedEntries = mutableListOf<BatchEntry>()
         try {
             contentResolver.openInputStream(uri)?.use { inputStream ->
                 BufferedReader(InputStreamReader(inputStream)).use { reader ->
@@ -293,16 +301,17 @@ class BatchListActivity : AppCompatActivity() {
                         }
 
                         try {
-                            val entry = StockEntry(
+                            // --- FIX: Read timestamp as a String, and parse other fields safely ---
+                            val entry = BatchEntry(
                                 id = columns[0],
-                                timestamp = columns[1],
+                                timestamp = parseTimestamp(columns[1]), // Read as String
                                 username = columns[2],
                                 locationBarcode = columns[3],
                                 skuBarcode = columns[4],
-                                quantity = columns[5].toInt(),
+                                quantity = columns[5].toIntOrNull() ?: 0, // Safe parsing
                                 batch_id = columns[6],
                                 batch_user = columns[7],
-                                transfer_date = parseTimestamp(columns[8]),
+                                transfer_date = parseTimestamp(columns[8]), // Safe parsing
                                 receiver_user = columns[9]
                             )
                             importedEntries.add(entry)
@@ -316,7 +325,7 @@ class BatchListActivity : AppCompatActivity() {
             }
 
             if (importedEntries.isNotEmpty()) {
-                fileHandler.addMultipleStockEntries(importedEntries)
+                goDataFileHandler.addMultipleRecords(importedEntries)
                 Toast.makeText(this, "Successfully imported ${importedEntries.size} records!", Toast.LENGTH_LONG).show()
                 loadAndDisplayBatches()
             } else {
@@ -338,7 +347,7 @@ class BatchListActivity : AppCompatActivity() {
     }
 
     private fun deleteAllBatches(showToast: Boolean) {
-        val allEntries = fileHandler.loadStockEntries()
+        val allEntries = goDataFileHandler.loadRecords()
         if (allEntries.isEmpty()) {
             if(showToast) Toast.makeText(this, "There is nothing to delete.", Toast.LENGTH_SHORT).show()
             return
@@ -346,18 +355,13 @@ class BatchListActivity : AppCompatActivity() {
 
         val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
         val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-        val enrichedEntries = allEntries.map {
-            it.copy(
-                action_user = actionUser,
-                action_timestamp = actionTimestamp,
-                action = "Batch Deleted"
-            )
-        }
+        val enrichedEntries = allEntries
 
-        val deletedFileHandler = FileHandler(this, "go_deleted.json")
-        deletedFileHandler.addMultipleStockEntries(enrichedEntries)
+        val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
+        val deletedFileHandler = JsonFileHandler(this, "go_deleted.json", stockListType)
+        deletedFileHandler.addMultipleRecords(enrichedEntries)
 
-        fileHandler.clearData()
+        goDataFileHandler.clearData()
 
         if (showToast) {
             Toast.makeText(this, "All batch data cleared and archived.", Toast.LENGTH_SHORT).show()
@@ -387,12 +391,14 @@ class BatchListActivity : AppCompatActivity() {
         return result
     }
 
-    private fun parseTimestamp(timestampStr: String): Long? {
-        timestampStr.toLongOrNull()?.let { return it }
-        val possibleFormats = listOf(SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US), SimpleDateFormat("MMM dd, yyyy, h:mm:ss a", Locale.US))
-        for (format in possibleFormats) {
-            try { return format.parse(timestampStr)?.time } catch (e: Exception) { /* Ignore */ }
+    private fun parseTimestamp(dateString: String): Long {
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        return try {
+            val date = sdf.parse(dateString)
+            date?.time ?: 0L
+        } catch (e: Exception) {
+            e.printStackTrace()
+            0L
         }
-        return null
     }
 }

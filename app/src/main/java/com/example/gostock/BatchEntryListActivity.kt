@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.gson.reflect.TypeToken
 import java.io.IOException
 import java.io.OutputStream
 import java.text.SimpleDateFormat
@@ -43,7 +44,7 @@ class BatchEntryListActivity : AppCompatActivity() {
     private lateinit var tvHeaderTransferDate: TextView
 
     // --- Data ---
-    private lateinit var entryAdapter: EntryAdapter
+    private lateinit var batchEntryAdapter: BatchEntryAdapter
     private var currentBatch: Batch? = null
 
     companion object {
@@ -73,7 +74,6 @@ class BatchEntryListActivity : AppCompatActivity() {
                 currentBatch?.let { batch ->
                     val exportSuccess = writeBatchToCsv(uri, batch.entries, "Batch exported. Now clearing...")
                     if (exportSuccess) {
-                        // Pass the correct action string for the audit trail
                         deleteCurrentBatch(showToast = true, action = "Batch Exported and Cleared")
                     }
                 }
@@ -143,19 +143,19 @@ class BatchEntryListActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupRecyclerView(entries: List<StockEntry>) {
+    private fun setupRecyclerView(entries: List<BatchEntry>) {
         if (entries.isEmpty()) {
             recyclerView.visibility = View.GONE
             tvNoRecords.visibility = View.VISIBLE
         } else {
             recyclerView.visibility = View.VISIBLE
             tvNoRecords.visibility = View.GONE
-            val sortedEntries = entries.sortedByDescending { parseTimestamp(it.timestamp) }
-            entryAdapter = EntryAdapter(sortedEntries) { clickedEntry ->
+            val sortedEntries = entries.sortedByDescending { it.timestamp }
+            batchEntryAdapter = BatchEntryAdapter(sortedEntries) { clickedEntry ->
                 Toast.makeText(this, "Clicked entry with SKU: ${clickedEntry.skuBarcode}", Toast.LENGTH_SHORT).show()
             }
             recyclerView.layoutManager = LinearLayoutManager(this)
-            recyclerView.adapter = entryAdapter
+            recyclerView.adapter = batchEntryAdapter
         }
     }
 
@@ -169,7 +169,6 @@ class BatchEntryListActivity : AppCompatActivity() {
         popup.menuInflater.inflate(R.menu.batch_more_menu, popup.menu)
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-
                 R.id.action_transfer_batch -> {
                     val intent = Intent(this, TransferSingleBatchActivity::class.java).apply {
                         putExtra(EXTRA_BATCH_OBJECT, currentBatch)
@@ -177,7 +176,6 @@ class BatchEntryListActivity : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
-
                 R.id.action_export_batch -> {
                     initiateBatchExport()
                     true
@@ -226,15 +224,15 @@ class BatchEntryListActivity : AppCompatActivity() {
         exportAndClearBatchLauncher.launch(intent)
     }
 
-    private fun writeBatchToCsv(uri: Uri, records: List<StockEntry>, successMessage: String): Boolean {
+    private fun writeBatchToCsv(uri: Uri, records: List<BatchEntry>, successMessage: String): Boolean {
         val csvBuilder = StringBuilder()
-        // Add new audit columns to the CSV header
         csvBuilder.append("ID,Timestamp,Username,LocationBarcode,SkuBarcode,Quantity,BatchID,Sender,TransferDate,Receiver,ActionUser,ActionTimestamp,Action\n")
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         for (record in records) {
             val formattedTransferDate = record.transfer_date?.let { sdf.format(Date(it)) } ?: ""
+            val formattedTimestamp = record.timestamp?.let { sdf.format(Date(it)) } ?: ""
             csvBuilder.append("${escapeCsv(record.id)},")
-            csvBuilder.append("${escapeCsv(record.timestamp)},")
+            csvBuilder.append("${escapeCsv(formattedTimestamp)},")
             csvBuilder.append("${escapeCsv(record.username)},")
             csvBuilder.append("${escapeCsv(record.locationBarcode)},")
             csvBuilder.append("${escapeCsv(record.skuBarcode)},")
@@ -242,11 +240,7 @@ class BatchEntryListActivity : AppCompatActivity() {
             csvBuilder.append("${escapeCsv(record.batch_id ?: "")},")
             csvBuilder.append("${escapeCsv(record.batch_user ?: "")},")
             csvBuilder.append("${escapeCsv(formattedTransferDate)},")
-            csvBuilder.append("${escapeCsv(record.receiver_user ?: "")},")
-            // Add the new action fields to each row
-            csvBuilder.append("${escapeCsv(record.action_user ?: "")},")
-            csvBuilder.append("${escapeCsv(record.action_timestamp ?: "")},")
-            csvBuilder.append("${escapeCsv(record.action ?: "")}\n")
+            csvBuilder.append("${escapeCsv(record.receiver_user ?: "")}\n")
         }
 
         return try {
@@ -263,7 +257,7 @@ class BatchEntryListActivity : AppCompatActivity() {
     }
 
     private fun escapeCsv(field: String): String {
-        return if (field.contains(",") || field.contains("\"")) {
+        return if (field.contains(",") || field.contains("\"") || field.contains("\n")) {
             "\"" + field.replace("\"", "\"\"") + "\""
         } else {
             field
@@ -287,33 +281,31 @@ class BatchEntryListActivity : AppCompatActivity() {
             return
         }
 
-        // 1. Get all entries from go_data.json
-        val goDataFileHandler = FileHandler(this, "go_data.json")
-        val allEntries = goDataFileHandler.loadStockEntries()
+        // --- UPDATED: Use the new generic JsonFileHandler ---
+        val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
+        val goDataFileHandler = JsonFileHandler(this, "go_data.json", stockListType)
+        val allEntries = goDataFileHandler.loadRecords()
 
-        // 2. Separate the entries to be deleted from the ones to keep
         val entriesToDelete = allEntries.filter { it.batch_id == batchIdToDelete }
         val remainingEntries = allEntries.filter { it.batch_id != batchIdToDelete }
 
-        // 3. Enrich the deleted entries with action details
         val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
         val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-        val enrichedDeletedEntries = entriesToDelete.map {
-            it.copy(
-                action_user = actionUser,
-                action_timestamp = actionTimestamp,
-                action = action
-            )
-        }
+//        val enrichedDeletedEntries = entriesToDelete.map {
+//            it.copy(
+//                action_user = actionUser,
+//                action_timestamp = actionTimestamp,
+//                action = action
+//            )
+//        }
+        val enrichedDeletedEntries = entriesToDelete
 
-        // 4. Append the enriched deleted entries to go_deleted.json
         if (enrichedDeletedEntries.isNotEmpty()) {
-            val deletedFileHandler = FileHandler(this, "go_deleted.json")
-            deletedFileHandler.addMultipleStockEntries(enrichedDeletedEntries)
+            val deletedFileHandler = JsonFileHandler(this, "go_deleted.json", stockListType)
+            deletedFileHandler.addMultipleRecords(enrichedDeletedEntries)
         }
 
-        // 5. Overwrite go_data.json with only the remaining entries
-        goDataFileHandler.saveStockEntries(remainingEntries)
+        goDataFileHandler.saveRecords(remainingEntries)
 
         if (showToast) {
             Toast.makeText(this, "Batch '$batchIdToDelete' deleted.", Toast.LENGTH_SHORT).show()
@@ -327,7 +319,7 @@ class BatchEntryListActivity : AppCompatActivity() {
         timestampStr.toLongOrNull()?.let { return it }
         val possibleFormats = listOf(
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US),
-            SimpleDateFormat("MMM dd, yyyy, h:mm:ss a", Locale.US)
+            SimpleDateFormat("MMM dd, Regency, h:mm:ss a", Locale.US)
         )
         for (format in possibleFormats) {
             try {
