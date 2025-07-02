@@ -10,9 +10,9 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class Batch(
     val batch_id: String,
-    val batch_user: String,
+    val batch_user: String?,
     val transfer_date: Long,
-    val receiver_user: String,
+    val receiver_user: String?,
     val item_count: Int,
     val batch_timer: Float,
     val locations_counted: Int,

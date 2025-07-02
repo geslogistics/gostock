@@ -26,7 +26,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -257,7 +256,6 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
 
     private fun sendData(socket: BluetoothSocket) {
         lifecycleScope.launch(Dispatchers.IO) {
-            // --- UPDATED: Use JsonFileHandler ---
             val stockListType = object : TypeToken<MutableList<StockEntry>>() {}
             val stockDataFileHandler = JsonFileHandler(this@BluetoothTransferSubActivity, STOCK_DATA_FILENAME, stockListType)
             val originalEntries = stockDataFileHandler.loadRecords()
@@ -274,9 +272,22 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
             val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
             val batchId = "${senderUser?.username}_${dateFormat.format(Date(transferTimestamp))}"
 
-            val entriesToSend: List<StockEntry> = originalEntries
+            val entriesToSend = originalEntries.map {
+                BatchEntry(
+                    id = it.id,
+                    timestamp = it.timestamp,
+                    username = it.username,
+                    locationBarcode = it.locationBarcode,
+                    skuBarcode = it.skuBarcode,
+                    quantity = it.quantity,
+                    batch_id = batchId,
+                    batch_user = senderUser?.username,
+                    transfer_date = transferTimestamp,
+                    receiver_user = connectedReceiverUsername
+                )
+            }
 
-            archiveSentDataOnSender(entriesToSend)
+            batchingDataOnSender(entriesToSend)
 
             val tempFile = File(cacheDir, "temp_send_data.json")
             try {
@@ -320,9 +331,8 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
         }
     }
 
-    private fun archiveSentDataOnSender(entriesToArchive: List<StockEntry>) {
-        // --- UPDATED: Use JsonFileHandler ---
-        val stockListType = object : TypeToken<MutableList<StockEntry>>() {}
+    private fun batchingDataOnSender(entriesToArchive: List<BatchEntry>) {
+        val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
         val goDataFileHandler = JsonFileHandler(this, GO_DATA_FILENAME, stockListType)
         goDataFileHandler.addMultipleRecords(entriesToArchive)
         Log.d(TAG, "Sender: Successfully archived ${entriesToArchive.size} records.")
@@ -362,16 +372,12 @@ class BluetoothTransferSubActivity : AppCompatActivity() {
 
     private fun processReceivedFile(receivedFile: File) {
         try {
-            val listType = object : TypeToken<MutableList<StockEntry>>() {}.type
+            val listType = object : TypeToken<MutableList<BatchEntry>>() {}
             val receivedEntries: MutableList<BatchEntry> = FileReader(receivedFile).use { reader ->
                 Gson().fromJson(reader, listType) ?: mutableListOf()
             }
             if (receivedEntries.isNotEmpty()) {
-                // --- UPDATED: Use JsonFileHandler ---
-                val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
-                val goDataFileHandler = JsonFileHandler(this, GO_DATA_FILENAME, stockListType)
-
-
+                val goDataFileHandler = JsonFileHandler(this, GO_DATA_FILENAME, listType)
                 goDataFileHandler.addMultipleRecords(receivedEntries)
                 navigateToHome()
             } else {

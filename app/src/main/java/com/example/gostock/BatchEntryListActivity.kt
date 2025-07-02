@@ -290,18 +290,29 @@ class BatchEntryListActivity : AppCompatActivity() {
         val remainingEntries = allEntries.filter { it.batch_id != batchIdToDelete }
 
         val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
-        val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-//        val enrichedDeletedEntries = entriesToDelete.map {
-//            it.copy(
-//                action_user = actionUser,
-//                action_timestamp = actionTimestamp,
-//                action = action
-//            )
-//        }
-        val enrichedDeletedEntries = entriesToDelete
+        val actionTimestamp = System.currentTimeMillis()
+        val enrichedDeletedEntries = entriesToDelete.map {
+            BatchEntryArchived(
+                id = it.id,
+                timestamp = it.timestamp,
+                username = it.username,
+                locationBarcode = it.locationBarcode,
+                skuBarcode = it.skuBarcode,
+                quantity = it.quantity,
+                batch_id = it.batch_id,
+                batch_user = it.batch_user,
+                transfer_date = it.transfer_date,
+                receiver_user = it.receiver_user,
+                action_user = actionUser,
+                action_timestamp = actionTimestamp,
+                action = action
+            )
+        }
+
 
         if (enrichedDeletedEntries.isNotEmpty()) {
-            val deletedFileHandler = JsonFileHandler(this, "go_deleted.json", stockListType)
+            val deletedStockListType = object : TypeToken<MutableList<BatchEntryArchived>>() {}
+            val deletedFileHandler = JsonFileHandler(this, "go_deleted.json", deletedStockListType)
             deletedFileHandler.addMultipleRecords(enrichedDeletedEntries)
         }
 

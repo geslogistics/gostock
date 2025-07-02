@@ -78,6 +78,19 @@ class JsonFileHandler<T : Identifiable>(private val context: Context, private va
         }
     }
 
+    fun deleteRecords(recordIds: List<String>) {
+        if (recordIds.isEmpty()) return
+
+        val currentRecords = loadRecords()
+        val updatedRecords = currentRecords.filter { it.id !in recordIds }
+
+        if (updatedRecords.size < currentRecords.size) {
+            saveRecords(updatedRecords)
+        } else {
+            Log.w(TAG, "No matching records found for deletion in $filename.")
+        }
+    }
+
     fun clearData() {
         try {
             getFile().writeText("[]", Charsets.UTF_8)

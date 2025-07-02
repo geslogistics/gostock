@@ -69,11 +69,28 @@ class BatchListActivity : AppCompatActivity() {
                 if (success) {
                     // If export was successful, enrich and move the data
                     val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
-                    val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-                    val enrichedRecords = recordsToExport
+                    val actionTimestamp = System.currentTimeMillis()
+                    val enrichedRecords = recordsToExport.map{
+                        BatchEntryArchived(
+                            id = it.id,
+                            timestamp = it.timestamp,
+                            username = it.username,
+                            locationBarcode = it.locationBarcode,
+                            skuBarcode = it.skuBarcode,
+                            quantity = it.quantity,
+                            batch_id = it.batch_id,
+                            batch_user = it.batch_user,
+                            transfer_date = it.transfer_date,
+                            receiver_user = it.receiver_user,
+                            action_user = actionUser,
+                            action_timestamp = actionTimestamp,
+                            action = "Batch Exported and Cleared"
+                        )
+                    }
+
                     
 
-                    val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
+                    val stockListType = object : TypeToken<MutableList<BatchEntryArchived>>() {}
                     val deletedFileHandler = JsonFileHandler(this, "go_deleted.json", stockListType)
                     deletedFileHandler.addMultipleRecords(enrichedRecords)
 
@@ -201,12 +218,18 @@ class BatchListActivity : AppCompatActivity() {
                 val totalQuantity = entriesInBatch.sumOf { it.quantity }
 
                 Batch(
-                    batch_id = batchId, batch_user = firstEntry.batch_user,
-                    transfer_date = firstEntry.transfer_date, receiver_user = firstEntry.receiver_user,
-                    item_count = entriesInBatch.size, batch_timer = durationHours,
-                    locations_counted = uniqueLocations, sku_counted = uniqueSkus,
-                    quantity_counted = totalQuantity, entries = entriesInBatch,
-                    first_entry_date = minTimestamp, last_entry_date = maxTimestamp
+                    batch_id = batchId,
+                    batch_user = firstEntry.batch_user,
+                    transfer_date = firstEntry.transfer_date,
+                    receiver_user = firstEntry.receiver_user,
+                    item_count = entriesInBatch.size,
+                    batch_timer = durationHours,
+                    locations_counted = uniqueLocations,
+                    sku_counted = uniqueSkus,
+                    quantity_counted = totalQuantity,
+                    entries = entriesInBatch,
+                    first_entry_date = minTimestamp,
+                    last_entry_date = maxTimestamp
                 )
             }
             .sortedByDescending { it.transfer_date }
@@ -354,10 +377,26 @@ class BatchListActivity : AppCompatActivity() {
         }
 
         val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
-        val actionTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-        val enrichedEntries = allEntries
+        val actionTimestamp = System.currentTimeMillis()
+        val enrichedEntries = allEntries.map {
+            BatchEntryArchived(
+                id = it.id,
+                timestamp = it.timestamp,
+                username = it.username,
+                locationBarcode = it.locationBarcode,
+                skuBarcode = it.skuBarcode,
+                quantity = it.quantity,
+                batch_id = it.batch_id,
+                batch_user = it.batch_user,
+                transfer_date = it.transfer_date,
+                receiver_user = it.receiver_user,
+                action_user = actionUser,
+                action_timestamp = actionTimestamp,
+                action = "Batch Deleted"
+            )
+        }
 
-        val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
+        val stockListType = object : TypeToken<MutableList<BatchEntryArchived>>() {}
         val deletedFileHandler = JsonFileHandler(this, "go_deleted.json", stockListType)
         deletedFileHandler.addMultipleRecords(enrichedEntries)
 

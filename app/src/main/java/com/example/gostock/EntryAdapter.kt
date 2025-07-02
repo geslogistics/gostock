@@ -45,7 +45,6 @@ class EntryAdapter(
             return
         }
         val entry = entries[position]
-        // Log.d(TAG, "onBindViewHolder: Binding item at position $position, ID: ${entry.id}, SKU: ${entry.skuBarcode}") // Debug log removed
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val formattedTimestamp = entry.timestamp?.let { sdf.format(Date(it)) } ?: ""
 

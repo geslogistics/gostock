@@ -289,6 +289,7 @@ class HomeActivity : AppCompatActivity() {
                         if (columns.size >= 6) {
                             try {
                                 val entry = StockEntry(
+                                    id = columns[0],
                                     timestamp = parseTimestamp(columns[1]),
                                     username = columns[2],
                                     locationBarcode = columns[3],

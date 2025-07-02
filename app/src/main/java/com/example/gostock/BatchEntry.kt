@@ -14,8 +14,8 @@ data class BatchEntry(
     var quantity: Int,
 
     var batch_id: String,
-    var batch_user: String,
+    var batch_user: String?,
     var transfer_date: Long,
-    var receiver_user: String,
+    var receiver_user: String?,
 
 ) : Parcelable, Identifiable

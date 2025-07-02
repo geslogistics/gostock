@@ -22,7 +22,6 @@ import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
@@ -32,6 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.*
+import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.thread
 import kotlin.math.min
@@ -65,13 +65,13 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
     private var serverThread: Thread? = null
 
     // --- Constants ---
-    // FIX: Removed the 'private' keyword to make the companion object's contents accessible
     companion object {
         private val MY_UUID: UUID = UUID.fromString("8cc7117b-eca7-4c31-820f-26ed27198bb1")
-        private const val APP_NAME = "GoStockTransferSingleBatch"
-        private const val TAG = "BluetoothTransferSingleBatch"
+        private const val APP_NAME = "GoStockSingleBatchTransfer"
+        private const val TAG = "BluetoothSingleBatch"
         const val EXTRA_BATCH_TO_TRANSFER = "extra_batch_to_transfer"
         const val GO_DATA_FILENAME = "go_data.json"
+        const val DELETED_DATA_FILENAME = "go_deleted.json"
     }
 
     private enum class BluetoothState {
@@ -253,7 +253,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
         }
     }
 
-    // --- Data Transfer Logic for a SINGLE BATCH ---
+    // --- Data Transfer Logic ---
 
     private fun sendData(socket: BluetoothSocket) {
         lifecycleScope.launch(Dispatchers.IO) {
@@ -300,7 +300,42 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
             }
 
             if (transferSucceeded) {
-                // No data is cleared. Just navigate home.
+                // --- NEW ARCHIVE AND CLEAR LOGIC ---
+                val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
+                val actionTimestamp = System.currentTimeMillis()
+
+                val archivedEntries = entriesToSend.map {
+                    BatchEntryArchived(
+                        id = it.id,
+                        timestamp = it.timestamp,
+                        username = it.username,
+                        locationBarcode = it.locationBarcode,
+                        skuBarcode = it.skuBarcode,
+                        quantity = it.quantity,
+                        batch_id = it.batch_id,
+                        batch_user = it.batch_user,
+                        transfer_date = it.transfer_date,
+                        receiver_user = it.receiver_user,
+                        action_user = actionUser,
+                        action_timestamp = actionTimestamp,
+                        action = "Batch Transferred"
+                    )
+                }
+
+                // Move the archived entries to the deleted file
+                val archivedListType = object : TypeToken<MutableList<BatchEntryArchived>>() {}
+                val deletedFileHandler = JsonFileHandler(this@BluetoothTransferSingleBatchActivity, "go_deleted.json", archivedListType)
+                deletedFileHandler.addMultipleRecords(archivedEntries)
+
+                // Remove the transferred batch from the sender's go_data.json
+                val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
+                val goDataFileHandler = JsonFileHandler(this@BluetoothTransferSingleBatchActivity, GO_DATA_FILENAME, stockListType)
+                val allGoData = goDataFileHandler.loadRecords()
+                val remainingEntries = allGoData.filter { it.batch_id != batchToTransfer?.batch_id }
+                goDataFileHandler.saveRecords(remainingEntries)
+
+                Log.d(TAG, "Sender: Archived and cleared batch ${batchToTransfer?.batch_id}")
+
                 navigateToHome()
             }
         }
@@ -340,15 +375,12 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
 
     private fun processReceivedFile(receivedFile: File) {
         try {
-            val listType = object : TypeToken<MutableList<BatchEntry>>() {}.type
+            val listType = object : TypeToken<MutableList<BatchEntry>>() {}
             val receivedEntries: MutableList<BatchEntry> = FileReader(receivedFile).use { reader ->
                 Gson().fromJson(reader, listType) ?: mutableListOf()
             }
             if (receivedEntries.isNotEmpty()) {
-                // No enrichment needed. Just append the data.
-                val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
-                val goDataFileHandler = JsonFileHandler(this, "go_data.json", stockListType)
-
+                val goDataFileHandler = JsonFileHandler(this, GO_DATA_FILENAME, listType)
                 goDataFileHandler.addMultipleRecords(receivedEntries)
                 navigateToHome()
             } else {

@@ -7,6 +7,9 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class BatchEntryAdapter(
     initialEntries: List<BatchEntry>, // Take initial entries as a regular parameter
@@ -42,9 +45,10 @@ class BatchEntryAdapter(
             return
         }
         val entry = entries[position]
-        // Log.d(TAG, "onBindViewHolder: Binding item at position $position, ID: ${entry.id}, SKU: ${entry.skuBarcode}") // Debug log removed
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val formattedTimestamp = entry.timestamp?.let { sdf.format(Date(it)) } ?: ""
 
-        holder.timestamp.text = "${entry.timestamp}"
+        holder.timestamp.text = formattedTimestamp
         holder.username.text = "${entry.username}"
         holder.location.text = "${entry.locationBarcode}"
         holder.sku.text = "${entry.skuBarcode}"
