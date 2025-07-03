@@ -5,13 +5,17 @@
             android:id="@+id/action_add_user"
             android:title="Add User" />
     </group>
-    <group android:id="@+id/group_configurations">
-        <item
-            android:id="@+id/action_send_users"
-            android:title="Send Users List" />
+    <group android:id="@+id/group_settings">
         <item
             android:id="@+id/action_send_settings"
-            android:title="Send Settings" />
+            android:title="Send Settings (Replace All)" />
     </group>
-
+    <group android:id="@+id/group_users">
+        <item
+            android:id="@+id/action_send_users_replace_all"
+            android:title="Send Users (Replace All)" />
+        <item
+            android:id="@+id/action_send_users_add_only"
+            android:title="Send Users (Add New Only)" />
+    </group>
 </menu>

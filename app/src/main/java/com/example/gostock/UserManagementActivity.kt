@@ -3,6 +3,7 @@ package com.example.gostock
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
@@ -12,12 +13,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.widget.PopupMenu
 
 class UserManagementActivity : AppCompatActivity(), OnUserActionListener {
 
     private lateinit var rvUsers: RecyclerView
     private lateinit var tvNoUsers: TextView
-    private lateinit var btnToolbarAdd: ImageButton
+    private lateinit var btnToolbarMore: ImageButton
     private lateinit var btnToolbarBack: ImageButton
     private lateinit var userFileHandler: UserFileHandler
     private lateinit var userAdapter: UserAdapter
@@ -67,7 +69,7 @@ class UserManagementActivity : AppCompatActivity(), OnUserActionListener {
 
         rvUsers = findViewById(R.id.rv_users)
         tvNoUsers = findViewById(R.id.tv_no_users)
-        btnToolbarAdd = findViewById(R.id.btn_toolbar_add)
+        btnToolbarMore = findViewById(R.id.btn_toolbar_more)
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
         userFileHandler = UserFileHandler(this)
 
@@ -88,11 +90,8 @@ class UserManagementActivity : AppCompatActivity(), OnUserActionListener {
     }
 
     private fun setupClickListeners() {
-        btnToolbarAdd.setOnClickListener {
-            // Launch AddEditUserActivity to add a new user (no user ID passed)
-            val intent = Intent(this, AddEditUserActivity::class.java)
-            addEditUserLauncher.launch(intent)
-        }
+        btnToolbarMore.setOnClickListener { view -> showMoreMenu(view) }
+
         btnToolbarBack.setOnClickListener {
             finish()
         }
@@ -158,5 +157,37 @@ class UserManagementActivity : AppCompatActivity(), OnUserActionListener {
             putExtra(EXTRA_USER_ID, userId) // Pass the ID of the user to reset
         }
         resetPasswordLauncher.launch(intent) // Launch the reset password activity
+    }
+
+    private fun showMoreMenu(view: View) {
+        val popup = PopupMenu(this, view, Gravity.END)
+        popup.menuInflater.inflate(R.menu.user_more_menu, popup.menu)
+
+        popup.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_add_user -> {
+                    val intent = Intent(this, AddEditUserActivity::class.java)
+                    addEditUserLauncher.launch(intent)
+                    true
+                }
+                R.id.action_send_settings -> {
+                    val intent = Intent(this, BluetoothSettingsTransferActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+                R.id.action_send_users_replace_all -> {
+                    // TODO: Implement this feature
+                    Toast.makeText(this, "Send Users (Replace) coming soon!", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                R.id.action_send_users_add_only -> {
+                    // TODO: Implement this feature
+                    Toast.makeText(this, "Send Users (Add New) coming soon!", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
     }
 }

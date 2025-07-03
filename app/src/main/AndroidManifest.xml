@@ -59,6 +59,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".BluetoothSettingsTransferActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".TransferSingleBatchActivity"
             android:exported="false" />
         <activity
