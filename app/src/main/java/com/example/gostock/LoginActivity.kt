@@ -1,12 +1,14 @@
 package com.example.gostock // IMPORTANT: Replace with your actual package name
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.pm.PackageInfoCompat
 
 class LoginActivity : AppCompatActivity() {
 
@@ -14,6 +16,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var etPassword: EditText
     private lateinit var btnLogin: LinearLayout
     private lateinit var userFileHandler: UserFileHandler
+    private lateinit var tvAppVersion: TextView // TextView for the app version
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,7 +25,11 @@ class LoginActivity : AppCompatActivity() {
         etUsername = findViewById(R.id.et_username)
         etPassword = findViewById(R.id.et_password)
         btnLogin = findViewById(R.id.btn_login2)
+        tvAppVersion = findViewById(R.id.tv_app_version) // Initialize the TextView
         userFileHandler = UserFileHandler(this)
+
+        // Set the app version text
+        setAppVersionText()
 
         // Check if user is already logged in (from previous session)
         if (GoStockApp.loggedInUser != null) {
@@ -33,6 +40,18 @@ class LoginActivity : AppCompatActivity() {
 
         btnLogin.setOnClickListener {
             performLogin()
+        }
+    }
+
+    private fun setAppVersionText() {
+        try {
+            val packageInfo = packageManager.getPackageInfo(packageName, 0)
+            val versionName = packageInfo.versionName
+            val versionCode = PackageInfoCompat.getLongVersionCode(packageInfo)
+            tvAppVersion.text = "Version: $versionName ($versionCode)"
+        } catch (e: PackageManager.NameNotFoundException) {
+            e.printStackTrace()
+            tvAppVersion.text = "Version: N/A"
         }
     }
 

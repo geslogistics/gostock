@@ -374,6 +374,34 @@
 
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_app_version"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Version: 1.4"
+                        android:textColor="@color/primary_text_dark"
+                        android:textSize="10sp"
+                        android:layout_marginBottom="10dp"
+                        />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="© 2025 Overseas Development Co Ltd. All rights reserved."
+                        android:textColor="@color/primary_text_dark"
+                        android:textSize="9sp"
+                        />
+
+
+                </LinearLayout>
+
 
 
             </LinearLayout>
