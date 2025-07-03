@@ -1,9 +1,10 @@
 package com.example.gostock // IMPORTANT: Replace with your actual package name
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.widget.ImageButton
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
@@ -15,6 +16,7 @@ class ResetPasswordActivity : AppCompatActivity() {
     private lateinit var btnToolbarBack: ImageButton
 
     private lateinit var userFileHandler: UserFileHandler
+    private var userToReset: User? = null // This will hold the user whose password is being reset
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,6 +28,23 @@ class ResetPasswordActivity : AppCompatActivity() {
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
 
         userFileHandler = UserFileHandler(this)
+
+        // --- FIX: Get the target user's ID from the intent ---
+        val userIdToReset = intent.getStringExtra(UserManagementActivity.EXTRA_USER_ID)
+        if (userIdToReset == null) {
+            Toast.makeText(this, "Error: No user specified for password reset.", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+
+        // Load the specific user to be edited
+        userToReset = userFileHandler.loadUsers().find { it.id == userIdToReset }
+
+        if (userToReset == null) {
+            Toast.makeText(this, "Error: Could not find the user to reset.", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
 
         setupClickListeners()
     }
@@ -43,17 +62,8 @@ class ResetPasswordActivity : AppCompatActivity() {
         val newPassword = etNewPassword.text.toString()
         val confirmNewPassword = etConfirmNewPassword.text.toString()
 
-        val loggedInUser = GoStockApp.loggedInUser
-        if (loggedInUser == null) {
-            Toast.makeText(this, "No user logged in. Please log in first.", Toast.LENGTH_LONG).show()
-            // Force logout and return to login screen
-            (application as GoStockApp).clearLoginSession()
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-            finish()
-            return
-        }
+        // Use the userToReset object, which is guaranteed to be non-null here
+        val targetUser = userToReset ?: return
 
         // 1. Validate new password
         if (newPassword.isEmpty() || newPassword.length < 6) {
@@ -65,14 +75,17 @@ class ResetPasswordActivity : AppCompatActivity() {
             return
         }
 
-        // 2. Update user password
+        // 2. Update the correct user's password
         val newPasswordHash = PasswordHasher.hashPassword(newPassword)
-        val updatedUser = loggedInUser.copy(passwordHash = newPasswordHash)
+        val updatedUser = targetUser.copy(passwordHash = newPasswordHash)
 
-        userFileHandler.updateUser(updatedUser) // Save to file
-        (application as GoStockApp).saveLoginSession(updatedUser) // Update session object
+        userFileHandler.updateUser(updatedUser) // Save the updated user to the file
 
-        Toast.makeText(this, "Password reset successfully!", Toast.LENGTH_SHORT).show()
+        // --- DO NOT update the login session ---
+        // (application as GoStockApp).saveLoginSession(updatedUser) // This line was incorrect
+
+        Toast.makeText(this, "Password for '${targetUser.username}' reset successfully!", Toast.LENGTH_SHORT).show()
+        setResult(Activity.RESULT_OK) // Set result so the user list refreshes
         finish() // Close activity
     }
 }
