@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/gray_background"
+    android:fitsSystemWindows="true"
+    tools:context=".BluetoothCloseSendActivity">
+
+    <LinearLayout
+        android:id="@+id/main_page_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btn_toolbar_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="start|center"
+                android:layout_marginStart="16dp"
+                android:background="@drawable/circle_button_bg_stateful"
+                android:contentDescription="@string/back_button_label"
+                android:src="@drawable/ic_back_icon"
+                app:tint="@color/toolbar_icon_tint" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/page_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawablePadding="8dp"
+                app:drawableStartCompat="@drawable/ic_bluetooth_icon"
+                android:text="Send Entries"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="16dp"
+                android:contentDescription=""
+                android:background="@null"
+                android:visibility="invisible" />
+
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_bg_outline_gray"
+                    android:padding="16dp"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_transfer_status_sub"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:text="🟡  Initializing..."
+                        android:textAlignment="center"
+                        android:textSize="15sp"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+
+
+                </LinearLayout>
+
+
+<!--                <ProgressBar-->
+<!--                    android:id="@+id/progress_bar_sub"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_gravity="center_horizontal"-->
+<!--                    android:layout_marginBottom="8dp"-->
+<!--                    android:visibility="gone" />-->
+
+                <Button
+                    android:id="@+id/btn_enable_bluetooth_sub"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:text="Enable Bluetooth"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:orientation="horizontal">
+
+
+
+
+                    <Button
+                        android:id="@+id/btn_scan_devices_sub"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="7"
+                        android:text="Scan" />
+
+                    <View
+                        android:id="@+id/btn_make_discoverable_sub_divider"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <Button
+                        android:id="@+id/btn_send_data_sub"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+
+                        android:enabled="true"
+                        android:layout_weight="7"
+                        android:text="Send" />
+
+                </LinearLayout>
+
+
+
+                <LinearLayout
+                    android:id="@+id/progress_bar_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@drawable/rounded_bg_outline_gray"
+                    android:padding="10dp"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:layout_marginBottom="16dp">
+
+                    <ProgressBar
+                        android:id="@+id/progress_bar_sub"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="0dp"
+                        android:layout_weight="11"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:max="100"
+                        android:visibility="gone"
+                        tools:visibility="visible"
+                        tools:progress="60"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/tv_progress_percent"
+                        android:layout_width="20dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:visibility="gone"
+                        tools:visibility="visible"
+                        tools:text="60%"/>
+
+
+                </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Paired Devices:"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <ListView
+                    android:id="@+id/lv_paired_devices_sub"
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@color/button_background_light" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Discovered Devices:"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <ListView
+                    android:id="@+id/lv_discovered_devices_sub"
+                    android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:background="@color/button_background_light" />
+
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

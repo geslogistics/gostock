@@ -43,6 +43,22 @@
         android:theme="@style/Theme.GoStock"
         tools:targetApi="31">
         <activity
+            android:name=".BluetoothCloseSendActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BluetoothCloseReceiveActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BluetoothBatchAllSendActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BluetoothBatchReceiveActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BluetoothBatchSendActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".TransferSingleBatchActivity"
             android:exported="false" />
         <activity

@@ -37,10 +37,7 @@ import kotlin.concurrent.thread
 import kotlin.math.min
 
 @SuppressLint("MissingPermission")
-class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
-
-    // --- Data ---
-    private var batchToTransfer: Batch? = null
+class BluetoothCloseReceiveActivity : AppCompatActivity() {
 
     // --- UI elements declarations ---
     private lateinit var btnToolbarBack: ImageButton
@@ -51,7 +48,6 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
     private lateinit var btnScanDevices: Button
     private lateinit var lvPairedDevices: ListView
     private lateinit var lvDiscoveredDevices: ListView
-    private lateinit var btnSendData: Button
     private lateinit var progressBar: ProgressBar
     private lateinit var tvProgressPercent: TextView
 
@@ -63,15 +59,15 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
     private val discoveredDevicesList = mutableListOf<BluetoothDevice>()
     private var connectedSocket: BluetoothSocket? = null
     private var serverThread: Thread? = null
+    private var connectedReceiverUsername: String? = null
 
     // --- Constants ---
-    companion object {
-        private val MY_UUID: UUID = UUID.fromString("8cc7117b-eca7-4c31-820f-26ed27198bb1")
-        private const val APP_NAME = "GoStockBatchTransfer"
-        private const val TAG = "BluetoothSingleBatch"
-        const val EXTRA_BATCH_TO_TRANSFER = "extra_batch_to_transfer"
+    private companion object {
+        private val MY_UUID: UUID = UUID.fromString("8cc7117b-eca7-4c31-820f-26ed27198bb0")
+        private const val APP_NAME = "GoStockClosing"
+        private const val TAG = "BluetoothCloseReceiveActivity"
+        const val STOCK_DATA_FILENAME = "stock_data.json"
         const val GO_DATA_FILENAME = "go_data.json"
-        const val DELETED_DATA_FILENAME = "go_deleted.json"
     }
 
     private enum class BluetoothState {
@@ -92,31 +88,15 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
         btnMakeDiscoverable.visibility = View.VISIBLE
         btnMakeDiscoverableDivider.visibility = View.VISIBLE
         btnScanDevices.visibility = View.VISIBLE
-        btnSendData.visibility = View.VISIBLE
     }
     private val requestDiscoverableLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result -> if (result.resultCode > 0) startServer() }
 
-
     // --- Activity Lifecycle ---
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_bluetooth_transfer_single_batch)
-
-        batchToTransfer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableExtra(EXTRA_BATCH_TO_TRANSFER, Batch::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getParcelableExtra(EXTRA_BATCH_TO_TRANSFER)
-        }
-
-        if (batchToTransfer == null) {
-            Toast.makeText(this, "Error: No batch selected for transfer.", Toast.LENGTH_LONG).show()
-            finish()
-            return
-        }
-
+        setContentView(R.layout.activity_bluetooth_close_receive)
         initUI()
         initBluetooth()
         setupClickListeners()
@@ -141,7 +121,6 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
         btnScanDevices = findViewById(R.id.btn_scan_devices_sub)
         lvPairedDevices = findViewById(R.id.lv_paired_devices_sub)
         lvDiscoveredDevices = findViewById(R.id.lv_discovered_devices_sub)
-        btnSendData = findViewById(R.id.btn_send_data_sub)
         progressBar = findViewById(R.id.progress_bar_sub)
         tvProgressPercent = findViewById(R.id.tv_progress_percent)
     }
@@ -188,10 +167,6 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
                 device.createBond()
             }
         }
-        btnSendData.setOnClickListener {
-            connectedSocket?.let { socket -> sendData(socket) }
-                ?: Toast.makeText(this, "Not connected to a device", Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun setupRoleBasedUI() {
@@ -207,7 +182,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
         }
     }
 
-    // --- Core Bluetooth Logic ---
+    // --- Core Bluetooth Logic with Handshake ---
 
     private fun startServer() {
         updateUiForListening()
@@ -245,10 +220,27 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
 
     private fun manageConnectedSocket(socket: BluetoothSocket, isServer: Boolean) {
         connectedSocket = socket
-        runOnUiThread {
-            updateUiForConnected(socket.remoteDevice.name)
-            if (isServer) {
-                receiveData(socket)
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                if (isServer) {
+                    val receiverUsername = GoStockApp.loggedInUser?.username ?: "Unknown"
+                    DataOutputStream(socket.outputStream).writeUTF(receiverUsername)
+                    Log.d(TAG, "Server: Sent my username: $receiverUsername")
+                    withContext(Dispatchers.Main) {
+                        updateUiForConnected(socket.remoteDevice.name)
+                        receiveData(socket)
+                    }
+                } else {
+                    val receiverUsername = DataInputStream(socket.inputStream).readUTF()
+                    connectedReceiverUsername = receiverUsername
+                    Log.d(TAG, "Client: Received receiver's username: $receiverUsername")
+                    withContext(Dispatchers.Main) {
+                        updateUiForConnected(socket.remoteDevice.name)
+                    }
+                }
+            } catch (e: IOException) {
+                Log.e(TAG, "Handshake failed", e)
+                withContext(Dispatchers.Main) { updateUiForReadyState("❗ Handshake failed") }
             }
         }
     }
@@ -257,15 +249,40 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
 
     private fun sendData(socket: BluetoothSocket) {
         lifecycleScope.launch(Dispatchers.IO) {
-            val entriesToSend = batchToTransfer?.entries
-            if (entriesToSend.isNullOrEmpty()) {
-                withContext(Dispatchers.Main) { Toast.makeText(this@BluetoothTransferSingleBatchActivity, "Selected batch is empty.", Toast.LENGTH_SHORT).show() }
+            val stockListType = object : TypeToken<MutableList<StockEntry>>() {}
+            val stockDataFileHandler = JsonFileHandler(this@BluetoothCloseReceiveActivity, STOCK_DATA_FILENAME, stockListType)
+            val originalEntries = stockDataFileHandler.loadRecords()
+
+            if (originalEntries.isEmpty()) {
+                withContext(Dispatchers.Main) { Toast.makeText(this@BluetoothCloseReceiveActivity, "No data to send.", Toast.LENGTH_SHORT).show() }
                 return@launch
             }
 
-            withContext(Dispatchers.Main) { updateUiForTransfer("Sending batch...") }
+            withContext(Dispatchers.Main) { updateUiForTransfer("Preparing data...") }
 
-            val tempFile = File(cacheDir, "temp_single_batch.json")
+            val senderUser = GoStockApp.loggedInUser
+            val transferTimestamp = System.currentTimeMillis()
+            val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
+            val batchId = "${senderUser?.username}_${dateFormat.format(Date(transferTimestamp))}"
+
+            val entriesToSend = originalEntries.map {
+                BatchEntry(
+                    id = it.id,
+                    timestamp = it.timestamp,
+                    username = it.username,
+                    locationBarcode = it.locationBarcode,
+                    skuBarcode = it.skuBarcode,
+                    quantity = it.quantity,
+                    batch_id = batchId,
+                    batch_user = senderUser?.username,
+                    transfer_date = transferTimestamp,
+                    receiver_user = connectedReceiverUsername
+                )
+            }
+
+            batchingDataOnSender(entriesToSend)
+
+            val tempFile = File(cacheDir, "temp_send_data.json")
             try {
                 FileWriter(tempFile).use { writer -> Gson().toJson(entriesToSend, writer) }
             } catch (e: Exception) {
@@ -274,6 +291,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
             }
 
             var transferSucceeded = false
+            withContext(Dispatchers.Main) { updateUiForTransfer("Sending...") }
             try {
                 DataOutputStream(socket.outputStream).use { dataOut ->
                     FileInputStream(tempFile).use { fileIn ->
@@ -300,51 +318,23 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
             }
 
             if (transferSucceeded) {
-                // --- NEW ARCHIVE AND CLEAR LOGIC ---
-                val actionUser = GoStockApp.loggedInUser?.username ?: "Unknown"
-                val actionTimestamp = System.currentTimeMillis()
-
-                val archivedEntries = entriesToSend.map {
-                    BatchEntryArchived(
-                        id = it.id,
-                        timestamp = it.timestamp,
-                        username = it.username,
-                        locationBarcode = it.locationBarcode,
-                        skuBarcode = it.skuBarcode,
-                        quantity = it.quantity,
-                        batch_id = it.batch_id,
-                        batch_user = it.batch_user,
-                        transfer_date = it.transfer_date,
-                        receiver_user = it.receiver_user,
-                        action_user = actionUser,
-                        action_timestamp = actionTimestamp,
-                        action = "Batch Transferred"
-                    )
-                }
-
-                // Move the archived entries to the deleted file
-                val archivedListType = object : TypeToken<MutableList<BatchEntryArchived>>() {}
-                val deletedFileHandler = JsonFileHandler(this@BluetoothTransferSingleBatchActivity, "go_deleted.json", archivedListType)
-                deletedFileHandler.addMultipleRecords(archivedEntries)
-
-                // Remove the transferred batch from the sender's go_data.json
-                val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
-                val goDataFileHandler = JsonFileHandler(this@BluetoothTransferSingleBatchActivity, GO_DATA_FILENAME, stockListType)
-                val allGoData = goDataFileHandler.loadRecords()
-                val remainingEntries = allGoData.filter { it.batch_id != batchToTransfer?.batch_id }
-                goDataFileHandler.saveRecords(remainingEntries)
-
-                Log.d(TAG, "Sender: Archived and cleared batch ${batchToTransfer?.batch_id}")
-
+                stockDataFileHandler.clearData()
                 navigateToHome()
             }
         }
     }
 
+    private fun batchingDataOnSender(entriesToArchive: List<BatchEntry>) {
+        val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
+        val goDataFileHandler = JsonFileHandler(this, GO_DATA_FILENAME, stockListType)
+        goDataFileHandler.addMultipleRecords(entriesToArchive)
+        Log.d(TAG, "Sender: Successfully archived ${entriesToArchive.size} records.")
+    }
+
     private fun receiveData(socket: BluetoothSocket) {
         lifecycleScope.launch(Dispatchers.IO) {
-            val tempFile = File(cacheDir, "received_single_batch.json")
-            withContext(Dispatchers.Main) { updateUiForTransfer("\uD83D\uDD35 Receiving batch...") }
+            val tempFile = File(cacheDir, "received_transfer.json")
+            withContext(Dispatchers.Main) { updateUiForTransfer("\uD83D\uDD35 Receiving...") }
             try {
                 DataInputStream(socket.inputStream).use { dataIn ->
                     FileOutputStream(tempFile).use { fileOut ->
@@ -391,7 +381,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
         }
     }
 
-    // --- All other UI and helper functions ---
+    // --- All other UI and helper functions remain here ---
     private fun showSnackbar(message: String, duration: Int = Snackbar.LENGTH_LONG) {
         val snackbar = Snackbar.make(findViewById(android.R.id.content), message, duration)
         val snackbarTextView = snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
@@ -424,24 +414,22 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
         tvTransferStatus.text = status
         progressBar.visibility = View.VISIBLE
         tvProgressPercent.visibility = View.VISIBLE
-        listOf(btnSendData, btnScanDevices, btnMakeDiscoverable, lvPairedDevices, lvDiscoveredDevices, btnToolbarBack).forEach { it.isEnabled = false }
+        listOf(btnScanDevices, btnMakeDiscoverable, lvPairedDevices, lvDiscoveredDevices).forEach { it.isEnabled = false }
         updateProgress(0)
     }
     private fun updateUiForReadyState(status: String = "⚪  Ready") {
         tvTransferStatus.text = status
         progressBar.visibility = View.GONE
         tvProgressPercent.visibility = View.GONE
-        btnSendData.isEnabled = false
         btnScanDevices.isEnabled = true
         btnMakeDiscoverable.isEnabled = true
-        listOf(lvPairedDevices, lvDiscoveredDevices, btnToolbarBack).forEach { it.isEnabled = true }
+        listOf(lvPairedDevices, lvDiscoveredDevices).forEach { it.isEnabled = true }
         setupRoleBasedUI()
     }
     private fun updateUiForConnected(deviceName: String) {
         tvTransferStatus.text = "\uD83D\uDFE2  Connected to $deviceName"
         progressBar.visibility = View.GONE
         tvProgressPercent.visibility = View.GONE
-        btnSendData.isEnabled = true
         btnScanDevices.isEnabled = false
         btnMakeDiscoverable.isEnabled = false
     }
@@ -474,7 +462,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
     private fun checkBluetoothState() {
         if (bluetoothAdapter == null) {
             updateUiForReadyState("❗  Bluetooth not supported")
-            listOf(btnMakeDiscoverable, btnMakeDiscoverableDivider, btnScanDevices, btnSendData).forEach { it.visibility = View.GONE }
+            listOf(btnMakeDiscoverable, btnMakeDiscoverableDivider, btnScanDevices).forEach { it.visibility = View.GONE }
             return
         }
         if (bluetoothAdapter?.isEnabled == true) {
@@ -482,7 +470,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
             listPairedDevices()
         } else {
             btnEnableBluetooth.visibility = View.VISIBLE
-            listOf(btnMakeDiscoverable, btnMakeDiscoverableDivider, btnScanDevices, btnSendData).forEach { it.visibility = View.GONE }
+            listOf(btnMakeDiscoverable, btnMakeDiscoverableDivider, btnScanDevices).forEach { it.visibility = View.GONE }
             updateUiForReadyState("❗  Bluetooth is disabled")
         }
     }

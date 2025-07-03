@@ -577,7 +577,7 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/btn_transfer_data"
+                    android:id="@+id/btn_send_closing"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -597,7 +597,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Transfer Data"
+                            android:text="Send Closing"
                             android:textSize="22dp"
                             android:textStyle="bold"
                             android:layout_gravity="center_vertical"
@@ -607,7 +607,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Send/Receive the current batch"
+                            android:text="Send and close the current batch"
                             android:textColor="@color/primary_text_dark"
                             android:textSize="15sp"
                             android:textStyle="normal" />
@@ -622,6 +622,100 @@
                         app:tint="@color/primary_text_dark"/>
 
                 </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/btn_receive_closing"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:clickable="true"
+                    android:background="@drawable/rounded_bg_light"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:padding="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_weight="1">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Receive Closing"
+                            android:textSize="22dp"
+                            android:textStyle="bold"
+                            android:layout_gravity="center_vertical"
+                            android:textColor="@color/primary_text_dark" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Receive and close the current batch"
+                            android:textColor="@color/primary_text_dark"
+                            android:textSize="15sp"
+                            android:textStyle="normal" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top|end"
+                        app:srcCompat="@drawable/ic_transfer_data_icon"
+                        app:tint="@color/primary_text_dark"/>
+
+                </LinearLayout>
+
+<!--                <LinearLayout-->
+<!--                    android:id="@+id/btn_transfer_data"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:orientation="horizontal"-->
+<!--                    android:clickable="true"-->
+<!--                    android:background="@drawable/rounded_bg_light"-->
+<!--                    android:foreground="?attr/selectableItemBackground"-->
+<!--                    android:padding="16dp"-->
+<!--                    android:layout_marginTop="8dp"-->
+<!--                    android:layout_marginBottom="8dp">-->
+
+<!--                    <LinearLayout-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:orientation="vertical"-->
+<!--                        android:layout_weight="1">-->
+
+<!--                        <TextView-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:text="Transfer Data"-->
+<!--                            android:textSize="22dp"-->
+<!--                            android:textStyle="bold"-->
+<!--                            android:layout_gravity="center_vertical"-->
+<!--                            android:textColor="@color/primary_text_dark" />-->
+
+<!--                        <TextView-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:layout_weight="1"-->
+<!--                            android:text="Send/Receive the current batch"-->
+<!--                            android:textColor="@color/primary_text_dark"-->
+<!--                            android:textSize="15sp"-->
+<!--                            android:textStyle="normal" />-->
+
+<!--                    </LinearLayout>-->
+
+<!--                    <ImageView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_gravity="top|end"-->
+<!--                        app:srcCompat="@drawable/ic_transfer_data_icon"-->
+<!--                        app:tint="@color/primary_text_dark"/>-->
+
+<!--                </LinearLayout>-->
 
 <!--                <LinearLayout-->
 <!--                    android:id="@+id/btn_batch_data"-->

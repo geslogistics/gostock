@@ -54,7 +54,8 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var btnExportClearRecords: LinearLayout
     private lateinit var btnImportRecords: LinearLayout
     private lateinit var btnManageUsers: LinearLayout
-    private lateinit var btnTransferData: LinearLayout
+    private lateinit var btnSendClosing: LinearLayout
+    private lateinit var btnReceiveClosing: LinearLayout
     private lateinit var btnBatchList: LinearLayout
     private lateinit var btnSettings: LinearLayout
     private lateinit var tvLoggedInUser: TextView
@@ -121,7 +122,8 @@ class HomeActivity : AppCompatActivity() {
         btnImportRecords = findViewById(R.id.btn_import_records)
         btnManageUsers = findViewById(R.id.btn_manage_users)
         btnSettings = findViewById(R.id.btn_settings)
-        btnTransferData = findViewById(R.id.btn_transfer_data)
+        btnSendClosing = findViewById(R.id.btn_send_closing)
+        btnReceiveClosing = findViewById(R.id.btn_receive_closing)
         btnBatchList = findViewById(R.id.btn_batch_list)
         tvLoggedInUser = findViewById(R.id.tv_logged_in_user)
     }
@@ -209,7 +211,8 @@ class HomeActivity : AppCompatActivity() {
             }
             importDocumentLauncher.launch(intent)
         }
-        btnTransferData.setOnClickListener { startActivity(Intent(this, TransferDataActivity::class.java)) }
+        btnSendClosing.setOnClickListener { startActivity(Intent(this, BluetoothCloseSendActivity::class.java)) }
+        btnReceiveClosing.setOnClickListener { startActivity(Intent(this, BluetoothCloseReceiveActivity::class.java)) }
         btnBatchList.setOnClickListener { startActivity(Intent(this, BatchListActivity::class.java)) }
         btnManageUsers.setOnClickListener { startActivity(Intent(this, UserManagementActivity::class.java)) }
         btnSettings.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
@@ -223,11 +226,28 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun setupRoleBasedVisibility() {
-        if (GoStockApp.loggedInUser?.role == UserRole.ADMIN) {
-            listOf(btnExportRecords, btnExportClearRecords, btnImportRecords, btnBatchList, btnSettings, btnManageUsers).forEach { it.visibility = View.VISIBLE }
-        } else {
-            listOf(btnExportRecords, btnExportClearRecords, btnImportRecords, btnBatchList, btnSettings, btnManageUsers).forEach { it.visibility = View.GONE }
-        }
+        val userRole = GoStockApp.loggedInUser?.role
+
+        // Rule: Manage Users is for Admins only.
+        btnManageUsers.visibility = if (userRole == UserRole.ADMIN) View.VISIBLE else View.GONE
+
+        // Rule: Settings is for Admins and Team Leaders.
+        btnSettings.visibility = if (userRole == UserRole.ADMIN || userRole == UserRole.TEAMLEADER) View.VISIBLE else View.GONE
+
+        // Rule: Batch List is for Admins, Team Leaders, and Supervisors.
+        btnBatchList.visibility = if (userRole == UserRole.ADMIN || userRole == UserRole.TEAMLEADER || userRole == UserRole.SUPERVISOR) View.VISIBLE else View.GONE
+
+        // Rule: Import is for Admins only.
+        btnImportRecords.visibility = if (userRole == UserRole.ADMIN) View.VISIBLE else View.GONE
+
+        btnReceiveClosing.visibility = if (userRole == UserRole.ADMIN || userRole == UserRole.SUPERVISOR || userRole == UserRole.TEAMLEADER) View.VISIBLE else View.GONE
+
+        // Rule: Export and Export & Clear are for Admins and Team Leaders.
+        val canExport = userRole == UserRole.ADMIN || userRole == UserRole.TEAMLEADER
+        btnExportRecords.visibility = if (canExport) View.VISIBLE else View.GONE
+        btnExportClearRecords.visibility = if (canExport) View.VISIBLE else View.GONE
+
+
     }
 
     // --- Core Logic Functions ---

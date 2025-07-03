@@ -2,8 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:id="@+id/group_transfer">
         <item
-            android:id="@+id/action_transfer_all_batch"
-            android:title="Transfer/Receive All" />
+            android:id="@+id/action_receive_batch"
+            android:title="Receive" />
+        <item
+            android:id="@+id/action_send_all_batch"
+            android:title="Send All Batches" />
+
     </group>
     <group android:id="@+id/group_export">
         <item

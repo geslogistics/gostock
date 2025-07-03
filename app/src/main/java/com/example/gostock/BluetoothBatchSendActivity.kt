@@ -37,7 +37,7 @@ import kotlin.concurrent.thread
 import kotlin.math.min
 
 @SuppressLint("MissingPermission")
-class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
+class BluetoothBatchSendActivity : AppCompatActivity() {
 
     // --- Data ---
     private var batchToTransfer: Batch? = null
@@ -46,8 +46,6 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
     private lateinit var btnToolbarBack: ImageButton
     private lateinit var tvTransferStatus: TextView
     private lateinit var btnEnableBluetooth: Button
-    private lateinit var btnMakeDiscoverable: Button
-    private lateinit var btnMakeDiscoverableDivider: View
     private lateinit var btnScanDevices: Button
     private lateinit var lvPairedDevices: ListView
     private lateinit var lvDiscoveredDevices: ListView
@@ -68,7 +66,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
     companion object {
         private val MY_UUID: UUID = UUID.fromString("8cc7117b-eca7-4c31-820f-26ed27198bb1")
         private const val APP_NAME = "GoStockBatchTransfer"
-        private const val TAG = "BluetoothSingleBatch"
+        private const val TAG = "BluetoothBatchSendActivity"
         const val EXTRA_BATCH_TO_TRANSFER = "extra_batch_to_transfer"
         const val GO_DATA_FILENAME = "go_data.json"
         const val DELETED_DATA_FILENAME = "go_deleted.json"
@@ -89,8 +87,6 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
     ) { result -> if (result.resultCode == Activity.RESULT_OK)
         checkBluetoothState()
         btnEnableBluetooth.visibility = View.GONE
-        btnMakeDiscoverable.visibility = View.VISIBLE
-        btnMakeDiscoverableDivider.visibility = View.VISIBLE
         btnScanDevices.visibility = View.VISIBLE
         btnSendData.visibility = View.VISIBLE
     }
@@ -102,7 +98,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
     // --- Activity Lifecycle ---
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_bluetooth_transfer_single_batch)
+        setContentView(R.layout.activity_bluetooth_batch_send)
 
         batchToTransfer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(EXTRA_BATCH_TO_TRANSFER, Batch::class.java)
@@ -136,8 +132,6 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
         tvTransferStatus = findViewById(R.id.tv_transfer_status_sub)
         btnEnableBluetooth = findViewById(R.id.btn_enable_bluetooth_sub)
-        btnMakeDiscoverable = findViewById(R.id.btn_make_discoverable_sub)
-        btnMakeDiscoverableDivider = findViewById(R.id.btn_make_discoverable_sub_divider)
         btnScanDevices = findViewById(R.id.btn_scan_devices_sub)
         lvPairedDevices = findViewById(R.id.lv_paired_devices_sub)
         lvDiscoveredDevices = findViewById(R.id.lv_discovered_devices_sub)
@@ -168,12 +162,6 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
             val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
             enableBluetoothLauncher.launch(enableBtIntent)
         }
-        btnMakeDiscoverable.setOnClickListener {
-            val discoverableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
-                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
-            }
-            requestDiscoverableLauncher.launch(discoverableIntent)
-        }
         btnScanDevices.setOnClickListener { startDiscovery() }
         lvPairedDevices.setOnItemClickListener { _, _, pos, _ ->
             bluetoothAdapter?.cancelDiscovery()
@@ -196,12 +184,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
 
     private fun setupRoleBasedUI() {
         val loggedInUser = GoStockApp.loggedInUser
-        if (loggedInUser != null) {
-            if (loggedInUser.role == UserRole.STOCKTAKER) {
-                btnMakeDiscoverable.visibility = View.GONE
-                btnMakeDiscoverableDivider.visibility = View.GONE
-            }
-        } else {
+        if (loggedInUser == null) {
             showSnackbar("User not logged in. Redirecting...", Snackbar.LENGTH_LONG)
             performLogout()
         }
@@ -259,7 +242,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val entriesToSend = batchToTransfer?.entries
             if (entriesToSend.isNullOrEmpty()) {
-                withContext(Dispatchers.Main) { Toast.makeText(this@BluetoothTransferSingleBatchActivity, "Selected batch is empty.", Toast.LENGTH_SHORT).show() }
+                withContext(Dispatchers.Main) { Toast.makeText(this@BluetoothBatchSendActivity, "Selected batch is empty.", Toast.LENGTH_SHORT).show() }
                 return@launch
             }
 
@@ -324,12 +307,12 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
 
                 // Move the archived entries to the deleted file
                 val archivedListType = object : TypeToken<MutableList<BatchEntryArchived>>() {}
-                val deletedFileHandler = JsonFileHandler(this@BluetoothTransferSingleBatchActivity, "go_deleted.json", archivedListType)
+                val deletedFileHandler = JsonFileHandler(this@BluetoothBatchSendActivity, "go_deleted.json", archivedListType)
                 deletedFileHandler.addMultipleRecords(archivedEntries)
 
                 // Remove the transferred batch from the sender's go_data.json
                 val stockListType = object : TypeToken<MutableList<BatchEntry>>() {}
-                val goDataFileHandler = JsonFileHandler(this@BluetoothTransferSingleBatchActivity, GO_DATA_FILENAME, stockListType)
+                val goDataFileHandler = JsonFileHandler(this@BluetoothBatchSendActivity, GO_DATA_FILENAME, stockListType)
                 val allGoData = goDataFileHandler.loadRecords()
                 val remainingEntries = allGoData.filter { it.batch_id != batchToTransfer?.batch_id }
                 goDataFileHandler.saveRecords(remainingEntries)
@@ -424,7 +407,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
         tvTransferStatus.text = status
         progressBar.visibility = View.VISIBLE
         tvProgressPercent.visibility = View.VISIBLE
-        listOf(btnSendData, btnScanDevices, btnMakeDiscoverable, lvPairedDevices, lvDiscoveredDevices, btnToolbarBack).forEach { it.isEnabled = false }
+        listOf(btnSendData, btnScanDevices, lvPairedDevices, lvDiscoveredDevices, btnToolbarBack).forEach { it.isEnabled = false }
         updateProgress(0)
     }
     private fun updateUiForReadyState(status: String = "⚪  Ready") {
@@ -433,7 +416,6 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
         tvProgressPercent.visibility = View.GONE
         btnSendData.isEnabled = false
         btnScanDevices.isEnabled = true
-        btnMakeDiscoverable.isEnabled = true
         listOf(lvPairedDevices, lvDiscoveredDevices, btnToolbarBack).forEach { it.isEnabled = true }
         setupRoleBasedUI()
     }
@@ -443,19 +425,16 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
         tvProgressPercent.visibility = View.GONE
         btnSendData.isEnabled = true
         btnScanDevices.isEnabled = false
-        btnMakeDiscoverable.isEnabled = false
     }
     private fun updateUiForListening() {
         runOnUiThread {
             tvTransferStatus.text = "\uD83D\uDD35  Listening for connections..."
             btnScanDevices.isEnabled = false
-            btnMakeDiscoverable.isEnabled = false
         }
     }
     private fun updateUiForConnecting(deviceName: String) {
         tvTransferStatus.text = "\uD83D\uDFE1  Connecting to $deviceName..."
         btnScanDevices.isEnabled = false
-        btnMakeDiscoverable.isEnabled = false
     }
     private fun checkPermission(p: String): Boolean = ContextCompat.checkSelfPermission(this, p) == PackageManager.PERMISSION_GRANTED
     private fun requestAllPermissions() {
@@ -474,7 +453,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
     private fun checkBluetoothState() {
         if (bluetoothAdapter == null) {
             updateUiForReadyState("❗  Bluetooth not supported")
-            listOf(btnMakeDiscoverable, btnMakeDiscoverableDivider, btnScanDevices, btnSendData).forEach { it.visibility = View.GONE }
+            listOf(btnScanDevices, btnSendData).forEach { it.visibility = View.GONE }
             return
         }
         if (bluetoothAdapter?.isEnabled == true) {
@@ -482,7 +461,7 @@ class BluetoothTransferSingleBatchActivity : AppCompatActivity() {
             listPairedDevices()
         } else {
             btnEnableBluetooth.visibility = View.VISIBLE
-            listOf(btnMakeDiscoverable, btnMakeDiscoverableDivider, btnScanDevices, btnSendData).forEach { it.visibility = View.GONE }
+            listOf(btnScanDevices, btnSendData).forEach { it.visibility = View.GONE }
             updateUiForReadyState("❗  Bluetooth is disabled")
         }
     }

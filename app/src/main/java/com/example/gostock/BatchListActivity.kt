@@ -160,10 +160,41 @@ class BatchListActivity : AppCompatActivity() {
     private fun showMoreMenu(view: View) {
         val popup = PopupMenu(this, view, Gravity.END)
         popup.menuInflater.inflate(R.menu.batch_list_more_menu, popup.menu)
+
+        // Get the role of the currently logged-in user
+        val userRole = GoStockApp.loggedInUser?.role
+
+        // Find each menu item by its ID
+        val sendAllItem = popup.menu.findItem(R.id.action_send_all_batch)
+        val receiveItem = popup.menu.findItem(R.id.action_receive_batch)
+        val exportAllItem = popup.menu.findItem(R.id.action_export_all_batch)
+        val exportClearItem = popup.menu.findItem(R.id.action_export_all_clear_batch)
+        val importItem = popup.menu.findItem(R.id.action_import_batch)
+        val deleteAllItem = popup.menu.findItem(R.id.action_delete_all_batch)
+
+        // --- NEW VISIBILITY LOGIC ---
+
+        // Transfer is allowed for Admin, Supervisor, and Team Leader
+        receiveItem.isVisible = (userRole == UserRole.ADMIN || userRole == UserRole.SUPERVISOR || userRole == UserRole.TEAMLEADER)
+        sendAllItem.isVisible = (userRole == UserRole.ADMIN || userRole == UserRole.SUPERVISOR || userRole == UserRole.TEAMLEADER)
+        // Export and Export & Clear are allowed for Admin and Team Leader
+        exportAllItem.isVisible = (userRole == UserRole.ADMIN || userRole == UserRole.TEAMLEADER)
+        exportClearItem.isVisible = (userRole == UserRole.ADMIN || userRole == UserRole.TEAMLEADER)
+
+        // Import and Delete All are only allowed for Admin
+        importItem.isVisible = (userRole == UserRole.ADMIN)
+        deleteAllItem.isVisible = (userRole == UserRole.ADMIN)
+
+        // --- END OF NEW LOGIC ---
+
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.action_transfer_all_batch -> {
-                    startActivity(Intent(this, TransferAllBatchActivity::class.java))
+                R.id.action_receive_batch -> {
+                    startActivity(Intent(this, BluetoothBatchReceiveActivity::class.java))
+                    true
+                }
+                R.id.action_send_all_batch -> {
+                    startActivity(Intent(this, BluetoothBatchAllSendActivity::class.java))
                     true
                 }
                 R.id.action_export_all_batch -> {
@@ -187,7 +218,6 @@ class BatchListActivity : AppCompatActivity() {
         }
         popup.show()
     }
-
     // --- Data Loading and Processing ---
 
     private fun loadAndDisplayBatches() {

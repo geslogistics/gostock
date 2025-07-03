@@ -165,13 +165,38 @@ class BatchEntryListActivity : AppCompatActivity() {
     }
 
     private fun showMoreMenu(view: View) {
+        val batchIdToHandle = currentBatch?.batch_id
         val popup = PopupMenu(this, view, Gravity.END)
         popup.menuInflater.inflate(R.menu.batch_more_menu, popup.menu)
+
+        // --- NEW: Add this logic to control visibility ---
+        val userRole = GoStockApp.loggedInUser?.role
+
+        // Find each menu item by its ID
+        val sendItem = popup.menu.findItem(R.id.action_send_batch)
+        val exportItem = popup.menu.findItem(R.id.action_export_batch)
+        val exportClearItem = popup.menu.findItem(R.id.action_export_clear_batch)
+        val deleteItem = popup.menu.findItem(R.id.action_delete_batch)
+
+        // Rule: Transfer is allowed for Admin, Supervisor, and Team Leader
+        sendItem.isVisible = (userRole == UserRole.ADMIN || userRole == UserRole.SUPERVISOR || userRole == UserRole.TEAMLEADER)
+
+        // Rule: Export and Export & Clear are allowed for Admin and Team Leader
+        val canExport = (userRole == UserRole.ADMIN || userRole == UserRole.TEAMLEADER)
+        exportItem.isVisible = canExport
+        exportClearItem.isVisible = canExport
+
+        // Rule: Delete is only allowed for Admin
+        deleteItem.isVisible = (userRole == UserRole.ADMIN)
+        // --- END OF NEW LOGIC ---
+
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.action_transfer_batch -> {
-                    val intent = Intent(this, TransferSingleBatchActivity::class.java).apply {
-                        putExtra(EXTRA_BATCH_OBJECT, currentBatch)
+                R.id.action_send_batch -> {
+                    val intent = Intent(this, BluetoothBatchSendActivity::class.java).apply {
+                        putExtra(BluetoothBatchSendActivity.EXTRA_BATCH_TO_TRANSFER, currentBatch)
+
+
                     }
                     startActivity(intent)
                     true
