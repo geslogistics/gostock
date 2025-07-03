@@ -22,8 +22,14 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var btnToolbarSave: ImageButton
     private lateinit var btnToolbarBack: ImageButton
     private lateinit var switchEnableZebraDevice: Switch
+
     private lateinit var etAcceptedLocationFormats: EditText
+    private lateinit var switchLocationRequired: Switch
+    private lateinit var switchLocationEditable: Switch
+
     private lateinit var etAcceptedSkuFormats: EditText
+    private lateinit var switchSkuRequired: Switch
+    private lateinit var switchSkuEditable: Switch
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,10 +41,14 @@ class SettingsActivity : AppCompatActivity() {
         btnToolbarSave = findViewById(R.id.btn_toolbar_save)
         btnToolbarBack = findViewById(R.id.btn_toolbar_back)
         switchEnableZebraDevice = findViewById(R.id.switch_enable_zebra_device)
+
         etAcceptedLocationFormats = findViewById(R.id.et_accepted_location_formats)
+        switchLocationRequired = findViewById(R.id.switch_location_required)
+        switchLocationEditable = findViewById(R.id.switch_location_editable)
+
         etAcceptedSkuFormats = findViewById(R.id.et_accepted_sku_formats)
-
-
+        switchSkuRequired = findViewById(R.id.switch_sku_required)
+        switchSkuEditable = findViewById(R.id.switch_sku_editable)
 
 
         loadSettings() // Load current settings on creation
@@ -50,7 +60,11 @@ class SettingsActivity : AppCompatActivity() {
         etMaxBatchTime.setText(AppSettings.maxBatchTime.toString())
         switchEnableZebraDevice.isChecked = AppSettings.enableZebraDevice
         etAcceptedLocationFormats.setText(TextUtils.join(", ", AppSettings.acceptedLocationFormats))
+        switchLocationRequired.isChecked = AppSettings.locationRequired
+        switchLocationEditable.isChecked = AppSettings.locationEditable
         etAcceptedSkuFormats.setText(TextUtils.join(", ", AppSettings.acceptedSkuFormats))
+        switchSkuRequired.isChecked = AppSettings.skuRequired
+        switchSkuEditable.isChecked = AppSettings.skuEditable
     }
 
     private fun setupClickListeners() {
@@ -75,6 +89,10 @@ class SettingsActivity : AppCompatActivity() {
         val newMaxBatchSize = maxBatchSizeStr.toIntOrNull()
         val newMaxBatchTime = maxBatchTimeStr.toIntOrNull()
         val newEnableZebraDevice = switchEnableZebraDevice.isChecked
+        val newLocationRequired = switchLocationRequired.isChecked
+        val newLocationEditable = switchLocationEditable.isChecked
+        val newSkuRequired = switchSkuRequired.isChecked
+        val newSkuEditable = switchSkuEditable.isChecked
 
         if (newMaxBatchSize == null || newMaxBatchSize < 0) { // Allow 0, only disallow negative
             Toast.makeText(this, "Max Batch Size must be a non-negative number.", Toast.LENGTH_SHORT).show()
@@ -90,6 +108,7 @@ class SettingsActivity : AppCompatActivity() {
         } else {
             emptySet()
         }
+
         val newAcceptedSkuFormats = if (acceptedSkuFormatsStr.isNotEmpty()) {
             acceptedSkuFormatsStr.split(",").map { it.trim().uppercase(Locale.ROOT) }.toSet()
         } else {
@@ -100,6 +119,11 @@ class SettingsActivity : AppCompatActivity() {
         AppSettings.maxBatchSize = newMaxBatchSize
         AppSettings.maxBatchTime = newMaxBatchTime
         AppSettings.enableZebraDevice = newEnableZebraDevice
+        AppSettings.locationRequired = newLocationRequired
+        AppSettings.locationEditable = newLocationEditable
+        AppSettings.skuRequired = newSkuRequired
+        AppSettings.skuEditable = newSkuEditable
+
         AppSettings.acceptedLocationFormats = newAcceptedLocationFormats // SAVE NEW SETTING
         AppSettings.acceptedSkuFormats = newAcceptedSkuFormats // SAVE NEW SETTING
 

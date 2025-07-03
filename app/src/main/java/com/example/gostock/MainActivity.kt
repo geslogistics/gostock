@@ -86,6 +86,7 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
         setContentView(R.layout.activity_main)
 
         initViews()
+        InitiateSettingsElements()
 
         // --- UPDATED: Initialize the generic handler with the correct type ---
         val stockListType = object : TypeToken<MutableList<StockEntry>>() {}
@@ -146,6 +147,19 @@ class MainActivity : AppCompatActivity(), ZebraScanResultListener {
                 Log.e(TAG, "Error unregistering DataWedge receiver: ${e.message}")
             }
             zebraScannerHelper.activateProfile("")
+        }
+    }
+
+    private fun InitiateSettingsElements() {
+        if (AppSettings.locationEditable) {
+            tvLocationValue.isEnabled = true
+        } else {
+            tvLocationValue.isEnabled = false
+        }
+        if (AppSettings.skuEditable) {
+            tvSkuValue.isEnabled = true
+        } else {
+            tvSkuValue.isEnabled = false
         }
     }
 

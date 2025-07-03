@@ -43,6 +43,7 @@ class EditRecordActivity : AppCompatActivity() {
         stockEntryArchivedFileHandler = JsonFileHandler(this, "stock_deleted.json", stockArchivedListType)
 
         initViews()
+        InitiateSettingsElements()
 
         currentEntry = intent.getParcelableExtra(RecordListActivity.EXTRA_STOCK_ENTRY)
 
@@ -55,6 +56,19 @@ class EditRecordActivity : AppCompatActivity() {
         populateFields(currentEntry!!)
         setupClickListeners()
         updateSaveButtonState()
+    }
+
+    private fun InitiateSettingsElements() {
+        if (AppSettings.locationEditable) {
+            tvLocationBarcode.isEnabled = true
+        } else {
+            tvLocationBarcode.isEnabled = false
+        }
+        if (AppSettings.skuEditable) {
+            tvSkuBarcode.isEnabled = true
+        } else {
+            tvSkuBarcode.isEnabled = false
+        }
     }
 
     private fun initViews() {
@@ -104,7 +118,7 @@ class EditRecordActivity : AppCompatActivity() {
             return
         }
         currentEntry?.let { original ->
-            val updatedEntry = original.copy(quantity = newQuantity)
+            val updatedEntry = original.copy(quantity = newQuantity, locationBarcode = tvLocationBarcode.text.toString(), skuBarcode = tvSkuBarcode.text.toString())
             stockEntryFileHandler.updateRecord(updatedEntry)
             setResult(RESULT_OK)
             finish()
@@ -153,6 +167,6 @@ class EditRecordActivity : AppCompatActivity() {
         val enteredQuantity = etQuantity.text.toString().toIntOrNull()
         val isQuantityValid = enteredQuantity != null && enteredQuantity > 0
         val hasQuantityChanged = enteredQuantity != currentEntry?.quantity
-        btnToolbarSave.isEnabled = isQuantityValid && hasQuantityChanged
+        //btnToolbarSave.isEnabled = isQuantityValid && hasQuantityChanged
     }
 }

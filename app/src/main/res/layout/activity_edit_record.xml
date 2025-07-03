@@ -107,7 +107,7 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <TextView
+                <EditText
                     android:id="@+id/tv_edit_location_barcode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -115,6 +115,7 @@
                     android:text="01012345678901281721022110ABCD1234\F217654"
                     android:textColor="@color/primary_text_dark"
                     android:textSize="12sp"
+                    android:enabled="false"
                     android:textStyle="bold" />
 
             </LinearLayout>
@@ -154,7 +155,7 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <TextView
+                <EditText
                     android:id="@+id/tv_edit_sku_barcode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -162,6 +163,7 @@
                     android:layout_marginTop="8dp"
                     android:text="01012345678901281721022110ABCD1234\F217654"
                     android:textColor="@color/primary_text_dark"
+                    android:enabled="false"
                     android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>

@@ -263,6 +263,37 @@
                         android:minHeight="20dp"
                         />
 
+                    <Switch
+                        android:id="@+id/switch_location_required"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Required"
+                        android:layout_marginTop="15dp"
+                        android:minHeight="20dp"
+                        android:thumbTextPadding="12dp"
+                        android:thumbTint="@color/button_background_light"
+                        android:trackTint="@color/switch_track_selector"
+                        android:trackTintMode="add"
+                        tools:ignore="UseSwitchCompatOrMaterial3"
+                        android:checked="true"
+                        />
+
+                    <Switch
+                        android:id="@+id/switch_location_editable"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Editable"
+                        android:layout_marginTop="15dp"
+                        android:minHeight="20dp"
+                        android:thumbTextPadding="12dp"
+
+                        android:thumbTint="@color/button_background_light"
+                        android:trackTint="@color/switch_track_selector"
+                        android:trackTintMode="add"
+                        tools:ignore="UseSwitchCompatOrMaterial3"
+                        android:checked="true"
+                        />
+
                 </LinearLayout>
 
                 <LinearLayout
@@ -308,6 +339,37 @@
                         android:hint="e.g., LABEL-TYPE-CODE128,CODE_128"
                         android:inputType="text"
                         android:minHeight="20dp"
+                        />
+
+                    <Switch
+                        android:id="@+id/switch_sku_required"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Required"
+                        android:layout_marginTop="15dp"
+                        android:minHeight="20dp"
+                        android:thumbTextPadding="12dp"
+                        android:thumbTint="@color/button_background_light"
+                        android:trackTint="@color/switch_track_selector"
+                        android:trackTintMode="add"
+                        tools:ignore="UseSwitchCompatOrMaterial3"
+                        android:checked="true"
+                        />
+
+                    <Switch
+                        android:id="@+id/switch_sku_editable"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Editable"
+                        android:layout_marginTop="15dp"
+                        android:minHeight="20dp"
+                        android:thumbTextPadding="12dp"
+
+                        android:thumbTint="@color/button_background_light"
+                        android:trackTint="@color/switch_track_selector"
+                        android:trackTintMode="add"
+                        tools:ignore="UseSwitchCompatOrMaterial3"
+                        android:checked="true"
                         />
 
                 </LinearLayout>

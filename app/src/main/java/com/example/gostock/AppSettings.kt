@@ -12,13 +12,23 @@ object AppSettings {
     private const val KEY_MAX_BATCH_SIZE = "max_batch_size"
     private const val KEY_MAX_BATCH_TIME = "max_batch_time"
     private const val KEY_ENABLE_ZEBRA_DEVICE = "enable_zebra_device"
+
     private const val KEY_ACCEPTED_LOCATION_FORMATS = "accepted_location_formats"
+    private const val KEY_LOCATION_REQUIRED = "location_required"
+    private const val KEY_LOCATION_EDITABLE = "location_editable"
+
     private const val KEY_ACCEPTED_SKU_FORMATS = "accepted_sku_formats"
+    private const val KEY_SKU_REQUIRED = "sku_required"
+    private const val KEY_SKU_EDITABLE = "sku_editable"
 
     // Default values
     const val DEFAULT_MAX_BATCH_SIZE = 100 // count
     const val DEFAULT_MAX_BATCH_TIME = 2 // hours
     const val DEFAULT_ENABLE_ZEBRA_DEVICE = false
+    const val DEFAULT_LOCATION_REQUIRED = true
+    const val DEFAULT_LOCATION_EDITABLE = false
+    const val DEFAULT_SKU_REQUIRED = true
+    const val DEFAULT_SKU_EDITABLE = false
 
     // --- NEW: Specific default formats ---
     private val DEFAULT_LOCATION_FORMATS = setOf("LABEL-TYPE-DATAMATRIX", "DATA_MATRIX")
@@ -59,6 +69,14 @@ object AppSettings {
             sharedPreferences.edit().putString(KEY_ACCEPTED_LOCATION_FORMATS, json).apply()
         }
 
+    var locationRequired: Boolean
+        get() = sharedPreferences.getBoolean(KEY_LOCATION_REQUIRED, DEFAULT_LOCATION_REQUIRED)
+        set(value) = sharedPreferences.edit().putBoolean(KEY_LOCATION_REQUIRED, value).apply()
+
+    var locationEditable: Boolean
+        get() = sharedPreferences.getBoolean(KEY_LOCATION_EDITABLE, DEFAULT_LOCATION_EDITABLE)
+        set(value) = sharedPreferences.edit().putBoolean(KEY_LOCATION_EDITABLE, value).apply()
+
     var acceptedSkuFormats: Set<String>
         get() {
             val json = sharedPreferences.getString(KEY_ACCEPTED_SKU_FORMATS, null)
@@ -74,6 +92,14 @@ object AppSettings {
             val json = gson.toJson(value)
             sharedPreferences.edit().putString(KEY_ACCEPTED_SKU_FORMATS, json).apply()
         }
+
+    var skuRequired: Boolean
+        get() = sharedPreferences.getBoolean(KEY_SKU_REQUIRED, DEFAULT_SKU_REQUIRED)
+        set(value) = sharedPreferences.edit().putBoolean(KEY_SKU_REQUIRED, value).apply()
+
+    var skuEditable: Boolean
+        get() = sharedPreferences.getBoolean(KEY_SKU_EDITABLE, DEFAULT_SKU_EDITABLE)
+        set(value) = sharedPreferences.edit().putBoolean(KEY_SKU_EDITABLE, value).apply()
 
     fun isFormatAccepted(scannedFormat: String?, acceptedFormats: Set<String>): Boolean {
         if (scannedFormat.isNullOrEmpty()) {
