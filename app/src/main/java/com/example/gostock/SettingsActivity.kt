@@ -1,18 +1,16 @@
 package com.example.gostock // IMPORTANT: Replace with your actual package name
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Button
-import android.widget.TextView
+import android.text.TextUtils
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.Switch
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.pm.PackageInfoCompat
 import java.util.Locale
-import android.text.TextUtils
 
 
 class SettingsActivity : AppCompatActivity() {
@@ -30,6 +28,8 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var etAcceptedSkuFormats: EditText
     private lateinit var switchSkuRequired: Switch
     private lateinit var switchSkuEditable: Switch
+
+    private lateinit var tvAppVersion: TextView // TextView for the app version
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,8 +50,10 @@ class SettingsActivity : AppCompatActivity() {
         switchSkuRequired = findViewById(R.id.switch_sku_required)
         switchSkuEditable = findViewById(R.id.switch_sku_editable)
 
+        tvAppVersion = findViewById(R.id.tv_app_version) // Initialize the TextView
 
         loadSettings() // Load current settings on creation
+        setAppVersionText() // Set the app version text
         setupClickListeners()
     }
 
@@ -65,6 +67,18 @@ class SettingsActivity : AppCompatActivity() {
         etAcceptedSkuFormats.setText(TextUtils.join(", ", AppSettings.acceptedSkuFormats))
         switchSkuRequired.isChecked = AppSettings.skuRequired
         switchSkuEditable.isChecked = AppSettings.skuEditable
+    }
+
+    private fun setAppVersionText() {
+        try {
+            val packageInfo = packageManager.getPackageInfo(packageName, 0)
+            val versionName = packageInfo.versionName
+            val versionCode = PackageInfoCompat.getLongVersionCode(packageInfo)
+            tvAppVersion.text = "Version: $versionName ($versionCode)"
+        } catch (e: PackageManager.NameNotFoundException) {
+            e.printStackTrace()
+            tvAppVersion.text = "Version: N/A"
+        }
     }
 
     private fun setupClickListeners() {

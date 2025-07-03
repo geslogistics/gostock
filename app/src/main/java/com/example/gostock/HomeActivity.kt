@@ -2,6 +2,7 @@ package com.example.gostock
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -16,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.edit
+import androidx.core.content.pm.PackageInfoCompat
 import com.google.gson.reflect.TypeToken
 import java.io.BufferedReader
 import java.io.IOException
@@ -59,6 +61,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var btnBatchList: LinearLayout
     private lateinit var btnSettings: LinearLayout
     private lateinit var tvLoggedInUser: TextView
+    private lateinit var tvAppVersion: TextView // TextView for the app version
 
     // --- UPDATED: Use the new generic JsonFileHandler ---
     private lateinit var stockEntryFileHandler: JsonFileHandler<StockEntry>
@@ -73,6 +76,7 @@ class HomeActivity : AppCompatActivity() {
         setContentView(R.layout.activity_home)
 
         initViews()
+        setAppVersionText() // Set the app version text
 
         val stockListType = object : TypeToken<MutableList<StockEntry>>() {}
         stockEntryFileHandler = JsonFileHandler(this, "stock_data.json", stockListType)
@@ -126,6 +130,19 @@ class HomeActivity : AppCompatActivity() {
         btnReceiveClosing = findViewById(R.id.btn_receive_closing)
         btnBatchList = findViewById(R.id.btn_batch_list)
         tvLoggedInUser = findViewById(R.id.tv_logged_in_user)
+        tvAppVersion = findViewById(R.id.tv_app_version) // Initialize the version TextView
+    }
+
+    private fun setAppVersionText() {
+        try {
+            val packageInfo = packageManager.getPackageInfo(packageName, 0)
+            val versionName = packageInfo.versionName
+            val versionCode = PackageInfoCompat.getLongVersionCode(packageInfo)
+            tvAppVersion.text = "Version: $versionName ($versionCode)"
+        } catch (e: PackageManager.NameNotFoundException) {
+            e.printStackTrace()
+            tvAppVersion.text = "Version: N/A"
+        }
     }
 
     // --- SAF Launchers ---
