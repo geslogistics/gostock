@@ -108,4 +108,11 @@ class UserFileHandler(private val context: Context) {
             // Log.w(TAG, "User with ID $userId not found for deletion.") // Debug log removed
         }
     }
+
+    fun addMultipleUsers(newUsers: List<User>) {
+        val currentUsers = loadUsers()
+        currentUsers.addAll(newUsers)
+        saveUsers(currentUsers)
+        // Log.d(TAG, "Added ${newUsers.size} users. Total users: ${currentUsers.size}") // Debug log removed
+    }
 }

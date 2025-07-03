@@ -43,6 +43,12 @@
         android:theme="@style/Theme.GoStock"
         tools:targetApi="31">
         <activity
+            android:name=".BluetoothUsersAddOnlyActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BluetoothUsersReplaceActivity"
+            android:exported="false" />
+        <activity
             android:name=".BluetoothCloseSendActivity"
             android:exported="false" />
         <activity
@@ -57,11 +63,9 @@
         <activity
             android:name=".BluetoothBatchSendActivity"
             android:exported="false" />
-
         <activity
             android:name=".BluetoothSettingsTransferActivity"
             android:exported="false" />
-
         <activity
             android:name=".TransferSingleBatchActivity"
             android:exported="false" />

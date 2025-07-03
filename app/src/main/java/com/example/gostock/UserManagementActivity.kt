@@ -176,13 +176,13 @@ class UserManagementActivity : AppCompatActivity(), OnUserActionListener {
                     true
                 }
                 R.id.action_send_users_replace_all -> {
-                    // TODO: Implement this feature
-                    Toast.makeText(this, "Send Users (Replace) coming soon!", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, BluetoothUsersReplaceActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 R.id.action_send_users_add_only -> {
-                    // TODO: Implement this feature
-                    Toast.makeText(this, "Send Users (Add New) coming soon!", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, BluetoothUsersAddOnlyActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 else -> false
